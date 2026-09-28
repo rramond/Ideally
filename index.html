@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ideally</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M4 32 Q32 8 60 32 Q32 56 4 32Z' fill='%230E0617' stroke='%23C084FC' stroke-width='3'/%3E%3Ccircle cx='32' cy='32' r='12' fill='%23A855F7'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%2308020E'/%3E%3Ccircle cx='28' cy='28' r='2.5' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <svg viewBox="0 0 64 44"><path d="M3 22 Q32 1 61 22 Q32 43 3 22Z" fill="#0E0617" stroke="#C084FC" stroke-width="3"/><circle cx="32" cy="22" r="9.5" fill="#A855F7"/><circle cx="32" cy="22" r="4" fill="#08020E"/><circle cx="29" cy="19" r="2" fill="#fff"/></svg>
+    Ideally
+  </div>
+  <button class="nav-btn active" data-view="notes">
+    <svg viewBox="0 0 24 24"><path d="M4 4h13l3 3v13H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
+    Notes
+  </button>
+  <button class="nav-btn" data-view="calendar">
+    <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+    Calendar
+  </button>
+  <button class="nav-btn" data-view="board">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="6" width="8" height="8" rx="1"/><rect x="7" y="14" width="8" height="8" rx="1"/></svg>
+    Vision board
+  </button>
+  <button class="nav-btn" data-view="timer">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>
+    Focus
+  </button>
+</aside>
+
+<main>
+
+  <!-- ================= NOTES ================= -->
+  <section class="view active" id="view-notes">
+    <div class="notes-list">
+      <div class="panel-head">
+        <h2>Notes</h2>
+        <button class="icon-btn" id="new-note-btn" title="New note">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+      <div class="note-items" id="note-items"></div>
+    </div>
+    <div class="editor" id="editor"></div>
+  </section>
+
+  <!-- ================= CALENDAR ================= -->
+  <section class="view" id="view-calendar">
+    <div class="cal-main">
+      <div class="cal-head">
+        <h2 id="cal-month">Month</h2>
+        <span class="cal-year" id="cal-year"></span>
+        <div class="cal-nav">
+          <button class="ghost-btn" id="cal-today">Today</button>
+          <button class="icon-btn" id="cal-prev" title="Previous month">
+            <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <button class="icon-btn" id="cal-next" title="Next month">
+            <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="cal-grid-head">
+        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+    <div class="cal-side" id="cal-side"></div>
+  </section>
+
+  <!-- ================= BOARD ================= -->
+  <section class="view" id="view-board">
+    <div class="board-bar">
+      <h2>Vision board</h2>
+      <button class="tool-btn" id="add-sticky">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        New note
+      </button>
+      <button class="tool-btn" id="add-title" title="Add a text title">
+        <svg viewBox="0 0 24 24"><path d="M5 7V4h14v3"/><path d="M12 4v16"/><path d="M9 20h6"/></svg>
+        Title
+      </button>
+      <button class="tool-btn" id="connect-btn" title="Link two stickies with an arrow">
+        <svg viewBox="0 0 24 24"><path d="M5 19L17 7"/><path d="M10 6h7v7"/></svg>
+        Connect
+      </button>
+      <div class="color-pick">
+        <button class="swatch" id="color-swatch" title="Sticky color"></button>
+      </div>
+      <div class="fmt-group off" id="fmt-group">
+        <button class="fmt-btn" id="fmt-bold" title="Bold (Ctrl+B)"><b>B</b></button>
+        <button class="fmt-btn" id="fmt-italic" title="Italic (Ctrl+I)"><i>I</i></button>
+        <div class="fmt-size">
+          <button class="fmt-btn" id="fmt-size-down" title="Smaller text">−</button>
+          <span class="fmt-size-val" id="fmt-size-val">–</span>
+          <button class="fmt-btn" id="fmt-size-up" title="Larger text">+</button>
+        </div>
+        <div class="color-pick">
+          <button class="fmt-btn fmt-color" id="fmt-color" title="Text color">A<span class="fmt-color-bar" id="fmt-color-bar"></span></button>
+        </div>
+      </div>
+      <button class="zoom-pill" id="zoom-pill" title="Reset view">100%</button>
+    </div>
+    <div class="board-stage" id="board-stage">
+      <div class="board-world" id="board-world">
+        <svg id="arrow-layer" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrowhead" markerWidth="9" markerHeight="8"
+                    refX="7.5" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+              <path d="M0.5,0.5 L8,4 L0.5,7.5 Z" fill="#5E5B7A"/>
+            </marker>
+            <marker id="arrowhead-hot" markerWidth="9" markerHeight="8"
+                    refX="7.5" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+              <path d="M0.5,0.5 L8,4 L0.5,7.5 Z" fill="#C084FC"/>
+            </marker>
+          </defs>
+          <g id="arrow-paths"></g>
+          <g id="arrow-handles"></g>
+        </svg>
+        <div class="board-floor" id="board-floor"></div>
+      </div>
+      <div class="board-empty" id="board-empty" style="display:none">
+        <span class="be-big">An empty wall.</span>
+        <span>Pick a color and add your first sticky.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TIMER ================= -->
+  <section class="view" id="view-timer">
+    <canvas id="scene-canvas"></canvas>
+    <div class="scene-dim"></div>
+    <div class="timer-shell">
+      <div class="timer-phase" id="timer-phase">Focus</div>
+      <div class="t-units">
+        <div class="t-unit">
+          <button class="t-step" data-step="3600">▲</button>
+          <span class="t-num" id="tn-h">1</span>
+          <button class="t-step" data-step="-3600">▼</button>
+        </div>
+        <span class="t-colon">:</span>
+        <div class="t-unit">
+          <button class="t-step" data-step="300">▲</button>
+          <span class="t-num" id="tn-m">00</span>
+          <button class="t-step" data-step="-300">▼</button>
+        </div>
+        <span class="t-colon">:</span>
+        <div class="t-unit">
+          <button class="t-step hidden">▲</button>
+          <span class="t-num" id="tn-s">00</span>
+          <button class="t-step hidden">▼</button>
+        </div>
+      </div>
+      <div class="timer-controls">
+        <button class="primary-btn big" id="timer-start">Start</button>
+        <button class="ghost-btn" id="timer-reset">Reset</button>
+      </div>
+      <div class="timer-opts">
+        <label>Preset
+          <select id="preset-sel">
+            <option value="custom">Custom</option>
+            <option value="pomodoro">Pomodoro · 25 + 5</option>
+            <option value="pomodoroL">Long Pomodoro · 50 + 10</option>
+            <option value="desktime">DeskTime · 52 + 17</option>
+            <option value="ultradian">Ultradian · 90 + 20</option>
+          </select>
+        </label>
+        <label>Scene
+          <select id="scene-sel">
+            <option value="jungle">Jungle at night</option>
+            <option value="space">Orbiting planets</option>
+            <option value="blackhole">Black hole</option>
+            <option value="ocean">Ocean sunset</option>
+          </select>
+        </label>
+        <label>Sound
+          <select id="sound-sel">
+            <option value="on">Scene ambience</option>
+            <option value="off">Muted</option>
+          </select>
+        </label>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

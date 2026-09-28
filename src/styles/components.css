@@ -1,0 +1,22 @@
+/* Buttons shared across views */
+.icon-btn{
+  width:28px;height:28px;border-radius:7px;
+  display:grid;place-items:center;color:var(--muted);
+  transition:background .12s,color .12s,box-shadow .12s;
+}
+.icon-btn:hover{background:#1A1928;color:#D8B4FE;box-shadow:var(--neon)}
+.icon-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+
+.ghost-btn{
+  border:1px solid var(--line);border-radius:8px;padding:7px 14px;
+  font-size:13px;font-weight:500;background:var(--surface2);
+  transition:border-color .12s,color .12s,box-shadow .12s;
+}
+.ghost-btn:hover{border-color:var(--accent);color:#D8B4FE;box-shadow:var(--neon)}
+
+.primary-btn{
+  background:var(--accent-dim);color:#fff;border-radius:8px;padding:8px 14px;
+  font-size:13px;font-weight:600;transition:background .12s,box-shadow .12s;
+  box-shadow:var(--neon);
+}
+.primary-btn:hover{background:var(--accent);box-shadow:var(--neon-strong)}

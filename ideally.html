@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ideally</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M4 32 Q32 8 60 32 Q32 56 4 32Z' fill='%230E0617' stroke='%23C084FC' stroke-width='3'/%3E%3Ccircle cx='32' cy='32' r='12' fill='%23A855F7'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%2308020E'/%3E%3Ccircle cx='28' cy='28' r='2.5' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0B11;
+    --surface:#111119;
+    --surface2:#171723;
+    --ink:#E9E7F4;
+    --muted:#8B89A0;
+    --line:#26253A;
+    --accent:#B14CF8;
+    --accent-dim:#7C3AED;
+    --accent-soft:rgba(177,76,248,.13);
+    --neon:0 0 10px rgba(177,76,248,.45);
+    --neon-strong:0 0 6px rgba(177,76,248,.8),0 0 18px rgba(177,76,248,.45);
+    --shadow-md:0 8px 22px rgba(0,0,0,.5);
+    --shadow-lg:0 22px 48px rgba(0,0,0,.65);
+    --radius:10px;
+    --font-display:'Space Grotesk',system-ui,sans-serif;
+    --font-body:'Inter',system-ui,sans-serif;
+    --font-mono:'JetBrains Mono',ui-monospace,monospace;
+    --scene-glow:#C084FC;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--font-body);
+    background:var(--bg);
+    color:var(--ink);
+    display:flex;
+    overflow:hidden;
+    font-size:15px;
+    line-height:1.5;
+  }
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[contenteditable]:focus-visible{
+    outline:2px solid var(--accent);outline-offset:2px;border-radius:4px;
+  }
+  ::selection{background:rgba(177,76,248,.35)}
+  input,select,textarea{color:var(--ink)}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:212px;min-width:212px;height:100vh;
+    border-right:1px solid var(--line);
+    background:linear-gradient(180deg,#0D0D15,#0A0A10);
+    display:flex;flex-direction:column;
+    padding:20px 12px;
+    gap:4px;
+  }
+  .brand{
+    font-family:var(--font-display);font-weight:700;font-size:19px;
+    letter-spacing:-.02em;
+    padding:6px 10px 20px;
+    display:flex;align-items:center;gap:10px;
+    color:#EFE6FF;
+    text-shadow:0 0 14px rgba(177,76,248,.55);
+  }
+  .brand svg{width:26px;height:18px;filter:drop-shadow(0 0 5px rgba(177,76,248,.8))}
+  .nav-btn{
+    display:flex;align-items:center;gap:10px;
+    width:100%;padding:8px 10px;border-radius:8px;
+    font-size:14px;font-weight:500;color:var(--ink);
+    transition:background .12s ease,color .12s,box-shadow .12s;
+    text-align:left;border:1px solid transparent;
+  }
+  .nav-btn:hover{background:#171622}
+  .nav-btn.active{
+    background:var(--accent-soft);color:#D8B4FE;
+    border-color:rgba(177,76,248,.3);
+    box-shadow:inset 0 0 14px rgba(177,76,248,.10),var(--neon);
+  }
+  .nav-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+  /* ---------- Main ---------- */
+  main{flex:1;height:100vh;overflow:hidden;position:relative;background:var(--bg)}
+  .view{display:none;height:100%}
+  .view.active{display:flex}
+
+  /* ============ NOTES ============ */
+  #view-notes{flex-direction:row}
+  .notes-list{
+    width:264px;min-width:264px;height:100%;
+    border-right:1px solid var(--line);
+    display:flex;flex-direction:column;
+    background:var(--bg);
+  }
+  .panel-head{display:flex;align-items:center;justify-content:space-between;padding:22px 18px 12px}
+  .panel-head h2{font-family:var(--font-display);font-size:17px;font-weight:700;letter-spacing:-.01em}
+  .icon-btn{
+    width:28px;height:28px;border-radius:7px;
+    display:grid;place-items:center;color:var(--muted);
+    transition:background .12s,color .12s,box-shadow .12s;
+  }
+  .icon-btn:hover{background:#1A1928;color:#D8B4FE;box-shadow:var(--neon)}
+  .icon-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+  .note-items{flex:1;overflow-y:auto;padding:4px 10px 20px}
+  .note-item{
+    width:100%;text-align:left;
+    padding:10px 12px;border-radius:8px;margin-bottom:2px;
+    transition:background .12s;border:1px solid transparent;
+  }
+  .note-item:hover{background:#15141F}
+  .note-item.active{background:var(--accent-soft);border-color:rgba(177,76,248,.25)}
+  .note-item .ni-title{font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .note-item .ni-meta{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);margin-top:2px}
+  .note-item .ni-snippet{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+
+  .editor{flex:1;display:flex;flex-direction:column;background:var(--surface);height:100%}
+  .editor-inner{max-width:720px;width:100%;margin:0 auto;padding:64px 48px 40px;flex:1;overflow-y:auto;display:flex;flex-direction:column}
+  .editor-date{font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
+  #note-title{
+    font-family:var(--font-display);font-size:34px;font-weight:700;letter-spacing:-.02em;
+    border:none;background:none;width:100%;color:var(--ink);
+  }
+  #note-title::placeholder{color:#3C3B52}
+  #note-body{
+    flex:1;border:none;background:none;resize:none;width:100%;
+    font-family:var(--font-body);font-size:15.5px;line-height:1.75;color:var(--ink);
+    margin-top:18px;min-height:300px;
+  }
+  #note-body::placeholder{color:#3C3B52}
+  .editor-bar{
+    display:flex;justify-content:flex-end;align-items:center;
+    padding:10px 48px;border-top:1px solid var(--line);
+  }
+  .danger-link{color:var(--muted);font-family:var(--font-mono);font-size:10.5px;transition:color .12s,text-shadow .12s}
+  .danger-link:hover{color:#FB7185;text-shadow:0 0 10px rgba(251,113,133,.6)}
+  .empty-state{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    color:var(--muted);background:var(--surface);
+  }
+  .empty-state p{font-size:13.5px}
+  .ghost-btn{
+    border:1px solid var(--line);border-radius:8px;padding:7px 14px;
+    font-size:13px;font-weight:500;background:var(--surface2);
+    transition:border-color .12s,color .12s,box-shadow .12s;
+  }
+  .ghost-btn:hover{border-color:var(--accent);color:#D8B4FE;box-shadow:var(--neon)}
+
+  /* ============ CALENDAR ============ */
+  #view-calendar{flex-direction:row}
+  .cal-main{flex:1;display:flex;flex-direction:column;padding:28px 32px;overflow:hidden}
+  .cal-head{display:flex;align-items:baseline;gap:16px;margin-bottom:18px}
+  .cal-head h2{font-family:var(--font-display);font-size:26px;font-weight:700;letter-spacing:-.02em}
+  .cal-head .cal-year{font-family:var(--font-mono);font-size:13px;color:var(--muted)}
+  .cal-nav{margin-left:auto;display:flex;gap:6px;align-items:center}
+  .cal-grid-head{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px}
+  .cal-grid-head span{
+    font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted);padding:4px 10px;
+  }
+  .cal-grid{
+    flex:1;display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:1fr;
+    border-top:1px solid var(--line);border-left:1px solid var(--line);
+    background:var(--surface);border-radius:var(--radius);overflow:hidden;
+    box-shadow:0 0 0 1px rgba(177,76,248,.07),0 10px 30px rgba(0,0,0,.45);
+  }
+  .cal-cell{
+    border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+    padding:8px 10px;text-align:left;position:relative;overflow:hidden;
+    display:flex;flex-direction:column;gap:4px;align-items:flex-start;
+    transition:background .12s;background:var(--surface);
+    min-height:0;
+  }
+  .cal-cell:hover{background:#15141F}
+  .cal-cell.other{color:#3F3E56;background:#0E0E16}
+  .cal-cell.selected{background:rgba(177,76,248,.10)}
+  .cal-cell .day-num{font-family:var(--font-mono);font-size:12px;font-weight:500}
+  .cal-cell.today .day-num{
+    background:var(--accent-dim);color:#fff;border-radius:6px;padding:1px 6px;margin:-1px -6px;
+    box-shadow:var(--neon-strong);
+  }
+  .ev-chip{
+    font-size:11px;font-weight:500;line-height:1.4;
+    border-radius:5px;padding:1px 7px;
+    max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    color:#EBD9FF;border:1px solid transparent;
+  }
+  .ev-more{font-family:var(--font-mono);font-size:10px;color:var(--muted)}
+
+  .cal-side{
+    width:296px;min-width:296px;border-left:1px solid var(--line);
+    background:var(--bg);display:flex;flex-direction:column;padding:28px 22px;gap:14px;
+    overflow-y:auto;
+  }
+  .cal-side .side-date{font-family:var(--font-display);font-size:18px;font-weight:700;letter-spacing:-.01em}
+  .cal-side .side-sub{font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-top:-10px}
+  .ev-list{display:flex;flex-direction:column;gap:8px}
+  .ev-row{
+    background:var(--surface2);border:1px solid var(--line);border-radius:8px;
+    padding:9px 12px;display:flex;align-items:center;gap:10px;
+  }
+  .ev-row .ev-time{font-family:var(--font-mono);font-size:11px;color:#D8B4FE;min-width:42px}
+  .ev-row .ev-title{font-size:13.5px;font-weight:500;flex:1;word-break:break-word}
+  .ev-row .ev-del{color:var(--muted);font-size:15px;line-height:1;padding:2px 4px;border-radius:4px}
+  .ev-row .ev-del:hover{color:#FB7185;background:rgba(251,113,133,.12)}
+  .ev-form{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+  .ev-form input{
+    border:1px solid var(--line);border-radius:8px;padding:8px 11px;
+    font-family:var(--font-body);font-size:13.5px;background:var(--surface2);
+  }
+  .ev-form input[type="time"]{font-family:var(--font-mono);font-size:12.5px;color-scheme:dark}
+  .ev-form input::placeholder{color:#4A4963}
+  .primary-btn{
+    background:var(--accent-dim);color:#fff;border-radius:8px;padding:8px 14px;
+    font-size:13px;font-weight:600;transition:background .12s,box-shadow .12s;
+    box-shadow:var(--neon);
+  }
+  .primary-btn:hover{background:var(--accent);box-shadow:var(--neon-strong)}
+  .side-hint{font-size:12.5px;color:var(--muted)}
+
+  /* ============ BOARD ============ */
+  #view-board{flex-direction:column}
+  .board-bar{
+    display:flex;align-items:center;gap:14px;
+    padding:16px 28px;border-bottom:1px solid var(--line);
+    flex-wrap:wrap;background:var(--bg);z-index:5;
+  }
+  .board-bar h2{font-family:var(--font-display);font-size:18px;font-weight:700;letter-spacing:-.01em}
+  .swatches{display:flex;gap:7px;align-items:center;margin-left:8px}
+  .swatch{
+    width:22px;height:22px;border-radius:6px;border:2px solid transparent;
+    transition:transform .12s,border-color .12s,box-shadow .12s;
+  }
+  .swatch:hover{transform:scale(1.12)}
+  .swatch.selected{border-color:#EFE6FF;box-shadow:var(--neon)}
+  .tool-btn{
+    display:flex;align-items:center;gap:7px;
+    border:1px solid var(--line);background:var(--surface2);
+    border-radius:8px;padding:7px 13px;font-size:13px;font-weight:600;
+    transition:border-color .12s,color .12s,background .12s,box-shadow .12s;
+  }
+  .tool-btn:hover{border-color:var(--accent);color:#D8B4FE;box-shadow:var(--neon)}
+  .tool-btn.on{background:var(--accent-dim);border-color:var(--accent);color:#fff;box-shadow:var(--neon-strong)}
+  .tool-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .zoom-pill{
+    margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--muted);
+    border:1px solid var(--line);border-radius:99px;padding:4px 12px;background:var(--surface2);
+    transition:border-color .12s,color .12s;
+  }
+  .zoom-pill:hover{border-color:var(--accent);color:#D8B4FE}
+
+  .board-stage{
+    flex:1;position:relative;overflow:hidden;
+    perspective:1600px;perspective-origin:50% 38%;
+    background-color:#0A0A10;
+    background-image:radial-gradient(circle at 1px 1px, #232238 1.1px, transparent 0);
+    background-size:26px 26px;
+    cursor:grab;
+  }
+  .board-stage.panning{cursor:grabbing}
+  .board-stage.connecting,.board-stage.connecting .sticky{cursor:crosshair}
+  .board-stage::after{ /* vignette */
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(5,5,10,.55));
+  }
+  .board-world{
+    position:absolute;left:0;top:0;width:100%;height:100%;
+    transform-origin:0 0;transform-style:preserve-3d;
+  }
+  #arrow-layer{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+  .arrow{
+    fill:none;stroke:#5E5B7A;stroke-width:2;
+    pointer-events:visibleStroke;cursor:pointer;
+    transition:stroke .12s;
+  }
+  .arrow:hover{stroke:#C084FC;filter:drop-shadow(0 0 4px rgba(177,76,248,.7))}
+  .arrow.sel{stroke:#C084FC;filter:drop-shadow(0 0 5px rgba(177,76,248,.85))}
+  .a-handle{
+    fill:#0B0B11;stroke:#C084FC;stroke-width:2;
+    pointer-events:all;cursor:grab;
+    filter:drop-shadow(0 0 4px rgba(177,76,248,.8));
+  }
+  .a-handle:hover{fill:#C084FC}
+
+  .board-floor{position:absolute;left:0;top:0;width:100%;height:100%;transform-style:preserve-3d;pointer-events:none}
+  .sticky{
+    position:absolute;
+    padding:16px 15px 14px;
+    border-radius:3px;
+    box-shadow:var(--shadow-md);
+    transform-style:preserve-3d;
+    cursor:grab;
+    transition:box-shadow .18s ease;
+    will-change:transform;
+    display:flex;flex-direction:column;
+    pointer-events:auto;
+  }
+  .sticky::before{ /* tape */
+    content:"";position:absolute;top:-9px;left:50%;width:56px;height:18px;
+    transform:translateX(-50%) rotate(-2deg);
+    background:rgba(255,255,255,.22);
+    box-shadow:0 1px 2px rgba(0,0,0,.25);
+  }
+  .sticky.dragging{cursor:grabbing;box-shadow:var(--shadow-lg)}
+  .sticky.link-from{outline:2px solid var(--accent);outline-offset:3px;box-shadow:var(--neon-strong)}
+  .sticky .s-text{
+    flex:1;font-family:var(--font-body);font-size:13.5px;line-height:1.55;
+    color:#221F18;word-break:break-word;white-space:pre-wrap;
+    cursor:inherit;overflow:hidden;
+  }
+  .sticky .s-text[contenteditable="true"]{cursor:text;overflow:auto}
+  .sticky .s-del{
+    position:absolute;top:5px;right:6px;
+    width:20px;height:20px;border-radius:5px;
+    display:grid;place-items:center;font-size:13px;line-height:1;
+    color:rgba(34,31,24,.5);opacity:0;transition:opacity .12s,background .12s;
+  }
+  .sticky:hover .s-del{opacity:1}
+  .sticky .s-del:hover{background:rgba(255,255,255,.4);color:#C81E3C}
+  .sticky .s-resize{
+    position:absolute;right:2px;bottom:2px;width:16px;height:16px;
+    cursor:nwse-resize;opacity:0;transition:opacity .12s;
+  }
+  .sticky:hover .s-resize{opacity:.65}
+  .sticky .s-resize::after{
+    content:"";position:absolute;right:3px;bottom:3px;width:8px;height:8px;
+    border-right:2px solid rgba(34,31,24,.55);border-bottom:2px solid rgba(34,31,24,.55);
+  }
+  .board-empty{
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:8px;color:var(--muted);
+    pointer-events:none;z-index:2;
+  }
+  .board-empty .be-big{font-family:var(--font-display);font-size:20px;font-weight:700;color:#4B4965;text-shadow:0 0 18px rgba(177,76,248,.25)}
+
+  /* ============ TIMER ============ */
+  #view-timer{position:relative;overflow:hidden}
+  #scene-canvas{position:absolute;inset:0;width:100%;height:100%}
+  .scene-dim{
+    position:absolute;inset:0;background:rgba(7,7,12,.58);
+    transition:background .8s ease;pointer-events:none;
+  }
+  #view-timer.running .scene-dim{background:rgba(7,7,12,.10)}
+  .timer-shell{
+    position:relative;z-index:2;flex:1;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;
+    padding:30px;
+  }
+  .timer-phase{
+    font-family:var(--font-mono);font-size:13px;letter-spacing:.45em;text-transform:uppercase;
+    color:var(--scene-glow);
+    text-shadow:0 0 10px var(--scene-glow);
+    min-height:20px;
+  }
+  .t-units{display:flex;align-items:center;gap:6px}
+  .t-unit{display:flex;flex-direction:column;align-items:center;gap:2px}
+  .t-num{
+    font-family:var(--font-mono);font-weight:700;
+    font-size:clamp(64px,11vw,120px);line-height:1;
+    color:#F4F0FF;
+    text-shadow:0 0 8px var(--scene-glow),0 0 26px var(--scene-glow),0 0 64px color-mix(in srgb, var(--scene-glow) 55%, transparent);
+    font-variant-numeric:tabular-nums;
+  }
+  .t-colon{
+    font-family:var(--font-mono);font-weight:700;font-size:clamp(48px,8vw,88px);
+    color:#F4F0FF;opacity:.75;line-height:1;padding-bottom:6px;
+    text-shadow:0 0 18px var(--scene-glow);
+  }
+  .t-step{
+    color:var(--muted);font-size:13px;padding:3px 16px;border-radius:6px;
+    transition:color .12s,text-shadow .12s,opacity .2s;
+  }
+  .t-step:hover{color:var(--scene-glow);text-shadow:0 0 10px var(--scene-glow)}
+  .t-step.hidden,.t-step[disabled]{opacity:0;pointer-events:none}
+  #view-timer.running .t-step{opacity:0;pointer-events:none}
+  .timer-controls{display:flex;gap:12px;align-items:center}
+  .primary-btn.big{font-size:15px;padding:11px 34px;border-radius:10px;letter-spacing:.04em}
+  .timer-opts{
+    display:flex;gap:14px;flex-wrap:wrap;justify-content:center;
+    transition:opacity .4s;
+  }
+  #view-timer.running .timer-opts{opacity:0;pointer-events:none}
+  .timer-opts label{
+    display:flex;flex-direction:column;gap:5px;
+    font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);
+  }
+  .timer-opts select{
+    background:var(--surface2);border:1px solid var(--line);border-radius:8px;
+    padding:8px 12px;font-family:var(--font-body);font-size:13px;min-width:180px;
+    transition:border-color .12s,box-shadow .12s;
+  }
+  .timer-opts select:hover{border-color:var(--accent);box-shadow:var(--neon)}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;animation:none !important}
+  }
+  ::-webkit-scrollbar{width:9px}
+  ::-webkit-scrollbar-thumb{background:#2C2B42;border-radius:8px;border:2px solid var(--bg)}
+  ::-webkit-scrollbar-track{background:transparent}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <svg viewBox="0 0 64 44"><path d="M3 22 Q32 1 61 22 Q32 43 3 22Z" fill="#0E0617" stroke="#C084FC" stroke-width="3"/><circle cx="32" cy="22" r="9.5" fill="#A855F7"/><circle cx="32" cy="22" r="4" fill="#08020E"/><circle cx="29" cy="19" r="2" fill="#fff"/></svg>
+    Ideally
+  </div>
+  <button class="nav-btn active" data-view="notes">
+    <svg viewBox="0 0 24 24"><path d="M4 4h13l3 3v13H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
+    Notes
+  </button>
+  <button class="nav-btn" data-view="calendar">
+    <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+    Calendar
+  </button>
+  <button class="nav-btn" data-view="board">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="6" width="8" height="8" rx="1"/><rect x="7" y="14" width="8" height="8" rx="1"/></svg>
+    Vision board
+  </button>
+  <button class="nav-btn" data-view="timer">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>
+    Focus
+  </button>
+</aside>
+
+<main>
+
+  <!-- ================= NOTES ================= -->
+  <section class="view active" id="view-notes">
+    <div class="notes-list">
+      <div class="panel-head">
+        <h2>Notes</h2>
+        <button class="icon-btn" id="new-note-btn" title="New note">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+      <div class="note-items" id="note-items"></div>
+    </div>
+    <div class="editor" id="editor"></div>
+  </section>
+
+  <!-- ================= CALENDAR ================= -->
+  <section class="view" id="view-calendar">
+    <div class="cal-main">
+      <div class="cal-head">
+        <h2 id="cal-month">Month</h2>
+        <span class="cal-year" id="cal-year"></span>
+        <div class="cal-nav">
+          <button class="ghost-btn" id="cal-today">Today</button>
+          <button class="icon-btn" id="cal-prev" title="Previous month">
+            <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <button class="icon-btn" id="cal-next" title="Next month">
+            <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="cal-grid-head">
+        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+    <div class="cal-side" id="cal-side"></div>
+  </section>
+
+  <!-- ================= BOARD ================= -->
+  <section class="view" id="view-board">
+    <div class="board-bar">
+      <h2>Vision board</h2>
+      <button class="tool-btn" id="add-sticky">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        New note
+      </button>
+      <button class="tool-btn" id="connect-btn" title="Link two stickies with an arrow">
+        <svg viewBox="0 0 24 24"><path d="M5 19L17 7"/><path d="M10 6h7v7"/></svg>
+        Connect
+      </button>
+      <div class="swatches" id="swatches"></div>
+      <button class="zoom-pill" id="zoom-pill" title="Reset view">100%</button>
+    </div>
+    <div class="board-stage" id="board-stage">
+      <div class="board-world" id="board-world">
+        <svg id="arrow-layer" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrowhead" markerWidth="9" markerHeight="8"
+                    refX="7.5" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+              <path d="M0.5,0.5 L8,4 L0.5,7.5 Z" fill="#5E5B7A"/>
+            </marker>
+            <marker id="arrowhead-hot" markerWidth="9" markerHeight="8"
+                    refX="7.5" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+              <path d="M0.5,0.5 L8,4 L0.5,7.5 Z" fill="#C084FC"/>
+            </marker>
+          </defs>
+          <g id="arrow-paths"></g>
+          <g id="arrow-handles"></g>
+        </svg>
+        <div class="board-floor" id="board-floor"></div>
+      </div>
+      <div class="board-empty" id="board-empty" style="display:none">
+        <span class="be-big">An empty wall.</span>
+        <span>Pick a color and add your first sticky.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TIMER ================= -->
+  <section class="view" id="view-timer">
+    <canvas id="scene-canvas"></canvas>
+    <div class="scene-dim"></div>
+    <div class="timer-shell">
+      <div class="timer-phase" id="timer-phase">Focus</div>
+      <div class="t-units">
+        <div class="t-unit">
+          <button class="t-step" data-step="3600">▲</button>
+          <span class="t-num" id="tn-h">1</span>
+          <button class="t-step" data-step="-3600">▼</button>
+        </div>
+        <span class="t-colon">:</span>
+        <div class="t-unit">
+          <button class="t-step" data-step="300">▲</button>
+          <span class="t-num" id="tn-m">00</span>
+          <button class="t-step" data-step="-300">▼</button>
+        </div>
+        <span class="t-colon">:</span>
+        <div class="t-unit">
+          <button class="t-step hidden">▲</button>
+          <span class="t-num" id="tn-s">00</span>
+          <button class="t-step hidden">▼</button>
+        </div>
+      </div>
+      <div class="timer-controls">
+        <button class="primary-btn big" id="timer-start">Start</button>
+        <button class="ghost-btn" id="timer-reset">Reset</button>
+      </div>
+      <div class="timer-opts">
+        <label>Preset
+          <select id="preset-sel">
+            <option value="custom">Custom</option>
+            <option value="pomodoro">Pomodoro · 25 + 5</option>
+            <option value="pomodoroL">Long Pomodoro · 50 + 10</option>
+            <option value="desktime">DeskTime · 52 + 17</option>
+            <option value="ultradian">Ultradian · 90 + 20</option>
+          </select>
+        </label>
+        <label>Scene
+          <select id="scene-sel">
+            <option value="jungle">Jungle at night</option>
+            <option value="space">Orbiting planets</option>
+            <option value="blackhole">Black hole</option>
+            <option value="ocean">Ocean sunset</option>
+          </select>
+        </label>
+        <label>Sound
+          <select id="sound-sel">
+            <option value="on">Scene ambience</option>
+            <option value="off">Muted</option>
+          </select>
+        </label>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ============================================================
+   Storage
+============================================================ */
+const store = {
+  ok: (() => { try { localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return true; } catch(e){ return false; } })(),
+  mem: {},
+  get(key, fallback){
+    try {
+      let raw = this.ok ? localStorage.getItem(key) : this.mem[key];
+      if (raw == null && this.ok && key.startsWith('ideally.')){
+        const legacy = localStorage.getItem(key.replace('ideally.', 'slate.'));
+        if (legacy != null){ localStorage.setItem(key, legacy); raw = legacy; }
+      }
+      return raw ? JSON.parse(raw) : fallback;
+    } catch(e){ return fallback; }
+  },
+  set(key, value){
+    const raw = JSON.stringify(value);
+    if (this.ok) { try { localStorage.setItem(key, raw); } catch(e){} }
+    else this.mem[key] = raw;
+  }
+};
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+
+/* ============================================================
+   View switching
+============================================================ */
+const views = document.querySelectorAll('.view');
+const navBtns = document.querySelectorAll('.nav-btn');
+navBtns.forEach(btn => btn.addEventListener('click', () => {
+  navBtns.forEach(b => b.classList.toggle('active', b === btn));
+  views.forEach(v => v.classList.toggle('active', v.id === 'view-' + btn.dataset.view));
+  if (btn.dataset.view === 'board'){ renderArrows(); renderHandles(); }
+  if (btn.dataset.view === 'timer'){ resizeSceneCanvas(); ensureSceneLoop(); }
+}));
+
+/* ============================================================
+   NOTES
+============================================================ */
+let notes = store.get('ideally.notes', []);
+let activeNoteId = notes.length ? notes[0].id : null;
+const noteItemsEl = document.getElementById('note-items');
+const editorEl = document.getElementById('editor');
+let saveTimer = null;
+
+function fmtDate(ts){
+  return new Date(ts).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+}
+function saveNotes(){ store.set('ideally.notes', notes); }
+
+function renderNoteList(){
+  noteItemsEl.innerHTML = '';
+  if (!notes.length){
+    const p = document.createElement('div');
+    p.style.cssText = 'padding:14px 12px;font-size:12.5px;color:var(--muted)';
+    p.textContent = 'No notes yet.';
+    noteItemsEl.appendChild(p);
+    return;
+  }
+  notes.forEach(n => {
+    const btn = document.createElement('button');
+    btn.className = 'note-item' + (n.id === activeNoteId ? ' active' : '');
+    const snippet = (n.body || '').split('\n')[0].slice(0, 60);
+    btn.innerHTML = '<div class="ni-title"></div><div class="ni-snippet"></div><div class="ni-meta"></div>';
+    btn.querySelector('.ni-title').textContent = n.title || 'Untitled';
+    btn.querySelector('.ni-snippet').textContent = snippet || '—';
+    btn.querySelector('.ni-meta').textContent = fmtDate(n.updated);
+    btn.addEventListener('click', () => { activeNoteId = n.id; renderNoteList(); renderEditor(); });
+    noteItemsEl.appendChild(btn);
+  });
+}
+
+function renderEditor(){
+  const note = notes.find(n => n.id === activeNoteId);
+  if (!note){
+    editorEl.innerHTML = '';
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.innerHTML = '<p>A blank page is an invitation.</p>';
+    const b = document.createElement('button');
+    b.className = 'ghost-btn'; b.textContent = 'Create a note';
+    b.addEventListener('click', createNote);
+    empty.appendChild(b);
+    editorEl.appendChild(empty);
+    return;
+  }
+  editorEl.innerHTML =
+    '<div class="editor-inner">' +
+      '<div class="editor-date" id="editor-date"></div>' +
+      '<input id="note-title" placeholder="Untitled" autocomplete="off">' +
+      '<textarea id="note-body" placeholder="Start writing…"></textarea>' +
+    '</div>' +
+    '<div class="editor-bar"><button class="danger-link" id="delete-note">delete note</button></div>';
+  document.getElementById('editor-date').textContent = 'Edited ' + fmtDate(note.updated);
+  const titleEl = document.getElementById('note-title');
+  const bodyEl  = document.getElementById('note-body');
+  titleEl.value = note.title;
+  bodyEl.value  = note.body;
+
+  const onInput = () => {
+    note.title = titleEl.value;
+    note.body  = bodyEl.value;
+    note.updated = Date.now();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      notes.sort((a,b) => b.updated - a.updated);
+      saveNotes(); renderNoteList();
+      document.getElementById('editor-date').textContent = 'Edited ' + fmtDate(note.updated);
+    }, 400);
+  };
+  titleEl.addEventListener('input', onInput);
+  bodyEl.addEventListener('input', onInput);
+  document.getElementById('delete-note').addEventListener('click', () => {
+    if (!confirm('Delete this note? This can\'t be undone.')) return;
+    notes = notes.filter(n => n.id !== note.id);
+    activeNoteId = notes.length ? notes[0].id : null;
+    saveNotes(); renderNoteList(); renderEditor();
+  });
+}
+
+function createNote(){
+  const n = { id: uid(), title: '', body: '', updated: Date.now() };
+  notes.unshift(n);
+  activeNoteId = n.id;
+  saveNotes(); renderNoteList(); renderEditor();
+  const t = document.getElementById('note-title');
+  if (t) t.focus();
+}
+document.getElementById('new-note-btn').addEventListener('click', createNote);
+renderNoteList(); renderEditor();
+
+/* ============================================================
+   CALENDAR — events glow violet, brighter as the date nears
+============================================================ */
+let events = store.get('ideally.events', []);
+const today = new Date();
+let calCursor = new Date(today.getFullYear(), today.getMonth(), 1);
+let selectedDate = isoDate(today);
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function isoDate(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function saveEvents(){ store.set('ideally.events', events); }
+function eventsOn(dateStr){
+  return events.filter(e => e.date === dateStr)
+               .sort((a,b) => (a.time||'99:99').localeCompare(b.time||'99:99'));
+}
+function urgency(dateStr){
+  /* 0 → past, 0.12 → far away, 1 → today/tomorrow */
+  const now = new Date(); now.setHours(0,0,0,0);
+  const d = (new Date(dateStr + 'T00:00:00') - now) / 86400000;
+  if (d < 0) return 0;
+  return clamp(1 - d / 14, 0.12, 1);
+}
+function glowStyle(el, u){
+  if (u <= 0){
+    el.style.background = 'rgba(139,137,160,.10)';
+    el.style.color = 'var(--muted)';
+    return;
+  }
+  el.style.background = 'rgba(177,76,248,' + (0.08 + 0.22 * u) + ')';
+  el.style.borderColor = 'rgba(192,132,252,' + (0.15 + 0.5 * u) + ')';
+  el.style.boxShadow = '0 0 ' + (3 + 11 * u) + 'px rgba(177,76,248,' + (0.2 + 0.6 * u) + ')';
+}
+
+function renderCalendar(){
+  document.getElementById('cal-month').textContent = MONTHS[calCursor.getMonth()];
+  document.getElementById('cal-year').textContent  = calCursor.getFullYear();
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  const first = new Date(calCursor.getFullYear(), calCursor.getMonth(), 1);
+  const offset = (first.getDay() + 6) % 7;
+  const start = new Date(first);
+  start.setDate(first.getDate() - offset);
+
+  const todayStr = isoDate(new Date());
+  for (let i = 0; i < 42; i++){
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    const dStr = isoDate(d);
+    const cell = document.createElement('button');
+    cell.className = 'cal-cell'
+      + (d.getMonth() !== calCursor.getMonth() ? ' other' : '')
+      + (dStr === todayStr ? ' today' : '')
+      + (dStr === selectedDate ? ' selected' : '');
+    const num = document.createElement('span');
+    num.className = 'day-num';
+    num.textContent = d.getDate();
+    cell.appendChild(num);
+
+    const evs = eventsOn(dStr);
+    const u = urgency(dStr);
+    evs.slice(0,2).forEach(e => {
+      const chip = document.createElement('span');
+      chip.className = 'ev-chip';
+      chip.textContent = (e.time ? e.time + ' ' : '') + e.title;
+      glowStyle(chip, u);
+      cell.appendChild(chip);
+    });
+    if (evs.length > 2){
+      const more = document.createElement('span');
+      more.className = 'ev-more';
+      more.textContent = '+' + (evs.length - 2);
+      cell.appendChild(more);
+    }
+    cell.addEventListener('click', () => {
+      selectedDate = dStr;
+      if (d.getMonth() !== calCursor.getMonth())
+        calCursor = new Date(d.getFullYear(), d.getMonth(), 1);
+      renderCalendar(); renderCalSide();
+    });
+    grid.appendChild(cell);
+  }
+}
+
+function renderCalSide(){
+  const side = document.getElementById('cal-side');
+  const d = new Date(selectedDate + 'T00:00:00');
+  side.innerHTML = '';
+
+  const h = document.createElement('div');
+  h.className = 'side-date';
+  h.textContent = d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
+  side.appendChild(h);
+  const sub = document.createElement('div');
+  sub.className = 'side-sub';
+  sub.textContent = selectedDate;
+  side.appendChild(sub);
+
+  const list = document.createElement('div');
+  list.className = 'ev-list';
+  const evs = eventsOn(selectedDate);
+  const u = urgency(selectedDate);
+  if (!evs.length){
+    const hint = document.createElement('div');
+    hint.className = 'side-hint';
+    hint.textContent = 'Nothing planned for this day.';
+    list.appendChild(hint);
+  }
+  evs.forEach(e => {
+    const row = document.createElement('div');
+    row.className = 'ev-row';
+    glowStyle(row, u);
+    const t = document.createElement('span'); t.className = 'ev-time'; t.textContent = e.time || '—';
+    const ti = document.createElement('span'); ti.className = 'ev-title'; ti.textContent = e.title;
+    const del = document.createElement('button'); del.className = 'ev-del'; del.title = 'Delete event'; del.textContent = '×';
+    del.addEventListener('click', () => {
+      events = events.filter(x => x.id !== e.id);
+      saveEvents(); renderCalendar(); renderCalSide();
+    });
+    row.append(t, ti, del);
+    list.appendChild(row);
+  });
+  side.appendChild(list);
+
+  const form = document.createElement('div');
+  form.className = 'ev-form';
+  const titleIn = document.createElement('input');
+  titleIn.placeholder = 'Add an event…';
+  const timeIn = document.createElement('input');
+  timeIn.type = 'time';
+  const addBtn = document.createElement('button');
+  addBtn.className = 'primary-btn';
+  addBtn.textContent = 'Add event';
+  const add = () => {
+    const title = titleIn.value.trim();
+    if (!title) { titleIn.focus(); return; }
+    events.push({ id: uid(), date: selectedDate, title, time: timeIn.value || '' });
+    saveEvents();
+    titleIn.value = ''; timeIn.value = '';
+    renderCalendar(); renderCalSide();
+  };
+  addBtn.addEventListener('click', add);
+  titleIn.addEventListener('keydown', e => { if (e.key === 'Enter') add(); });
+  form.append(titleIn, timeIn, addBtn);
+  side.appendChild(form);
+}
+
+document.getElementById('cal-prev').addEventListener('click', () => {
+  calCursor = new Date(calCursor.getFullYear(), calCursor.getMonth() - 1, 1);
+  renderCalendar();
+});
+document.getElementById('cal-next').addEventListener('click', () => {
+  calCursor = new Date(calCursor.getFullYear(), calCursor.getMonth() + 1, 1);
+  renderCalendar();
+});
+document.getElementById('cal-today').addEventListener('click', () => {
+  const t = new Date();
+  calCursor = new Date(t.getFullYear(), t.getMonth(), 1);
+  selectedDate = isoDate(t);
+  renderCalendar(); renderCalSide();
+});
+renderCalendar(); renderCalSide();
+
+/* ============================================================
+   VISION BOARD — infinite canvas with pan/zoom, 3D stickies,
+   editable arrows
+============================================================ */
+const STICKY_COLORS = ['#FFD84D', '#FF6FA5', '#5BC8FF', '#71E69A', '#C77DFF'];
+const MIN_W = 150, MIN_H = 130, MAX_W = 460, MAX_H = 440;
+const ARROW_GAP = 12;
+
+let stickies = store.get('ideally.stickies', []);
+stickies.forEach(s => { if (!s.w) s.w = 190; if (!s.h) s.h = 170; });
+let arrows = store.get('ideally.arrows', []);
+let zCounter = stickies.reduce((m,s) => Math.max(m, s.z || 1), 1);
+let pickedColor = STICKY_COLORS[0];
+let connectMode = false, connectFrom = null;
+let selectedArrow = null;
+const stickyEls = {};
+
+const stage = document.getElementById('board-stage');
+const world = document.getElementById('board-world');
+const floor = document.getElementById('board-floor');
+const arrowPaths = document.getElementById('arrow-paths');
+const arrowHandles = document.getElementById('arrow-handles');
+const connectBtn = document.getElementById('connect-btn');
+const boardEmpty = document.getElementById('board-empty');
+const zoomPill = document.getElementById('zoom-pill');
+
+const savedView = store.get('ideally.view', { x: 0, y: 0, z: 1 });
+let pan = { x: savedView.x, y: savedView.y };
+let zoom = savedView.z;
+
+function saveStickies(){ store.set('ideally.stickies', stickies); }
+function saveArrows(){ store.set('ideally.arrows', arrows); }
+function saveView(){ store.set('ideally.view', { x: pan.x, y: pan.y, z: zoom }); }
+
+function applyView(){
+  world.style.transform = 'translate(' + pan.x + 'px,' + pan.y + 'px) scale(' + zoom + ')';
+  stage.style.backgroundPosition = pan.x + 'px ' + pan.y + 'px';
+  stage.style.backgroundSize = (26 * zoom) + 'px ' + (26 * zoom) + 'px';
+  zoomPill.textContent = Math.round(zoom * 100) + '%';
+  renderHandles();
+}
+function clientToWorld(e){
+  const r = stage.getBoundingClientRect();
+  return { x: (e.clientX - r.left - pan.x) / zoom, y: (e.clientY - r.top - pan.y) / zoom };
+}
+
+/* ---- pan (drag the background) ---- */
+let panning = false, panStart = null;
+stage.addEventListener('pointerdown', e => {
+  if (e.target !== stage && e.target !== world) return;
+  if (connectMode){ setConnectMode(false); return; }
+  if (selectedArrow){ selectedArrow = null; renderArrows(); renderHandles(); }
+  panning = true;
+  stage.classList.add('panning');
+  stage.setPointerCapture(e.pointerId);
+  panStart = { mx: e.clientX, my: e.clientY, px: pan.x, py: pan.y };
+});
+stage.addEventListener('pointermove', e => {
+  if (!panning) return;
+  pan.x = panStart.px + (e.clientX - panStart.mx);
+  pan.y = panStart.py + (e.clientY - panStart.my);
+  applyView();
+});
+stage.addEventListener('pointerup', e => {
+  if (!panning) return;
+  panning = false;
+  stage.classList.remove('panning');
+  stage.releasePointerCapture(e.pointerId);
+  saveView();
+});
+
+/* ---- zoom (scroll, anchored at the cursor) ---- */
+stage.addEventListener('wheel', e => {
+  e.preventDefault();
+  const r = stage.getBoundingClientRect();
+  const cx = e.clientX - r.left, cy = e.clientY - r.top;
+  const wx = (cx - pan.x) / zoom, wy = (cy - pan.y) / zoom;
+  const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+  zoom = clamp(zoom * factor, 0.25, 2.5);
+  pan.x = cx - wx * zoom;
+  pan.y = cy - wy * zoom;
+  applyView(); saveView();
+}, { passive: false });
+
+zoomPill.addEventListener('click', () => {
+  pan = { x: 0, y: 0 }; zoom = 1;
+  applyView(); saveView();
+});
+
+/* ---- swatches ---- */
+const swatchesEl = document.getElementById('swatches');
+STICKY_COLORS.forEach((c, i) => {
+  const b = document.createElement('button');
+  b.className = 'swatch' + (i === 0 ? ' selected' : '');
+  b.style.background = c;
+  b.title = 'Sticky color';
+  b.addEventListener('click', () => {
+    pickedColor = c;
+    swatchesEl.querySelectorAll('.swatch').forEach(s => s.classList.toggle('selected', s === b));
+  });
+  swatchesEl.appendChild(b);
+});
+
+/* ---- arrow geometry: lock to facing-side midpoints, gap kept ---- */
+function sideAnchors(a, b){
+  const ca = { x: a.x + a.w / 2, y: a.y + a.h / 2 };
+  const cb = { x: b.x + b.w / 2, y: b.y + b.h / 2 };
+  const dx = cb.x - ca.x, dy = cb.y - ca.y;
+  let p1, p2, n1, n2;
+  if (Math.abs(dx) >= Math.abs(dy)){
+    if (dx >= 0){
+      p1 = { x: a.x + a.w + ARROW_GAP, y: ca.y }; n1 = { x: 1, y: 0 };
+      p2 = { x: b.x - ARROW_GAP,       y: cb.y }; n2 = { x: -1, y: 0 };
+    } else {
+      p1 = { x: a.x - ARROW_GAP,       y: ca.y }; n1 = { x: -1, y: 0 };
+      p2 = { x: b.x + b.w + ARROW_GAP, y: cb.y }; n2 = { x: 1, y: 0 };
+    }
+  } else {
+    if (dy >= 0){
+      p1 = { x: ca.x, y: a.y + a.h + ARROW_GAP }; n1 = { x: 0, y: 1 };
+      p2 = { x: cb.x, y: b.y - ARROW_GAP };       n2 = { x: 0, y: -1 };
+    } else {
+      p1 = { x: ca.x, y: a.y - ARROW_GAP };       n1 = { x: 0, y: -1 };
+      p2 = { x: cb.x, y: b.y + b.h + ARROW_GAP }; n2 = { x: 0, y: 1 };
+    }
+  }
+  return { p1, p2, n1, n2 };
+}
+function arrowD(a, b){
+  const { p1, p2, n1, n2 } = sideAnchors(a, b);
+  const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+  const k = clamp(dist * 0.35, 24, 110);
+  const c1 = { x: p1.x + n1.x * k, y: p1.y + n1.y * k };
+  const c2 = { x: p2.x + n2.x * k, y: p2.y + n2.y * k };
+  return 'M ' + p1.x + ' ' + p1.y + ' C ' + c1.x + ' ' + c1.y + ', ' + c2.x + ' ' + c2.y + ', ' + p2.x + ' ' + p2.y;
+}
+const fakeSticky = p => ({ x: p.x - 1, y: p.y - 1, w: 2, h: 2 });
+
+function renderArrows(){
+  arrowPaths.innerHTML = '';
+  arrows.forEach(ar => {
+    const a = stickies.find(s => s.id === ar.from);
+    const b = stickies.find(s => s.id === ar.to);
+    if (!a || !b) return;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('class', 'arrow' + (ar.id === selectedArrow ? ' sel' : ''));
+    path.setAttribute('d', arrowD(a, b));
+    path.setAttribute('marker-end', ar.id === selectedArrow ? 'url(#arrowhead-hot)' : 'url(#arrowhead)');
+    path.dataset.id = ar.id;
+    path.addEventListener('mouseenter', () => path.setAttribute('marker-end', 'url(#arrowhead-hot)'));
+    path.addEventListener('mouseleave', () => {
+      if (ar.id !== selectedArrow) path.setAttribute('marker-end', 'url(#arrowhead)');
+    });
+    path.addEventListener('pointerdown', e => {
+      e.stopPropagation();
+      selectedArrow = ar.id;
+      renderArrows(); renderHandles();
+    });
+    path.addEventListener('dblclick', e => {
+      e.stopPropagation();
+      arrows = arrows.filter(x => x.id !== ar.id);
+      if (selectedArrow === ar.id) selectedArrow = null;
+      saveArrows(); renderArrows(); renderHandles();
+    });
+    arrowPaths.appendChild(path);
+  });
+}
+
+function updateArrows(){
+  arrowPaths.querySelectorAll('.arrow').forEach(path => {
+    const ar = arrows.find(x => x.id === path.dataset.id);
+    if (!ar) return;
+    const a = stickies.find(s => s.id === ar.from);
+    const b = stickies.find(s => s.id === ar.to);
+    if (a && b) path.setAttribute('d', arrowD(a, b));
+  });
+  renderHandles();
+}
+
+/* ---- endpoint handles: drag to re-anchor an arrow ---- */
+function renderHandles(){
+  arrowHandles.innerHTML = '';
+  if (!selectedArrow) return;
+  const ar = arrows.find(x => x.id === selectedArrow);
+  if (!ar) return;
+  const a = stickies.find(s => s.id === ar.from);
+  const b = stickies.find(s => s.id === ar.to);
+  if (!a || !b) return;
+  const { p1, p2 } = sideAnchors(a, b);
+  [['from', p1], ['to', p2]].forEach(([end, p]) => {
+    const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    c.setAttribute('class', 'a-handle');
+    c.setAttribute('cx', p.x); c.setAttribute('cy', p.y);
+    c.setAttribute('r', 7 / zoom);
+    c.setAttribute('stroke-width', 2 / zoom);
+    c.addEventListener('pointerdown', e => startHandleDrag(e, ar, end, c));
+    arrowHandles.appendChild(c);
+  });
+}
+
+function stickyAt(wp){
+  const sorted = [...stickies].sort((x, y) => (y.z || 0) - (x.z || 0));
+  return sorted.find(s => wp.x >= s.x && wp.x <= s.x + s.w && wp.y >= s.y && wp.y <= s.y + s.h) || null;
+}
+
+function startHandleDrag(e, ar, end, handle){
+  e.stopPropagation();
+  handle.setPointerCapture(e.pointerId);
+  const path = arrowPaths.querySelector('[data-id="' + ar.id + '"]');
+  let hoverEl = null;
+  const otherId = end === 'from' ? ar.to : ar.from;
+
+  const move = ev => {
+    const wp = clientToWorld(ev);
+    handle.setAttribute('cx', wp.x); handle.setAttribute('cy', wp.y);
+    const a = stickies.find(s => s.id === ar.from);
+    const b = stickies.find(s => s.id === ar.to);
+    if (path && a && b){
+      path.setAttribute('d', end === 'from' ? arrowD(fakeSticky(wp), b) : arrowD(a, fakeSticky(wp)));
+    }
+    const hit = stickyAt(wp);
+    if (hoverEl) hoverEl.classList.remove('link-from');
+    hoverEl = hit && hit.id !== otherId ? stickyEls[hit.id] : null;
+    if (hoverEl) hoverEl.classList.add('link-from');
+  };
+  const up = ev => {
+    handle.removeEventListener('pointermove', move);
+    handle.removeEventListener('pointerup', up);
+    if (hoverEl) hoverEl.classList.remove('link-from');
+    const wp = clientToWorld(ev);
+    const hit = stickyAt(wp);
+    if (hit && hit.id !== otherId){
+      const dup = arrows.some(x => x.id !== ar.id &&
+        ((x.from === (end==='from'?hit.id:ar.from) && x.to === (end==='to'?hit.id:ar.to))));
+      if (!dup){ ar[end] = hit.id; saveArrows(); }
+    }
+    renderArrows(); renderHandles();
+  };
+  handle.addEventListener('pointermove', move);
+  handle.addEventListener('pointerup', up);
+}
+
+/* ---- connect mode ---- */
+function setConnectMode(on){
+  connectMode = on;
+  connectFrom = null;
+  connectBtn.classList.toggle('on', on);
+  stage.classList.toggle('connecting', on);
+  Object.values(stickyEls).forEach(el => el.classList.remove('link-from'));
+}
+connectBtn.addEventListener('click', () => setConnectMode(!connectMode));
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape'){
+    if (connectMode) setConnectMode(false);
+    if (selectedArrow){ selectedArrow = null; renderArrows(); renderHandles(); }
+  }
+  if ((e.key === 'Delete' || e.key === 'Backspace') && selectedArrow
+      && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)
+      && !document.activeElement.isContentEditable){
+    arrows = arrows.filter(x => x.id !== selectedArrow);
+    selectedArrow = null;
+    saveArrows(); renderArrows(); renderHandles();
+  }
+});
+
+function handleConnectClick(s, el){
+  if (!connectFrom){
+    connectFrom = s.id;
+    el.classList.add('link-from');
+    return;
+  }
+  if (connectFrom === s.id){ setConnectMode(false); return; }
+  const exists = arrows.some(a =>
+    (a.from === connectFrom && a.to === s.id) || (a.from === s.id && a.to === connectFrom));
+  if (!exists){
+    arrows.push({ id: uid(), from: connectFrom, to: s.id });
+    saveArrows(); renderArrows();
+  }
+  setConnectMode(false);
+}
+
+/* ---- stickies ---- */
+function applyTransform(el, s, tiltX = 0, tiltY = 0, lift = 0){
+  el.style.transform =
+    'translate3d(' + s.x + 'px,' + s.y + 'px,' + lift + 'px) ' +
+    'rotateZ(' + s.rot + 'deg) rotateX(' + tiltX + 'deg) rotateY(' + tiltY + 'deg)';
+}
+
+function renderBoard(){
+  floor.innerHTML = '';
+  Object.keys(stickyEls).forEach(k => delete stickyEls[k]);
+  boardEmpty.style.display = stickies.length ? 'none' : 'flex';
+  stickies.forEach(s => {
+    const el = buildSticky(s);
+    stickyEls[s.id] = el;
+    floor.appendChild(el);
+  });
+  renderArrows(); renderHandles();
+}
+
+function buildSticky(s){
+  const el = document.createElement('div');
+  el.className = 'sticky';
+  el.style.background = 'linear-gradient(178deg,' + s.color + ' 70%, ' + shade(s.color, -9) + ')';
+  el.style.width = s.w + 'px';
+  el.style.height = s.h + 'px';
+  el.style.zIndex = s.z || 1;
+  applyTransform(el, s);
+
+  const text = document.createElement('div');
+  text.className = 's-text';
+  text.textContent = s.text || '';
+  el.appendChild(text);
+
+  const del = document.createElement('button');
+  del.className = 's-del';
+  del.title = 'Remove sticky';
+  del.textContent = '×';
+  del.addEventListener('pointerdown', e => e.stopPropagation());
+  del.addEventListener('click', () => {
+    stickies = stickies.filter(x => x.id !== s.id);
+    arrows = arrows.filter(a => a.from !== s.id && a.to !== s.id);
+    if (!arrows.some(a => a.id === selectedArrow)) selectedArrow = null;
+    saveStickies(); saveArrows(); renderBoard();
+  });
+  el.appendChild(del);
+
+  const grip = document.createElement('div');
+  grip.className = 's-resize';
+  let resizing = false, rsX = 0, rsY = 0, origW = 0, origH = 0;
+  grip.addEventListener('pointerdown', e => {
+    e.stopPropagation();
+    resizing = true;
+    grip.setPointerCapture(e.pointerId);
+    rsX = e.clientX; rsY = e.clientY;
+    origW = s.w; origH = s.h;
+    s.z = ++zCounter; el.style.zIndex = s.z;
+  });
+  grip.addEventListener('pointermove', e => {
+    if (!resizing) return;
+    s.w = clamp(origW + (e.clientX - rsX) / zoom, MIN_W, MAX_W);
+    s.h = clamp(origH + (e.clientY - rsY) / zoom, MIN_H, MAX_H);
+    el.style.width = s.w + 'px';
+    el.style.height = s.h + 'px';
+    updateArrows();
+  });
+  grip.addEventListener('pointerup', e => {
+    if (!resizing) return;
+    resizing = false;
+    grip.releasePointerCapture(e.pointerId);
+    saveStickies();
+  });
+  el.appendChild(grip);
+
+  el.addEventListener('dblclick', () => {
+    if (connectMode) return;
+    text.setAttribute('contenteditable', 'true');
+    text.focus();
+    const range = document.createRange();
+    range.selectNodeContents(text);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges(); sel.addRange(range);
+  });
+  text.addEventListener('blur', () => {
+    text.removeAttribute('contenteditable');
+    s.text = text.textContent;
+    saveStickies();
+  });
+
+  let dragging = false, startX = 0, startY = 0, origX = 0, origY = 0;
+  el.addEventListener('pointerdown', e => {
+    if (connectMode){ handleConnectClick(s, el); return; }
+    if (text.isContentEditable) return;
+    dragging = true;
+    el.classList.add('dragging');
+    el.setPointerCapture(e.pointerId);
+    startX = e.clientX; startY = e.clientY;
+    origX = s.x; origY = s.y;
+    s.z = ++zCounter;
+    el.style.zIndex = s.z;
+    applyTransform(el, s, 0, 0, 40);
+  });
+  el.addEventListener('pointermove', e => {
+    if (dragging){
+      s.x = origX + (e.clientX - startX) / zoom;
+      s.y = origY + (e.clientY - startY) / zoom;
+      applyTransform(el, s, 0, 0, 40);
+      updateArrows();
+    } else if (!text.isContentEditable && !connectMode){
+      const r = el.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width  - .5;
+      const py = (e.clientY - r.top)  / r.height - .5;
+      applyTransform(el, s, -py * 14, px * 14, 14);
+    }
+  });
+  el.addEventListener('pointerup', e => {
+    if (!dragging) return;
+    dragging = false;
+    el.classList.remove('dragging');
+    el.releasePointerCapture(e.pointerId);
+    applyTransform(el, s);
+    updateArrows();
+    saveStickies();
+  });
+  el.addEventListener('pointerleave', () => {
+    if (!dragging) applyTransform(el, s);
+  });
+  return el;
+}
+
+function shade(hex, amt){
+  const n = parseInt(hex.slice(1), 16);
+  const f = c => Math.min(255, Math.max(0, c + Math.round(255 * amt / 100)));
+  return 'rgb(' + f(n >> 16) + ',' + f((n >> 8) & 255) + ',' + f(n & 255) + ')';
+}
+
+document.getElementById('add-sticky').addEventListener('click', () => {
+  const r = stage.getBoundingClientRect();
+  const cx = (r.width  / 2 - pan.x) / zoom;
+  const cy = (r.height / 2 - pan.y) / zoom;
+  const s = {
+    id: uid(),
+    x: cx - 95 + (Math.random() * 60 - 30),
+    y: cy - 85 + (Math.random() * 60 - 30),
+    w: 190, h: 170,
+    rot: (Math.random() * 8 - 4),
+    color: pickedColor,
+    text: '',
+    z: ++zCounter
+  };
+  stickies.push(s);
+  saveStickies(); renderBoard();
+});
+
+applyView();
+renderBoard();
+
+/* ============================================================
+   FOCUS TIMER — scenes, presets, ambience
+============================================================ */
+const PRESETS = {
+  custom:    null,
+  pomodoro:  { work: 25 * 60, brk: 5 * 60 },
+  pomodoroL: { work: 50 * 60, brk: 10 * 60 },
+  desktime:  { work: 52 * 60, brk: 17 * 60 },
+  ultradian: { work: 90 * 60, brk: 20 * 60 }
+};
+const SCENE_GLOW = { jungle: '#9EFFB6', space: '#A8C8FF', blackhole: '#FFC489', ocean: '#FF9E7E' };
+
+const timerView = document.getElementById('view-timer');
+const presetSel = document.getElementById('preset-sel');
+const sceneSel = document.getElementById('scene-sel');
+const soundSel = document.getElementById('sound-sel');
+const phaseEl = document.getElementById('timer-phase');
+const startBtn = document.getElementById('timer-start');
+const resetBtn = document.getElementById('timer-reset');
+const tnH = document.getElementById('tn-h'), tnM = document.getElementById('tn-m'), tnS = document.getElementById('tn-s');
+
+const tPrefs = store.get('ideally.timer', { scene: 'jungle', preset: 'custom', sound: 'on', customDur: 3600 });
+sceneSel.value = tPrefs.scene; presetSel.value = tPrefs.preset; soundSel.value = tPrefs.sound;
+
+let tCustomDur = tPrefs.customDur || 3600;
+let tPhase = 'work';
+let tDuration = currentWorkDuration();
+let tRemaining = tDuration;
+let tRunning = false, tLast = 0;
+
+function currentWorkDuration(){
+  const p = PRESETS[presetSel.value];
+  return p ? p.work : tCustomDur;
+}
+function saveTimerPrefs(){
+  store.set('ideally.timer', { scene: sceneSel.value, preset: presetSel.value, sound: soundSel.value, customDur: tCustomDur });
+}
+function applySceneGlow(){
+  document.documentElement.style.setProperty('--scene-glow', SCENE_GLOW[sceneSel.value] || '#C084FC');
+}
+function setDisplay(sec){
+  sec = Math.max(0, Math.round(sec));
+  tnH.textContent = Math.floor(sec / 3600);
+  tnM.textContent = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+  tnS.textContent = String(sec % 60).padStart(2, '0');
+}
+function setPhaseLabel(){
+  phaseEl.textContent = !tRunning && tRemaining === tDuration
+    ? (PRESETS[presetSel.value] ? 'Focus · breaks included' : 'Focus')
+    : (tPhase === 'work' ? 'Focus' : 'Break');
+}
+function updateStepperState(){
+  const custom = presetSel.value === 'custom';
+  document.querySelectorAll('.t-step[data-step]').forEach(b => b.disabled = !custom);
+}
+
+document.querySelectorAll('.t-step[data-step]').forEach(b => {
+  b.addEventListener('click', () => {
+    if (tRunning || presetSel.value !== 'custom') return;
+    tCustomDur = clamp(tCustomDur + Number(b.dataset.step), 60, 9 * 3600 + 59 * 60);
+    tDuration = tCustomDur; tRemaining = tDuration;
+    setDisplay(tRemaining); saveTimerPrefs();
+  });
+});
+
+presetSel.addEventListener('change', () => {
+  stopTimer(true);
+  tPhase = 'work';
+  tDuration = currentWorkDuration();
+  tRemaining = tDuration;
+  setDisplay(tRemaining); setPhaseLabel(); updateStepperState(); saveTimerPrefs();
+});
+sceneSel.addEventListener('change', () => { applySceneGlow(); saveTimerPrefs(); });
+soundSel.addEventListener('change', () => { saveTimerPrefs(); if (soundSel.value === 'off') stopAudio(); else if (tRunning) startAudio(); });
+
+startBtn.addEventListener('click', () => { tRunning ? pauseTimer() : startTimer(); });
+resetBtn.addEventListener('click', () => stopTimer(true));
+
+function startTimer(){
+  tRunning = true;
+  tLast = performance.now();
+  timerView.classList.add('running');
+  startBtn.textContent = 'Pause';
+  setPhaseLabel();
+  startAudio();
+}
+function pauseTimer(){
+  tRunning = false;
+  timerView.classList.remove('running');
+  startBtn.textContent = 'Resume';
+  stopAudio();
+}
+function stopTimer(reset){
+  tRunning = false;
+  timerView.classList.remove('running');
+  startBtn.textContent = 'Start';
+  stopAudio();
+  if (reset){
+    tPhase = 'work';
+    tDuration = currentWorkDuration();
+    tRemaining = tDuration;
+    setDisplay(tRemaining); setPhaseLabel();
+  }
+}
+function phaseComplete(){
+  chime();
+  const p = PRESETS[presetSel.value];
+  if (p){
+    tPhase = tPhase === 'work' ? 'brk' : 'work';
+    tDuration = tPhase === 'work' ? p.work : p.brk;
+    tRemaining = tDuration;
+    setPhaseLabel();
+  } else {
+    stopTimer(false);
+    phaseEl.textContent = 'Complete';
+    tRemaining = tDuration;
+    setDisplay(tRemaining);
+  }
+}
+setInterval(() => {
+  if (!tRunning) return;
+  const now = performance.now();
+  tRemaining -= (now - tLast) / 1000;
+  tLast = now;
+  if (tRemaining <= 0) phaseComplete();
+  setDisplay(tRemaining);
+}, 200);
+
+setDisplay(tRemaining); setPhaseLabel(); updateStepperState(); applySceneGlow();
+
+/* ---------- ambience (Web Audio, synthesized) ---------- */
+let AC = null, audioTimers = [];
+function noiseBuffer(ctx){
+  const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < d.length; i++){           // brown-ish noise
+    const white = Math.random() * 2 - 1;
+    last = (last + 0.02 * white) / 1.02;
+    d[i] = last * 3.5;
+  }
+  return buf;
+}
+function startAudio(){
+  stopAudio();
+  if (soundSel.value !== 'on') return;
+  try {
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+  } catch(e){ return; }
+  const master = AC.createGain();
+  master.gain.value = 0.14;
+  master.connect(AC.destination);
+  const scene = sceneSel.value;
+
+  const noiseSrc = () => {
+    const src = AC.createBufferSource();
+    src.buffer = noiseBuffer(AC); src.loop = true;
+    return src;
+  };
+  const lfoTo = (param, freq, depth) => {
+    const lfo = AC.createOscillator(), g = AC.createGain();
+    lfo.frequency.value = freq; g.gain.value = depth;
+    lfo.connect(g); g.connect(param); lfo.start();
+  };
+
+  if (scene === 'jungle'){
+    const n = noiseSrc(), lp = AC.createBiquadFilter(), g = AC.createGain();
+    lp.type = 'lowpass'; lp.frequency.value = 240; g.gain.value = 0.5;
+    n.connect(lp); lp.connect(g); g.connect(master); n.start();
+    const chirp = () => {
+      if (!AC) return;
+      const t0 = AC.currentTime;
+      for (let i = 0; i < 3; i++){
+        const o = AC.createOscillator(), og = AC.createGain();
+        o.type = 'sine';
+        o.frequency.value = 4100 + Math.random() * 600;
+        og.gain.setValueAtTime(0, t0 + i * 0.09);
+        og.gain.linearRampToValueAtTime(0.05, t0 + i * 0.09 + 0.01);
+        og.gain.exponentialRampToValueAtTime(0.0001, t0 + i * 0.09 + 0.07);
+        o.connect(og); og.connect(master);
+        o.start(t0 + i * 0.09); o.stop(t0 + i * 0.09 + 0.1);
+      }
+    };
+    audioTimers.push(setInterval(() => { if (Math.random() < 0.75) chirp(); }, 1100));
+  }
+  else if (scene === 'space'){
+    const g = AC.createGain(); g.gain.value = 0.32;
+    [[55, .3], [55.4, .3], [110.3, .12], [164.8, .05]].forEach(([f, v]) => {
+      const o = AC.createOscillator(), og = AC.createGain();
+      o.type = 'sine'; o.frequency.value = f; og.gain.value = v;
+      o.connect(og); og.connect(g); o.start();
+    });
+    const lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420;
+    g.connect(lp); lp.connect(master);
+    lfoTo(g.gain, 0.05, 0.1);
+  }
+  else if (scene === 'blackhole'){
+    const o = AC.createOscillator(), og = AC.createGain();
+    o.type = 'sine'; o.frequency.value = 38; og.gain.value = 0.45;
+    o.connect(og); og.connect(master); o.start();
+    const n = noiseSrc(), lp = AC.createBiquadFilter(), ng = AC.createGain();
+    lp.type = 'lowpass'; lp.frequency.value = 95; ng.gain.value = 0.4;
+    n.connect(lp); lp.connect(ng); ng.connect(master); n.start();
+    lfoTo(og.gain, 0.03, 0.15);
+  }
+  else if (scene === 'ocean'){
+    const n = noiseSrc(), lp = AC.createBiquadFilter(), g = AC.createGain();
+    lp.type = 'lowpass'; lp.frequency.value = 460; g.gain.value = 0.42;
+    n.connect(lp); lp.connect(g); g.connect(master); n.start();
+    lfoTo(lp.frequency, 0.07, 190);
+    lfoTo(g.gain, 0.05, 0.16);
+  }
+}
+function stopAudio(){
+  audioTimers.forEach(clearInterval);
+  audioTimers = [];
+  if (AC){ try { AC.close(); } catch(e){} AC = null; }
+}
+function chime(){
+  try {
+    const ctx = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const t0 = ctx.currentTime;
+    [660, 990].forEach((f, i) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0 + i * 0.12);
+      g.gain.linearRampToValueAtTime(0.18, t0 + i * 0.12 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + i * 0.12 + 1.3);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(t0 + i * 0.12); o.stop(t0 + i * 0.12 + 1.4);
+    });
+    if (!AC) setTimeout(() => ctx.close(), 2200);
+  } catch(e){}
+}
+
+/* ---------- scenes (canvas) ---------- */
+const canvas = document.getElementById('scene-canvas');
+const cx2d = canvas.getContext('2d');
+let sceneLoopId = null;
+let stars = [], fireflies = [];
+
+function resizeSceneCanvas(){
+  canvas.width = timerView.clientWidth;
+  canvas.height = timerView.clientHeight;
+  stars = []; fireflies = [];
+}
+window.addEventListener('resize', () => {
+  if (timerView.classList.contains('active')) resizeSceneCanvas();
+});
+
+function ensureStars(w, h, n){
+  if (stars.length) return;
+  for (let i = 0; i < n; i++)
+    stars.push({ x: Math.random() * w, y: Math.random() * h, r: Math.random() * 1.3 + 0.3, tw: Math.random() * 2 + 0.5, ph: Math.random() * 6.28 });
+}
+function drawStars(w, h, t, dimBelow){
+  ensureStars(w, h, 160);
+  stars.forEach(st => {
+    if (dimBelow && st.y > dimBelow) return;
+    const a = 0.35 + 0.5 * (0.5 + 0.5 * Math.sin(t * st.tw + st.ph));
+    cx2d.fillStyle = 'rgba(225,225,255,' + a + ')';
+    cx2d.beginPath(); cx2d.arc(st.x, st.y, st.r, 0, 6.28); cx2d.fill();
+  });
+}
+
+function drawJungle(w, h, t){
+  const g = cx2d.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, '#03110A'); g.addColorStop(0.6, '#041A0F'); g.addColorStop(1, '#020A06');
+  cx2d.fillStyle = g; cx2d.fillRect(0, 0, w, h);
+
+  const mg = cx2d.createRadialGradient(w * 0.82, h * 0.14, 10, w * 0.82, h * 0.14, 180);
+  mg.addColorStop(0, 'rgba(210,235,215,.30)'); mg.addColorStop(1, 'transparent');
+  cx2d.fillStyle = mg; cx2d.fillRect(0, 0, w, h);
+
+  const layers = [
+    { c: '#06301C', yb: 0.78, amp: 60, n: 7, sw: 4 },
+    { c: '#04220F', yb: 0.88, amp: 80, n: 6, sw: 7 },
+    { c: '#02130A', yb: 0.98, amp: 95, n: 5, sw: 10 }
+  ];
+  layers.forEach((L, li) => {
+    cx2d.fillStyle = L.c;
+    for (let i = 0; i <= L.n; i++){
+      const bx = (i / L.n) * w + Math.sin(t * 0.18 + li * 2 + i) * 6;
+      const by = h * L.yb;
+      const r = L.amp + Math.sin(i * 3.7 + li) * 22;
+      cx2d.beginPath();
+      cx2d.ellipse(bx, by + 30, r * 1.5, r, Math.sin(i + li) * 0.3, 0, 6.28);
+      cx2d.fill();
+    }
+    for (let i = 0; i < L.sw; i++){
+      const vx = ((i * 1.7 + li) % L.sw) / L.sw * w;
+      const sway = Math.sin(t * 0.3 + i + li) * 14;
+      cx2d.strokeStyle = L.c; cx2d.lineWidth = 3;
+      cx2d.beginPath();
+      cx2d.moveTo(vx, 0);
+      cx2d.quadraticCurveTo(vx + sway, h * 0.15, vx + sway * 1.6, h * (0.24 + (i % 3) * 0.05));
+      cx2d.stroke();
+    }
+  });
+
+  if (!fireflies.length)
+    for (let i = 0; i < 26; i++)
+      fireflies.push({ x: Math.random() * w, y: h * (0.3 + Math.random() * 0.55), vx: 0, vy: 0, ph: Math.random() * 6.28 });
+  fireflies.forEach(f => {
+    f.vx += (Math.random() - 0.5) * 0.05; f.vy += (Math.random() - 0.5) * 0.05;
+    f.vx = clamp(f.vx, -0.4, 0.4); f.vy = clamp(f.vy, -0.3, 0.3);
+    f.x = (f.x + f.vx + w) % w; f.y = clamp(f.y + f.vy, h * 0.2, h * 0.92);
+    const a = 0.25 + 0.75 * Math.max(0, Math.sin(t * 1.4 + f.ph));
+    const fg = cx2d.createRadialGradient(f.x, f.y, 0, f.x, f.y, 9);
+    fg.addColorStop(0, 'rgba(190,255,140,' + a + ')'); fg.addColorStop(1, 'transparent');
+    cx2d.fillStyle = fg;
+    cx2d.beginPath(); cx2d.arc(f.x, f.y, 9, 0, 6.28); cx2d.fill();
+  });
+}
+
+function drawSpace(w, h, t){
+  cx2d.fillStyle = '#020409'; cx2d.fillRect(0, 0, w, h);
+  drawStars(w, h, t);
+  const cx = w * 0.5, cy = h * 0.44, sc = Math.min(w, h) / 600;
+
+  const planets = [
+    { a: 150 * sc, b: 50 * sc, r: 9 * sc,  c: '#7DD3FC', sp: 0.5,  off: 0 },
+    { a: 240 * sc, b: 82 * sc, r: 15 * sc, c: '#F0ABFC', sp: 0.26, off: 2.2 },
+    { a: 330 * sc, b: 112 * sc, r: 7 * sc, c: '#FDE68A', sp: 0.15, off: 4.4 }
+  ].map(p => {
+    const ang = t * p.sp + p.off;
+    return { ...p, px: cx + Math.cos(ang) * p.a, py: cy + Math.sin(ang) * p.b, behind: Math.sin(ang) < 0 };
+  });
+
+  cx2d.strokeStyle = 'rgba(170,160,220,.14)'; cx2d.lineWidth = 1;
+  planets.forEach(p => {
+    cx2d.beginPath(); cx2d.ellipse(cx, cy, p.a, p.b, 0, 0, 6.28); cx2d.stroke();
+  });
+
+  const drawPlanet = p => {
+    const pg = cx2d.createRadialGradient(p.px - p.r * 0.4, p.py - p.r * 0.4, p.r * 0.1, p.px, p.py, p.r);
+    pg.addColorStop(0, '#FFFFFF'); pg.addColorStop(0.35, p.c); pg.addColorStop(1, shadeHex(p.c, -55));
+    cx2d.fillStyle = pg;
+    cx2d.beginPath(); cx2d.arc(p.px, p.py, p.r, 0, 6.28); cx2d.fill();
+  };
+  planets.filter(p => p.behind).forEach(drawPlanet);
+
+  const sr = (34 + Math.sin(t * 1.8) * 3) * sc;
+  const sg = cx2d.createRadialGradient(cx, cy, 0, cx, cy, sr * 4);
+  sg.addColorStop(0, 'rgba(255,255,240,1)');
+  sg.addColorStop(0.12, 'rgba(255,240,200,.95)');
+  sg.addColorStop(0.3, 'rgba(255,200,130,.35)');
+  sg.addColorStop(1, 'transparent');
+  cx2d.fillStyle = sg;
+  cx2d.beginPath(); cx2d.arc(cx, cy, sr * 4, 0, 6.28); cx2d.fill();
+
+  planets.filter(p => !p.behind).forEach(drawPlanet);
+}
+
+function drawBlackHole(w, h, t){
+  cx2d.fillStyle = '#030308'; cx2d.fillRect(0, 0, w, h);
+  drawStars(w, h, t);
+  const cx = w * 0.5, cy = h * 0.46, R = Math.min(w, h) * 0.21;
+  const rx = R * 1.9, ry = R * 0.5, rot = t * 1.1, N = 130;
+
+  const seg = (from, to) => {
+    for (let i = 0; i < N; i++){
+      const a = (i / N) * 6.283;
+      const sn = Math.sin(a);
+      if (sn < from || sn >= to) continue;
+      const x = cx + Math.cos(a + rot) * 0 + Math.cos(a) * rx * Math.cos(rot * 0) - 0; /* simple ellipse param below */
+      const px = cx + Math.cos(a + rot) * rx * 0 + Math.cos(a) * rx;
+      void x; void px;
+      const ex = cx + Math.cos(a) * rx;
+      const ey = cy + sn * ry;
+      const doppler = 0.5 - 0.5 * Math.cos(a + rot);         // bright side sweeps
+      const heat = 0.35 + 0.65 * doppler;
+      const rr = 2 + 2.6 * heat;
+      cx2d.shadowBlur = 14 * heat;
+      cx2d.shadowColor = 'rgba(255,170,80,' + (0.5 * heat) + ')';
+      cx2d.fillStyle = 'rgba(' + Math.round(255) + ',' + Math.round(150 + 100 * heat) + ',' + Math.round(70 + 150 * heat) + ',' + (0.25 + 0.7 * heat) + ')';
+      cx2d.beginPath(); cx2d.arc(ex, ey, rr, 0, 6.28); cx2d.fill();
+    }
+    cx2d.shadowBlur = 0;
+  };
+
+  seg(-1.1, 0);                                  // back half of the disk
+
+  cx2d.beginPath(); cx2d.arc(cx, cy, R * 0.78, 0, 6.28);   // event horizon
+  cx2d.fillStyle = '#000'; cx2d.fill();
+  cx2d.strokeStyle = 'rgba(255,200,130,.9)';     // photon ring
+  cx2d.lineWidth = 1.6;
+  cx2d.shadowBlur = 16; cx2d.shadowColor = 'rgba(255,180,90,.8)';
+  cx2d.beginPath(); cx2d.arc(cx, cy, R * 0.82, 0, 6.28); cx2d.stroke();
+  cx2d.shadowBlur = 0;
+
+  cx2d.strokeStyle = 'rgba(255,170,90,.35)';     // lensed halo above
+  cx2d.lineWidth = 5;
+  cx2d.beginPath(); cx2d.ellipse(cx, cy - R * 0.42, R * 0.95, R * 0.42, 0, Math.PI, 6.283); cx2d.stroke();
+
+  seg(0, 1.1);                                   // front half of the disk
+}
+
+function drawOcean(w, h, t){
+  const hor = h * 0.55;
+  const sky = cx2d.createLinearGradient(0, 0, 0, hor);
+  sky.addColorStop(0, '#190F3C'); sky.addColorStop(0.45, '#54265F');
+  sky.addColorStop(0.8, '#C3503F'); sky.addColorStop(1, '#FF9B4E');
+  cx2d.fillStyle = sky; cx2d.fillRect(0, 0, w, hor + 2);
+
+  const sx = w * 0.5, sr = Math.min(w, h) * 0.1;
+  const glow = cx2d.createRadialGradient(sx, hor, 0, sx, hor, sr * 3.4);
+  glow.addColorStop(0, 'rgba(255,210,140,.9)'); glow.addColorStop(1, 'transparent');
+  cx2d.fillStyle = glow;
+  cx2d.beginPath(); cx2d.arc(sx, hor, sr * 3.4, 0, 6.28); cx2d.fill();
+  cx2d.fillStyle = '#FFD9A0';                                   // sun, half set
+  cx2d.beginPath(); cx2d.arc(sx, hor, sr, Math.PI, 6.283); cx2d.fill();
+
+  const sea = cx2d.createLinearGradient(0, hor, 0, h);
+  sea.addColorStop(0, '#3A1A55'); sea.addColorStop(0.4, '#1C1140'); sea.addColorStop(1, '#0A0822');
+  cx2d.fillStyle = sea; cx2d.fillRect(0, hor, w, h - hor);
+
+  for (let i = 0; i < 9; i++){                                  // rocking wave bands
+    const baseY = hor + 12 + i * ((h - hor - 20) / 9);
+    const amp = 2 + i * 0.7;
+    const speed = 0.9 + i * 0.12;
+    cx2d.strokeStyle = i % 2
+      ? 'rgba(255,150,90,' + (0.26 - i * 0.022) + ')'
+      : 'rgba(190,120,255,' + (0.20 - i * 0.016) + ')';
+    cx2d.lineWidth = 1.4;
+    cx2d.beginPath();
+    for (let x = 0; x <= w; x += 14){
+      const y = baseY + Math.sin(x * 0.02 + t * speed + i * 1.3) * amp
+                      + Math.sin(t * 0.5 + i) * 3;             // slow rocking
+      x === 0 ? cx2d.moveTo(x, y) : cx2d.lineTo(x, y);
+    }
+    cx2d.stroke();
+  }
+
+  for (let k = 0; k < 42; k++){                                  // sun shimmer on water
+    const y = hor + 8 + Math.random() * (h - hor - 30);
+    const spread = 24 + (y - hor) * 0.55;
+    const x = sx + (Math.random() - 0.5) * spread;
+    const len = 6 + Math.random() * 22;
+    cx2d.strokeStyle = 'rgba(255,190,120,' + (0.05 + Math.random() * 0.3) + ')';
+    cx2d.lineWidth = 1.6;
+    cx2d.beginPath(); cx2d.moveTo(x - len / 2, y); cx2d.lineTo(x + len / 2, y); cx2d.stroke();
+  }
+}
+
+function shadeHex(hex, amt){
+  const n = parseInt(hex.slice(1), 16);
+  const f = c => Math.min(255, Math.max(0, c + Math.round(255 * amt / 100)));
+  return 'rgb(' + f(n >> 16) + ',' + f((n >> 8) & 255) + ',' + f(n & 255) + ')';
+}
+
+const SCENE_DRAW = { jungle: drawJungle, space: drawSpace, blackhole: drawBlackHole, ocean: drawOcean };
+let lastScene = null;
+function sceneLoop(ts){
+  if (!timerView.classList.contains('active')){ sceneLoopId = null; return; }
+  const t = ts / 1000;
+  const scene = sceneSel.value;
+  if (scene !== lastScene){ stars = []; fireflies = []; lastScene = scene; }
+  if (canvas.width !== timerView.clientWidth || canvas.height !== timerView.clientHeight) resizeSceneCanvas();
+  (SCENE_DRAW[scene] || drawJungle)(canvas.width, canvas.height, t);
+  sceneLoopId = requestAnimationFrame(sceneLoop);
+}
+function ensureSceneLoop(){
+  if (!sceneLoopId) sceneLoopId = requestAnimationFrame(sceneLoop);
+}
+</script>
+</body>
+</html>

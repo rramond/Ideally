@@ -1,0 +1,56 @@
+#view-timer{position:relative;overflow:hidden}
+#scene-canvas{position:absolute;inset:0;width:100%;height:100%}
+.scene-dim{
+  position:absolute;inset:0;background:rgba(7,7,12,.58);
+  transition:background .8s ease;pointer-events:none;
+}
+#view-timer.running .scene-dim{background:rgba(7,7,12,.10)}
+.timer-shell{
+  position:relative;z-index:2;flex:1;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;
+  padding:30px;
+}
+.timer-phase{
+  font-family:var(--font-mono);font-size:13px;letter-spacing:.45em;text-transform:uppercase;
+  color:var(--scene-glow);
+  text-shadow:0 0 10px var(--scene-glow);
+  min-height:20px;
+}
+.t-units{display:flex;align-items:center;gap:6px}
+.t-unit{display:flex;flex-direction:column;align-items:center;gap:2px}
+.t-num{
+  font-family:var(--font-mono);font-weight:700;
+  font-size:clamp(64px,11vw,120px);line-height:1;
+  color:#F4F0FF;
+  text-shadow:0 0 8px var(--scene-glow),0 0 26px var(--scene-glow),0 0 64px color-mix(in srgb, var(--scene-glow) 55%, transparent);
+  font-variant-numeric:tabular-nums;
+}
+.t-colon{
+  font-family:var(--font-mono);font-weight:700;font-size:clamp(48px,8vw,88px);
+  color:#F4F0FF;opacity:.75;line-height:1;padding-bottom:6px;
+  text-shadow:0 0 18px var(--scene-glow);
+}
+.t-step{
+  color:var(--muted);font-size:13px;padding:3px 16px;border-radius:6px;
+  transition:color .12s,text-shadow .12s,opacity .2s;
+}
+.t-step:hover{color:var(--scene-glow);text-shadow:0 0 10px var(--scene-glow)}
+.t-step.hidden,.t-step[disabled]{opacity:0;pointer-events:none}
+#view-timer.running .t-step{opacity:0;pointer-events:none}
+.timer-controls{display:flex;gap:12px;align-items:center}
+.primary-btn.big{font-size:15px;padding:11px 34px;border-radius:10px;letter-spacing:.04em}
+.timer-opts{
+  display:flex;gap:14px;flex-wrap:wrap;justify-content:center;
+  transition:opacity .4s;
+}
+#view-timer.running .timer-opts{opacity:0;pointer-events:none}
+.timer-opts label{
+  display:flex;flex-direction:column;gap:5px;
+  font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);
+}
+.timer-opts select{
+  background:var(--surface2);border:1px solid var(--line);border-radius:8px;
+  padding:8px 12px;font-family:var(--font-body);font-size:13px;min-width:180px;
+  transition:border-color .12s,box-shadow .12s;
+}
+.timer-opts select:hover{border-color:var(--accent);box-shadow:var(--neon)}
