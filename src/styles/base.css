@@ -54,6 +54,19 @@ input,select,textarea{color:var(--ink)}
   text-shadow:0 0 14px rgba(177,76,248,.55);
 }
 .brand svg{width:26px;height:18px;filter:drop-shadow(0 0 5px rgba(177,76,248,.8))}
+button.brand{width:100%;text-align:left;cursor:default;border-radius:8px}
+/* in the calendar side panel the logo leads back to the main menu */
+.sidebar.cal-mode .brand{cursor:pointer;transition:text-shadow .12s}
+.sidebar.cal-mode .brand:hover{text-shadow:0 0 18px rgba(177,76,248,.9)}
+.sidebar.cal-mode .brand::after{content:"‹ menu";margin-left:auto;font-family:var(--font-mono);font-size:10px;font-weight:400;color:var(--muted);text-shadow:none;opacity:0;transition:opacity .12s}
+.sidebar.cal-mode .brand:hover::after{opacity:1}
+
+.nav-main,.nav-cal{display:flex;flex-direction:column;gap:4px}
+.sidebar.cal-mode .nav-main,.sidebar:not(.cal-mode) .nav-cal{display:none}
+.nav-label{
+  font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);padding:0 10px 6px;
+}
 .nav-btn{
   display:flex;align-items:center;gap:10px;
   width:100%;padding:8px 10px;border-radius:8px;
