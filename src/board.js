@@ -259,12 +259,21 @@ document.addEventListener('keydown', e => {
     if (selectedArrow){ selectedArrow = null; renderArrows(); renderHandles(); }
     if (!document.activeElement.isContentEditable) selectItem(null);
   }
-  if ((e.key === 'Delete' || e.key === 'Backspace') && selectedArrow
+  /* Delete/Backspace removes the selected arrow, or else the selected item with
+     its arrows — only on the visible board, and never while typing */
+  if ((e.key === 'Delete' || e.key === 'Backspace')
+      && document.getElementById('view-board').classList.contains('active')
       && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)
       && !document.activeElement.isContentEditable){
-    arrows = arrows.filter(x => x.id !== selectedArrow);
-    selectedArrow = null;
-    saveArrows(); renderArrows(); renderHandles();
+    if (selectedArrow){
+      e.preventDefault();
+      arrows = arrows.filter(x => x.id !== selectedArrow);
+      selectedArrow = null;
+      saveArrows(); renderArrows(); renderHandles();
+    } else if (selectedItem){
+      e.preventDefault();
+      removeItem(selectedItem);
+    }
   }
 });
 
