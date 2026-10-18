@@ -1,3 +1,6 @@
+import { openPopup, closePopup } from './lib/history.js';
+import { addCloseX } from './lib/popups.js';
+
 /* ============================================================
    Color wheel popover — hue around the wheel, saturation toward
    the center, a brightness slider and a hex field
@@ -18,6 +21,8 @@ export function hexToHsv(hex){
   }
   return { h, s: max ? d / max : 0, v: max };
 }
+
+let wheelCount = 0;
 
 /* Clicking `trigger` toggles the popover, starting from getColor();
    onChange(hex) fires live while picking. */
@@ -113,15 +118,30 @@ export function attachColorWheel(trigger, getColor, onChange){
   });
   hexIn.addEventListener('blur', render);
 
-  const close = () => { pop.hidden = true; };
+  /* the open popover is a history step, so Back (logo, browser) and Esc close it */
+  const popupId = 'color-wheel-' + (++wheelCount);
+  const hide = () => { pop.hidden = true; };
+  const close = () => { if (!pop.hidden) closePopup(popupId); };
   trigger.addEventListener('click', () => {
-    pop.hidden = !pop.hidden;
-    if (!pop.hidden){ hsv = hexToHsv(getColor()); render(); }
+    if (!pop.hidden){ close(); return; }
+    pop.hidden = false;
+    openPopup(popupId, hide);
+    hsv = hexToHsv(getColor()); render();
   });
-  document.addEventListener('pointerdown', e => {
-    if (!pop.hidden && !pop.contains(e.target) && !trigger.contains(e.target)) close();
-  });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  addCloseX(pop, close);
+  /* back buttons ([data-back]) close the popover themselves through history */
+  const onDocDown = e => {
+    if (!pop.hidden && !pop.contains(e.target) && !trigger.contains(e.target)
+        && !e.target.closest('[data-back]')) close();
+  };
+  document.addEventListener('pointerdown', onDocDown);
 
   render();
+
+  /* for wheels inside UI that gets rebuilt */
+  return function destroy(){
+    close();
+    document.removeEventListener('pointerdown', onDocDown);
+    pop.remove();
+  };
 }

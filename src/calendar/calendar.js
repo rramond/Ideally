@@ -1,49 +1,28 @@
-import { store } from './lib/storage.js';
-import { clamp } from './lib/utils.js';
+import { clamp } from '../lib/utils.js';
+import { pad, isoDate, addDays, mondayOf, toHours, fromHours } from '../lib/dates.js';
+import { toast } from '../lib/toast.js';
+import { showContextMenu } from '../lib/contextMenu.js';
+import { eventsOn, typeOf, getEvent, deleteEvent, onEventsChange } from './events.js';
+import { openEventEditor } from './eventEditor.js';
 
 /* ============================================================
    CALENDAR — week view: one column per day, Monday first.
    Each column scrolls through the day's hours on its own;
-   12 hours fill the visible height. Events glow violet,
-   brighter as the date nears.
+   12 hours fill the visible height. Events are tinted with
+   their type's color and glow brighter as the date nears.
 ============================================================ */
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAY_INITIALS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const HOURS_VISIBLE = 12, FIRST_HOUR = 5;
+const WHEEL_STEP = 40;                            // wheel/trackpad distance (px) that moves one hour
 const weekEl = document.getElementById('week');
 
-const pad = n => String(n).padStart(2, '0');
-function isoDate(d){ return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
-function addDays(d, n){ return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
-function mondayOf(d){ return addDays(d, -((d.getDay() + 6) % 7)); }
-
-let events = store.get('ideally.events', []);
 let weekStart = mondayOf(new Date());
 let hourPx = 0;                                   // height of one hour row
 const colScroll = Array(7).fill(FIRST_HOUR);      // per weekday: top visible hour (whole hours), kept across weeks
-const WHEEL_STEP = 40;                            // wheel/trackpad distance (px) that moves one hour
 let calHidden = true;
 let renderedToday = isoDate(new Date());
 
-/* One-time: the old events are only placeholders now — move them into the
-   current week (same weekday, untimed ones at 12:00), or seed a few. */
-if (!store.get('ideally.eventsMovedToWeek', false)){
-  const DUMMIES = [[0, '07:00', 'Morning run'], [1, '09:30', 'Dentist'], [2, '14:00', 'Team sync'],
-                   [3, '18:00', 'Gym'], [4, '20:00', 'Dinner with friends'], [5, '11:00', 'Groceries']];
-  events = events.length
-    ? events.map(e => {
-        const day = (new Date(e.date + 'T00:00:00').getDay() + 6) % 7;
-        return { ...e, date: isoDate(addDays(weekStart, day)), time: e.time || '12:00' };
-      })
-    : DUMMIES.map(([day, time, title], i) => ({ id: 'dummy' + i, date: isoDate(addDays(weekStart, day)), time, title }));
-  store.set('ideally.events', events);
-  store.set('ideally.eventsMovedToWeek', true);
-}
-
-function eventsOn(dateStr){
-  return events.filter(e => e.date === dateStr)
-               .sort((a,b) => (a.time||'99:99').localeCompare(b.time||'99:99'));
-}
 function urgency(dateStr){
   /* 0 → past, 0.12 → far away, 1 → today/tomorrow */
   const now = new Date(); now.setHours(0,0,0,0);
@@ -51,31 +30,34 @@ function urgency(dateStr){
   if (d < 0) return 0;
   return clamp(1 - d / 14, 0.12, 1);
 }
-function glowStyle(el, u){
+/* tint with the type color; the glow grows as the date nears, past events are dim */
+function blockStyle(el, color, u){
+  const mix = pct => 'color-mix(in srgb, ' + color + ' ' + Math.round(pct) + '%, transparent)';
   if (u <= 0){
-    el.style.background = 'rgba(139,137,160,.10)';
+    el.style.background = mix(9);
+    el.style.borderColor = mix(20);
     el.style.color = 'var(--muted)';
     return;
   }
-  el.style.background = 'rgba(177,76,248,' + (0.08 + 0.22 * u) + ')';
-  el.style.borderColor = 'rgba(192,132,252,' + (0.15 + 0.5 * u) + ')';
-  el.style.boxShadow = '0 0 ' + (2 + 6 * u) + 'px rgba(177,76,248,' + (0.15 + 0.4 * u) + ')';
+  el.style.background = mix(14 + 18 * u);
+  el.style.borderColor = mix(35 + 40 * u);
+  el.style.boxShadow = '0 0 ' + (2 + 6 * u) + 'px ' + mix(15 + 40 * u);
 }
 
-const toHours = time => { const [h, m] = time.split(':').map(Number); return h + m / 60; };
-const atHour = h => 'calc(var(--hour) * ' + h + ')';
+const atHour = h => 'calc(var(--hour, 40px) * ' + h + ')';
 
-/* side-by-side lanes for events that overlap (each lasts 1 hour for now) */
+/* side-by-side lanes for events that overlap */
 function layoutDay(evs){
   const out = [];
   let cluster = [], clusterEnd = -1, laneEnds = [];
   const flush = () => { cluster.forEach(o => { o.lanes = laneEnds.length; }); cluster = []; laneEnds = []; };
   evs.forEach(e => {
-    const start = toHours(e.time), end = start + 1;
+    const start = toHours(e.start);
+    const end = Math.max(toHours(e.end), start + 0.25);
     if (start >= clusterEnd) flush();
     let lane = laneEnds.findIndex(t => t <= start);
     if (lane < 0){ lane = laneEnds.length; laneEnds.push(end); } else laneEnds[lane] = end;
-    const o = { e, start, lane };
+    const o = { e, start, end, lane };
     cluster.push(o); out.push(o);
     clusterEnd = Math.max(clusterEnd, end);
   });
@@ -102,6 +84,8 @@ function renderWeek(){
     const dStr = isoDate(d);
     const col = document.createElement('div');
     col.className = 'day-col' + (dStr === renderedToday ? ' today' : '') + (i >= 5 ? ' weekend' : '');
+    col.dataset.date = dStr;
+    col.dataset.index = i;
 
     /* daysRow cell: dim weekday initial above the bold DD.MM */
     const head = document.createElement('div');
@@ -130,17 +114,25 @@ function renderWeek(){
     }
 
     const u = urgency(dStr);
-    layoutDay(eventsOn(dStr).filter(e => e.time)).forEach(({ e, start, lane, lanes }) => {
+    layoutDay(eventsOn(dStr)).forEach(({ e, start, end, lane, lanes }) => {
       const block = document.createElement('div');
       block.className = 'ev-block';
+      block.dataset.id = e.id;
       block.style.top = atHour(start);
+      block.style.height = 'calc(var(--hour, 40px) * ' + (end - start) + ' - 3px)';
       block.style.setProperty('--lane', lane);
       block.style.setProperty('--lanes', lanes);
-      const t = document.createElement('span'); t.className = 'ev-time'; t.textContent = e.time;
-      const ti = document.createElement('span'); ti.className = 'ev-title'; ti.textContent = e.title;
-      block.title = e.time + ' ' + e.title;
+      const repeats = e.recur && e.recur.kind !== 'none';
+      const t = document.createElement('span');
+      t.className = 'ev-time';
+      t.textContent = e.start + '–' + e.end + (repeats ? ' ↻' : '');
+      const ti = document.createElement('span');
+      ti.className = 'ev-title';
+      ti.textContent = e.title;
+      block.title = e.start + '–' + e.end + ' ' + e.title + ' (' + typeOf(e).name + ')' + (e.description ? '\n' + e.description : '');
       block.append(t, ti);
-      glowStyle(block, u);
+      blockStyle(block, typeOf(e).color, u);
+      block.addEventListener('click', () => openEventEditor({ event: getEvent(e.id) }));
       grid.appendChild(block);
     });
 
@@ -177,6 +169,35 @@ function restoreScroll(){
   if (!hourPx) return;
   weekEl.querySelectorAll('.day-body').forEach((b, i) => { b.scrollTop = colScroll[i] * hourPx; });
 }
+
+/* right click: "New event" on a column (starting at the half hour under the
+   cursor), "Edit" / "Delete" on an event */
+weekEl.addEventListener('contextmenu', e => {
+  const col = e.target.closest('.day-col');
+  if (!col) return;
+  e.preventDefault();
+  const block = e.target.closest('.ev-block');
+  if (block){
+    const ev = getEvent(block.dataset.id);
+    if (!ev) return;
+    const repeats = ev.recur && ev.recur.kind !== 'none';
+    showContextMenu(e.clientX, e.clientY, [
+      { label: 'Edit event', action: () => openEventEditor({ event: getEvent(ev.id) }) },
+      { label: repeats ? 'Delete event (all repeats)' : 'Delete event', danger: true,
+        action: () => { deleteEvent(ev.id); toast('Deleted “' + ev.title + '”'); } }
+    ]);
+    return;
+  }
+  let h = colScroll[col.dataset.index];             // on the daysRow: the top visible hour
+  const grid = col.querySelector('.day-grid');
+  if (hourPx && e.target.closest('.day-body')){
+    h = Math.floor((e.clientY - grid.getBoundingClientRect().top) / hourPx * 2) / 2;
+  }
+  h = clamp(h, 0, 23.5);
+  showContextMenu(e.clientX, e.clientY, [
+    { label: 'New event', action: () => openEventEditor({ date: col.dataset.date, start: fromHours(h), end: fromHours(Math.min(24, h + 1)) }) }
+  ]);
+});
 
 /* rows are sized so 12 hours fill a column; recompute whenever the calendar
    becomes visible or the window changes size. Hidden = another tab is open;
@@ -216,4 +237,5 @@ document.getElementById('cal-today').addEventListener('click', () => {
   weekStart = mondayOf(new Date());
   renderWeek();
 });
+onEventsChange(renderWeek);
 renderWeek();

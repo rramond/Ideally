@@ -11,26 +11,44 @@
 <body>
 
 <aside class="sidebar">
-  <div class="brand">
+  <button class="brand" id="brand" data-back title="Back">
     <svg viewBox="0 0 64 44"><path d="M3 22 Q32 1 61 22 Q32 43 3 22Z" fill="#0E0617" stroke="#C084FC" stroke-width="3"/><circle cx="32" cy="22" r="9.5" fill="#A855F7"/><circle cx="32" cy="22" r="4" fill="#08020E"/><circle cx="29" cy="19" r="2" fill="#fff"/></svg>
     Ideally
-  </div>
-  <button class="nav-btn active" data-view="notes">
-    <svg viewBox="0 0 24 24"><path d="M4 4h13l3 3v13H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
-    Notes
   </button>
-  <button class="nav-btn" data-view="calendar">
-    <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
-    Calendar
-  </button>
-  <button class="nav-btn" data-view="board">
-    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="6" width="8" height="8" rx="1"/><rect x="7" y="14" width="8" height="8" rx="1"/></svg>
-    Vision board
-  </button>
-  <button class="nav-btn" data-view="timer">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>
-    Focus
-  </button>
+  <nav class="nav-main">
+    <button class="nav-btn active" data-view="notes">
+      <svg viewBox="0 0 24 24"><path d="M4 4h13l3 3v13H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
+      Notes
+    </button>
+    <button class="nav-btn" data-view="calendar">
+      <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      Calendar
+    </button>
+    <button class="nav-btn" data-view="board">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="6" width="8" height="8" rx="1"/><rect x="7" y="14" width="8" height="8" rx="1"/></svg>
+      Vision board
+    </button>
+    <button class="nav-btn" data-view="timer">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>
+      Focus
+    </button>
+  </nav>
+  <!-- shown instead of nav-main while the calendar side panel is active -->
+  <nav class="nav-cal">
+    <div class="nav-label">Calendar</div>
+    <button class="nav-btn" id="cal-new-event">
+      <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/></svg>
+      Events
+    </button>
+    <button class="nav-btn" data-soon="Periods">
+      <svg viewBox="0 0 24 24"><path d="M3 12h18"/><path d="M6 7v10M18 7v10"/></svg>
+      Periods
+    </button>
+    <button class="nav-btn" data-soon="Time Blocks">
+      <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="6" rx="1.5"/><rect x="4" y="11" width="16" height="4" rx="1.5"/><rect x="4" y="17" width="10" height="4" rx="1.5"/></svg>
+      Time Blocks
+    </button>
+  </nav>
 </aside>
 
 <main>
@@ -51,26 +69,19 @@
 
   <!-- ================= CALENDAR ================= -->
   <section class="view" id="view-calendar">
-    <div class="cal-main">
-      <div class="cal-head">
-        <h2 id="cal-month">Month</h2>
-        <span class="cal-year" id="cal-year"></span>
-        <div class="cal-nav">
-          <button class="ghost-btn" id="cal-today">Today</button>
-          <button class="icon-btn" id="cal-prev" title="Previous month">
-            <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
-          </button>
-          <button class="icon-btn" id="cal-next" title="Next month">
-            <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
-          </button>
-        </div>
+    <div class="cal-bar">
+      <h2 id="cal-title">Week</h2>
+      <div class="cal-nav">
+        <button class="ghost-btn" id="cal-today">Today</button>
+        <button class="icon-btn" id="cal-prev" title="Previous week">
+          <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
+        </button>
+        <button class="icon-btn" id="cal-next" title="Next week">
+          <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
       </div>
-      <div class="cal-grid-head">
-        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-      </div>
-      <div class="cal-grid" id="cal-grid"></div>
     </div>
-    <div class="cal-side" id="cal-side"></div>
+    <div class="week" id="week"></div>
   </section>
 
   <!-- ================= BOARD ================= -->

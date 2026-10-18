@@ -21,6 +21,28 @@
 }
 .primary-btn:hover{background:var(--accent);box-shadow:var(--neon-strong)}
 
+/* GENERAL b) — small close "x" in a pop-up's top-left corner, shown on hover */
+.has-pop-x > .pop-x{
+  position:absolute;top:-8px;left:-8px;z-index:3;
+  width:18px;height:18px;border-radius:50%;
+  display:grid;place-items:center;font-size:12px;line-height:1;
+  background:var(--surface2);border:1px solid var(--line);color:var(--muted);
+  opacity:0;transition:opacity .12s,color .12s,border-color .12s;
+}
+.has-pop-x:hover > .pop-x,.has-pop-x > .pop-x:focus-visible{opacity:1}
+.has-pop-x > .pop-x:hover{color:#FB7185;border-color:rgba(251,113,133,.5)}
+
+/* Right-click menu */
+.ctx-menu{
+  position:fixed;left:0;top:0;z-index:60;min-width:170px;
+  display:flex;flex-direction:column;padding:5px;
+  background:var(--surface2);border:1px solid var(--line);border-radius:10px;
+  box-shadow:var(--shadow-lg);
+}
+.ctx-item{text-align:left;padding:7px 10px;border-radius:6px;font-size:13px}
+.ctx-item:hover,.ctx-item:focus-visible{background:#221F33;color:#D8B4FE;outline:none}
+.ctx-item.danger:hover,.ctx-item.danger:focus-visible{background:rgba(251,113,133,.12);color:#FB7185}
+
 /* Short-lived status message */
 .toast{
   position:fixed;left:50%;bottom:28px;z-index:100;
