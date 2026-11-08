@@ -28,7 +28,7 @@ b) ✅ DONE — COLUMNS
 the columns are vertically scrollable to browse hours of the day. On page open, the first hour (top-most) displayed in the column is 05:00 (24 hour format), going till 17:00 (12 hour split at once), scrolling down to reveal the rest, keeping the same size ratio between hour rows. Each columns scroll should be independent of the rest (eg. i can view 05:00 - 17:00 on monday and next to it have 14:00 - 00:00 on tuesday)
 
 c) EVENTS
-c.1) NEW EVENT OVERLAY
+c.1) ✅ DONE — NEW EVENT OVERLAY
 when right clicking on a day's column, a "New Event" option pops up. Upon clicking it, an overlay opens where an Event can be created. Contents:
 -> top left, Heading font "New event", clicking on it selects the whole text and opens type mode, where the user can then type the name of their event.
 -> start and end time settings, displayed start above end
@@ -36,11 +36,11 @@ when right clicking on a day's column, a "New Event" option pops up. Upon clicki
 -> in the top right corner, on the same level an event type circle (it will be filled with the event type color)
 -> recurrence setting (daily, every x (x<7) days, weekly, biweekly, monthly)
 
-    c.2) Off-the-rack (TIME BLOCKS)
+    c.2) ✅ DONE — Off-the-rack (TIME BLOCKS)
 
 created in the Time Blocks tab, they are premade events with fixed durations, frequencies, types and description. When clicking on the :Time Blocks" icon in the side panel, it changes the side panel to a panel with "New Block" that opens a block creation overlay like the event creation overlay. below it is a scrollable column where already created blocks are stored. These can be dragged and dropped on the calendar. When above a day, they dont have global position, they click onto hour rows (half hours too).
 
-d) DETAILS PANNEL
+d) ✅ DONE — DETAILS PANNEL
 clicking on a date selects that date, dimming the rest, highlighting its borders and enhacing its brightness. Double clicking on a date opens a detailed overlay in the center of the screen, rectangular shape (with the w:h ratio of the screen, but smaller). The bg gets dimmer, the opened window has 90 percent opacity, and shows a row with DD.MM, and a vertically scrollable window with the events of the day and their added descriptions added below
 
 e) PERIODS
@@ -51,7 +51,7 @@ f) RECCURENCE
 
 a) ✅ DONE — pressing on the Ideally icon acts as a back button between tabs and pop-ups
 
-b) every and any pop-up/overlay should have an "x" button, small, subtle, that appears, in the top left corner of the pop up, when cursor hovers over it. It acts as a overlay closing button.
+b) ✅ DONE — every and any pop-up/overlay should have an "x" button, small, subtle, that appears, in the top left corner of the pop up, when cursor hovers over it. It acts as a overlay closing button.
 
 ### **EXTRAS** (added along the way, not in the original spec)
 
@@ -95,7 +95,7 @@ b) ✅ DONE — daysRow shows a dim weekday initial above the bold DD.MM, in the
 
 c) ✅ DONE — weekend columns slightly darker
 
-d) ✅ DONE — Events / Periods / Time Blocks show a "coming soon" message until built
+d) ✅ DONE — Events / Periods / Time Blocks show a "coming soon" message until built (only Periods left)
 
 e) ✅ DONE — hour label in each hour row; half-hour lines
 
@@ -138,6 +138,16 @@ w) ✅ DONE — event blocks are as tall as the event lasts, tinted with the typ
 x) ✅ DONE — repeats show in the calendar right away; a monthly event on the 29th–31st falls on the last day of shorter months
 
 y) ✅ DONE — existing events were upgraded: end = start + 1 hour, type Personal, no repeat
+
+z) ✅ DONE — time blocks: the block overlay is the event overlay with a Duration (h:mm) field instead of date / start / end; the Time Blocks panel is its own Back step
+
+aa) ✅ DONE — block list: click (or Enter) edits a block, right-click → Edit / Delete; each shows its type color, duration, type and ↻ if it repeats
+
+ab) ✅ DONE — dragging a block shows where it will land (dashed preview with its times); it always ends by 24:00; Esc or dropping outside a day cancels; a dropped block becomes a normal event (editable, keeps the block's repeat)
+
+ac) ✅ DONE — a date is selected by clicking its DD.MM; clicking it again, Esc or changing week unselects it
+
+ad) ✅ DONE — details window: weekday + year next to the DD.MM (glowing if today); each event shows time, type (↻ if repeating) and its full description; clicking an event opens it for editing on top, and the list updates after a save / delete; "Nothing planned" when empty
 
 #### **4. General**
 

@@ -4,10 +4,13 @@ import { openPopup, closePopup, isPopupOpen } from '../lib/history.js';
 import { addCloseX } from '../lib/popups.js';
 import { toast } from '../lib/toast.js';
 import { attachColorWheel } from '../colorWheel.js';
-import { RECURRENCE, getTypes, typeOf, saveType, deleteType, lastTypeId, rememberType, saveEvent, deleteEvent } from './events.js';
+import { RECURRENCE, getTypes, typeOf, saveType, deleteType, lastTypeId, rememberType,
+         saveEvent, deleteEvent, saveBlock, deleteBlock } from './events.js';
 
 /* ============================================================
-   NEW EVENT OVERLAY (3c.1) — also used to edit an event
+   NEW EVENT OVERLAY (3c.1) — also used to edit an event, and
+   to create / edit time blocks (3c.2: a duration instead of a
+   date, start and end)
 ============================================================ */
 const EDITOR = 'event-editor', PICKER = 'event-type-picker';
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -35,7 +38,7 @@ function parseTime(str, isEnd){
 
 const TEMPLATE =
   '<div class="ee-head">' +
-    '<h2 class="ee-name" title="Click to name the event"></h2>' +
+    '<h2 class="ee-name"></h2>' +
     '<div class="ee-type-wrap"><button class="ee-type" type="button"></button></div>' +
   '</div>' +
   '<div class="ee-date">' +
@@ -47,6 +50,7 @@ const TEMPLATE =
     '<label class="ee-field"><span>Start</span><input class="ee-time ee-start" inputmode="numeric" maxlength="5" autocomplete="off"></label>' +
     '<label class="ee-field"><span>End</span><input class="ee-time ee-end" inputmode="numeric" maxlength="5" autocomplete="off"></label>' +
   '</div>' +
+  '<label class="ee-field ee-dur-field"><span>Duration (h:mm)</span><input class="ee-time ee-dur" inputmode="numeric" maxlength="5" autocomplete="off"></label>' +
   '<label class="ee-field"><span>Description</span><textarea class="ee-desc" rows="3" placeholder="Add details…"></textarea></label>' +
   '<div class="ee-field"><span>Repeat</span><div class="ee-recur">' +
     '<select class="ee-recur-kind" aria-label="Repeat"></select>' +
@@ -60,24 +64,36 @@ const TEMPLATE =
 
 /* open for a new event ({ date, start, end }) or an existing one ({ event }) */
 export function openEventEditor({ event = null, date, start = '09:00', end = '10:00' } = {}){
+  openEditor(false, event, { date, start, end });
+}
+/* open for a new time block, or an existing one ({ block }) */
+export function openBlockEditor({ block = null } = {}){
+  openEditor(true, block, { duration: '01:00' });
+}
+
+function openEditor(isBlock, item, fresh){
   closePopup(EDITOR);
-  const editing = !!event;
+  const editing = !!item;
+  const noun = isBlock ? 'block' : 'event';
   const draft = editing
-    ? JSON.parse(JSON.stringify(event))
-    : { id: uid(), title: '', date, start, end, description: '', typeId: lastTypeId(), recur: { kind: 'none' } };
+    ? JSON.parse(JSON.stringify(item))
+    : { id: uid(), title: '', ...fresh, description: '', typeId: lastTypeId(), recur: { kind: 'none' } };
 
   const overlay = el('div', 'ev-overlay');
   const card = el('div', 'ev-card');
   card.setAttribute('role', 'dialog');
   card.setAttribute('aria-modal', 'true');
-  card.setAttribute('aria-label', editing ? 'Edit event' : 'New event');
+  card.setAttribute('aria-label', (editing ? 'Edit ' : 'New ') + noun);
   card.innerHTML = TEMPLATE;
+  /* a block has a duration; an event has a date, start and end */
+  if (isBlock){ card.querySelector('.ee-date').remove(); card.querySelector('.ee-times').remove(); }
+  else card.querySelector('.ee-dur-field').remove();
   overlay.appendChild(card);
   document.body.appendChild(overlay);
 
   const $ = sel => card.querySelector(sel);
   const nameEl = $('.ee-name'), typeBtn = $('.ee-type'), dateLabel = $('.ee-date-label');
-  const startIn = $('.ee-start'), endIn = $('.ee-end'), descIn = $('.ee-desc');
+  const startIn = $('.ee-start'), endIn = $('.ee-end'), durIn = $('.ee-dur'), descIn = $('.ee-desc');
   const kindSel = $('.ee-recur-kind'), nSel = $('.ee-recur-n');
   const delBtn = $('.ee-delete'), hint = $('.ee-hint'), saveBtn = $('.ee-save');
 
@@ -88,9 +104,10 @@ export function openEventEditor({ event = null, date, start = '09:00', end = '10
 
   /* ---- name: click selects it all and starts typing ---- */
   const showName = () => {
-    nameEl.textContent = draft.title || 'New event';
+    nameEl.textContent = draft.title || 'New ' + noun;
     nameEl.classList.toggle('placeholder', !draft.title);
   };
+  nameEl.title = 'Click to name the ' + noun;
   nameEl.addEventListener('click', () => {
     if (nameEl.isContentEditable) return;
     nameEl.contentEditable = 'true';
@@ -127,16 +144,20 @@ export function openEventEditor({ event = null, date, start = '09:00', end = '10
 
   /* ---- date ---- */
   const showDate = () => {
+    if (isBlock) return;
     const d = parseIso(draft.date);
     dateLabel.textContent = DAY_NAMES[d.getDay()] + ' ' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear();
   };
   const shiftDay = n => { draft.date = isoDate(addDays(parseIso(draft.date), n)); showDate(); };
-  $('.ee-day-prev').addEventListener('click', () => shiftDay(-1));
-  $('.ee-day-next').addEventListener('click', () => shiftDay(1));
+  if (!isBlock){
+    $('.ee-day-prev').addEventListener('click', () => shiftDay(-1));
+    $('.ee-day-next').addEventListener('click', () => shiftDay(1));
+  }
 
-  /* ---- start / end (24-hour) ---- */
+  /* ---- start / end (24-hour), or a block's duration ---- */
+  const timeFields = isBlock ? [[durIn, 'duration']] : [[startIn, 'start'], [endIn, 'end']];
   function commitTime(input, key){
-    const v = parseTime(input.value, key === 'end');
+    const v = parseTime(input.value, key !== 'start');
     if (!v || v === draft[key]){ input.value = draft[key]; return; }
     if (key === 'start'){
       /* moving the start keeps the duration */
@@ -144,21 +165,21 @@ export function openEventEditor({ event = null, date, start = '09:00', end = '10
       draft.start = v;
       if (dur > 0){ draft.end = fromHours(Math.min(24, toHours(v) + dur)); endIn.value = draft.end; }
     } else {
-      draft.end = v;
+      draft[key] = v;
     }
     input.value = v;
     refresh();
   }
-  [[startIn, 'start'], [endIn, 'end']].forEach(([input, key]) => {
+  timeFields.forEach(([input, key]) => {
     input.value = draft[key];
     input.addEventListener('blur', () => commitTime(input, key));
     input.addEventListener('keydown', e => {
       if (e.key === 'ArrowUp' || e.key === 'ArrowDown'){
         /* ±15 min (Shift: ±1 h) */
         e.preventDefault();
-        const cur = parseTime(input.value, key === 'end') || draft[key];
+        const cur = parseTime(input.value, key !== 'start') || draft[key];
         const step = (e.shiftKey ? 1 : 0.25) * (e.key === 'ArrowUp' ? 1 : -1);
-        input.value = fromHours(clamp(toHours(cur) + step, 0, key === 'end' ? 24 : 23.75));
+        input.value = fromHours(clamp(toHours(cur) + step, key === 'duration' ? 0.25 : 0, key === 'start' ? 23.75 : 24));
         commitTime(input, key);
       } else if (e.key === 'Enter'){
         e.preventDefault();
@@ -186,22 +207,22 @@ export function openEventEditor({ event = null, date, start = '09:00', end = '10
   nSel.addEventListener('change', readRecur);
 
   /* ---- save / delete ---- */
-  const problem = () =>
-    !draft.title ? 'name' : toHours(draft.end) <= toHours(draft.start) ? 'time' : null;
+  const badTime = () => isBlock ? toHours(draft.duration) <= 0 : toHours(draft.end) <= toHours(draft.start);
+  const problem = () => !draft.title ? 'name' : badTime() ? 'time' : null;
+  const timeIn = isBlock ? durIn : endIn;   // the field that is wrong when the time is
   function refresh(){
     const p = problem();
     saveBtn.setAttribute('aria-disabled', p ? 'true' : 'false');
-    endIn.classList.toggle('invalid', p === 'time');
-    hint.textContent = p === 'time' ? 'End must be after start' : '';
+    timeIn.classList.toggle('invalid', p === 'time');
+    hint.textContent = p !== 'time' ? '' : isBlock ? 'Duration must be longer than 0' : 'End must be after start';
   }
   function trySave(){
-    commitTime(startIn, 'start');
-    commitTime(endIn, 'end');
+    timeFields.forEach(([input, key]) => commitTime(input, key));
     const p = problem();
     if (p === 'name'){ pulse(nameEl); return; }
-    if (p === 'time'){ pulse(endIn); return; }
+    if (p === 'time'){ pulse(timeIn); return; }
     rememberType(draft.typeId);
-    saveEvent(draft);
+    (isBlock ? saveBlock : saveEvent)(draft);
     close();
   }
   saveBtn.textContent = editing ? 'Save' : 'Create';
@@ -209,9 +230,10 @@ export function openEventEditor({ event = null, date, start = '09:00', end = '10
   card.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); trySave(); } });
 
   if (editing){
-    delBtn.textContent = draft.recur.kind !== 'none' ? 'delete event (all repeats)' : 'delete event';
+    delBtn.textContent = isBlock ? 'delete block'
+      : draft.recur.kind !== 'none' ? 'delete event (all repeats)' : 'delete event';
     delBtn.addEventListener('click', () => {
-      deleteEvent(draft.id);
+      (isBlock ? deleteBlock : deleteEvent)(draft.id);
       close();
       toast('Deleted “' + draft.title + '”');
     });

@@ -4,6 +4,8 @@ import { toast } from '../lib/toast.js';
 import { showContextMenu } from '../lib/contextMenu.js';
 import { eventsOn, typeOf, getEvent, deleteEvent, onEventsChange } from './events.js';
 import { openEventEditor } from './eventEditor.js';
+import { openDayDetails } from './dayDetails.js';
+import { anyPopupOpen } from '../lib/history.js';
 
 /* ============================================================
    CALENDAR — week view: one column per day, Monday first.
@@ -22,6 +24,7 @@ let hourPx = 0;                                   // height of one hour row
 const colScroll = Array(7).fill(FIRST_HOUR);      // per weekday: top visible hour (whole hours), kept across weeks
 let calHidden = true;
 let renderedToday = isoDate(new Date());
+let selectedDate = null;                          // 3d: clicked date, the others are dimmed
 
 function urgency(dateStr){
   /* 0 → past, 0.12 → far away, 1 → today/tomorrow */
@@ -78,12 +81,13 @@ function renderWeek(){
   document.getElementById('cal-title').textContent = weekTitle();
   weekEl.innerHTML = '';
   renderedToday = isoDate(new Date());
+  weekEl.classList.toggle('has-selection', !!selectedDate);
 
   for (let i = 0; i < 7; i++){
     const d = addDays(weekStart, i);
     const dStr = isoDate(d);
     const col = document.createElement('div');
-    col.className = 'day-col' + (dStr === renderedToday ? ' today' : '') + (i >= 5 ? ' weekend' : '');
+    col.className = 'day-col' + (dStr === renderedToday ? ' today' : '') + (i >= 5 ? ' weekend' : '') + (dStr === selectedDate ? ' selected' : '');
     col.dataset.date = dStr;
     col.dataset.index = i;
 
@@ -97,6 +101,16 @@ function renderWeek(){
     date.className = 'dh-date';
     date.textContent = pad(d.getDate()) + '.' + pad(d.getMonth() + 1);
     head.append(init, date);
+    head.title = 'Click to select · double-click for the day's details';
+    /* click selects the date (again: unselects); double-click opens its details */
+    head.addEventListener('click', e => {
+      if (e.detail > 1) return;              // 2nd click of a double-click: keep it selected
+      selectDate(selectedDate === dStr ? null : dStr);
+    });
+    head.addEventListener('dblclick', () => {
+      selectDate(dStr);
+      openDayDetails(dStr);
+    });
 
     /* scrollable hours */
     const body = document.createElement('div');
@@ -165,6 +179,29 @@ function renderWeek(){
   updateNowLine();
 }
 
+/* the half-hour slot under the cursor, for dropping a time block of `dur`
+   hours: { date, hour, grid } or null when not over a day's hours.
+   The block snaps to hour / half-hour rows and always ends by 24:00. */
+export function slotAt(x, y, dur){
+  const target = document.elementFromPoint(x, y);
+  const body = target && target.closest('#week .day-body');
+  if (!body || !hourPx) return null;
+  const grid = body.querySelector('.day-grid');
+  const h = Math.floor((y - grid.getBoundingClientRect().top) / hourPx * 2) / 2;
+  const latest = Math.max(0, Math.floor((24 - dur) * 2) / 2);
+  return { date: body.parentElement.dataset.date, hour: clamp(h, 0, latest), grid };
+}
+
+function selectDate(dStr){
+  selectedDate = dStr;
+  weekEl.classList.toggle('has-selection', !!dStr);
+  weekEl.querySelectorAll('.day-col').forEach(c => c.classList.toggle('selected', c.dataset.date === dStr));
+}
+/* Esc unselects (once no pop-up is left to close) */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && selectedDate && !anyPopupOpen() && weekEl.offsetParent) selectDate(null);
+});
+
 function restoreScroll(){
   if (!hourPx) return;
   weekEl.querySelectorAll('.day-body').forEach((b, i) => { b.scrollTop = colScroll[i] * hourPx; });
@@ -226,14 +263,17 @@ setInterval(() => {
 }, 30000);
 
 document.getElementById('cal-prev').addEventListener('click', () => {
+  selectedDate = null;
   weekStart = addDays(weekStart, -7);
   renderWeek();
 });
 document.getElementById('cal-next').addEventListener('click', () => {
+  selectedDate = null;
   weekStart = addDays(weekStart, 7);
   renderWeek();
 });
 document.getElementById('cal-today').addEventListener('click', () => {
+  selectedDate = null;
   weekStart = mondayOf(new Date());
   renderWeek();
 });

@@ -116,3 +116,22 @@ export function occursOn(e, dateStr){
 export function eventsOn(dateStr){
   return events.filter(e => occursOn(e, dateStr)).sort((a, b) => a.start.localeCompare(b.start));
 }
+
+/* ============================================================
+   Time blocks (3c.2): premade events without a date or start.
+   Block: { id, title, duration 'HH:MM', description, typeId, recur }
+============================================================ */
+let blocks = store.get('ideally.timeBlocks', []);
+const saveBlocks = () => store.set('ideally.timeBlocks', blocks);
+
+export const getBlocks = () => blocks;
+export const getBlock = id => blocks.find(b => b.id === id);
+export function saveBlock(b){
+  const i = blocks.findIndex(x => x.id === b.id);
+  if (i < 0) blocks.push(b); else blocks[i] = b;
+  saveBlocks(); changed();
+}
+export function deleteBlock(id){
+  blocks = blocks.filter(b => b.id !== id);
+  saveBlocks(); changed();
+}

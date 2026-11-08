@@ -10,6 +10,7 @@ import './styles/timer.css';
 import './notes.js';
 import './calendar/calendar.js';
 import { openEventEditor } from './calendar/eventEditor.js';
+import './calendar/timeBlocks.js';
 import { renderArrows, renderHandles } from './board.js';
 import './timer/timer.js';
 import { resizeSceneCanvas, ensureSceneLoop } from './timer/scenes.js';
@@ -24,15 +25,16 @@ const sidebar = document.querySelector('.sidebar');
 const views = document.querySelectorAll('.view');
 const navBtns = document.querySelectorAll('.nav-main .nav-btn');
 
-function applyState({ view, calMode }){
+function applyState({ view, calMode, blocks }){
   navBtns.forEach(b => b.classList.toggle('active', b.dataset.view === view));
   views.forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
   if (view === 'board'){ renderArrows(); renderHandles(); }
   if (view === 'timer'){ resizeSceneCanvas(); ensureSceneLoop(); }
   /* the calendar replaces the main menu with its own side panel */
-  sidebar.classList.toggle('cal-mode', view === 'calendar' && calMode);
+  sidebar.classList.toggle('cal-mode', view === 'calendar' && !!calMode);
+  sidebar.classList.toggle('blocks-mode', view === 'calendar' && !!calMode && !!blocks);
 }
-initHistory({ view: 'notes', calMode: false }, applyState);
+initHistory({ view: 'notes', calMode: false, blocks: false }, applyState);
 
 navBtns.forEach(btn => btn.addEventListener('click', () => {
   const { view } = getState();
@@ -40,10 +42,10 @@ navBtns.forEach(btn => btn.addEventListener('click', () => {
   if (target === 'calendar'){
     /* two steps, so Back first leaves the side panel (calendar still in view),
        then returns to the previous tab */
-    if (view !== 'calendar') go({ view: 'calendar', calMode: false });
-    if (!getState().calMode) go({ calMode: true });
+    if (view !== 'calendar') go({ view: 'calendar', calMode: false, blocks: false });
+    if (!getState().calMode) go({ calMode: true, blocks: false });
   } else if (target !== view){
-    go({ view: target, calMode: false });
+    go({ view: target, calMode: false, blocks: false });
   }
 }));
 
@@ -52,8 +54,13 @@ document.getElementById('brand').addEventListener('click', back);
 /* capture phase: runs before an event block's own click opens the editor,
    so this step never closes the overlay that's about to open */
 document.getElementById('view-calendar').addEventListener('click', () => {
-  if (!getState().calMode) go({ calMode: true });
+  if (!getState().calMode) go({ calMode: true, blocks: false });
 }, true);
+
+/* side panel "Time Blocks": switch to the blocks panel (Back returns to the calendar panel) */
+document.getElementById('cal-blocks').addEventListener('click', () => {
+  if (!getState().blocks) go({ blocks: true });
+});
 
 /* side panel "Events": new event today, at the next full hour */
 document.getElementById('cal-new-event').addEventListener('click', () => {

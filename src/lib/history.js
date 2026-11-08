@@ -3,7 +3,8 @@
    browser history step, so the Ideally logo, the browser's Back,
    the mouse back button and Alt+← all behave the same.
 
-   State: { view, calMode, popups, depth }
+   State: { view, calMode, blocks, popups, depth }
+   - blocks: the calendar side panel shows the Time Blocks list
    - popups: ids of the pop-ups open at that step, oldest first.
      Pop-ups can nest (overlay → type picker → color wheel).
    - Going back closes every pop-up the target step doesn't have.
@@ -19,7 +20,8 @@ const openNow = new Map(); // pop-up id → hide(), in opening order
 
 export const getState = () => current;
 
-const sameView = (a, b) => a.view === b.view && !!a.calMode === !!b.calMode;
+const sameView = (a, b) => a.view === b.view && !!a.calMode === !!b.calMode && !!a.blocks === !!b.blocks;
+const viewOf = s => ({ view: s.view, calMode: s.calMode, blocks: s.blocks });
 
 /* hide pop-ups newest first, without touching history */
 function hideAll(ids){
@@ -36,10 +38,10 @@ export function initHistory(initial, apply){
   /* a reload keeps the browser's state: reopen the same view */
   const saved = history.state && history.state.view ? history.state : null;
   current = saved
-    ? { ...initialState, view: saved.view, calMode: saved.calMode, depth: saved.depth || 0 }
+    ? { ...initialState, ...viewOf(saved), depth: saved.depth || 0 }
     : initialState;
   history.replaceState(current, '');
-  shown = { view: current.view, calMode: current.calMode };
+  shown = viewOf(current);
   applyState(current);
 
   window.addEventListener('popstate', e => {
@@ -52,7 +54,7 @@ export function initHistory(initial, apply){
     const same = sameView(next, shown);
     if (goingBack && same && !toClose.length && next.depth > 0){ history.back(); return; }
     if (!same){
-      shown = { view: next.view, calMode: next.calMode };
+      shown = viewOf(next);
       applyState(next);
     }
   });
@@ -68,7 +70,7 @@ export function go(partial){
   hideAll([...openNow.keys()]);
   current = { ...current, ...partial, popups: [], depth: current.depth + 1 };
   history.pushState(current, '');
-  shown = { view: current.view, calMode: current.calMode };
+  shown = viewOf(current);
   applyState(current);
 }
 
@@ -77,6 +79,7 @@ export function back(){
 }
 
 export const isPopupOpen = id => openNow.has(id);
+export const anyPopupOpen = () => openNow.size > 0;
 
 /* hide(): take the pop-up off screen; called when going back or closing */
 export function openPopup(id, hide){
