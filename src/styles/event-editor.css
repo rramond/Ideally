@@ -87,3 +87,42 @@
 .tp-form-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px}
 .tp-form-actions .danger-link{margin-right:auto}
 .tp-form-actions .ghost-btn,.tp-form-actions .primary-btn{padding:5px 11px;font-size:12px}
+
+/* ============ PERIOD OVERLAY (3e) ============ */
+.pe-color-wrap .cw-pop{left:auto;right:-8px}           /* open the color wheel leftwards */
+.ee-type.clash{border-color:#FB7185;box-shadow:0 0 0 2px rgba(251,113,133,.45)}
+.pe-dates{position:relative;display:flex;align-items:flex-end;gap:10px}
+.pe-date{width:118px;font-family:var(--font-mono) !important;font-size:14px !important;letter-spacing:.03em;cursor:pointer}
+.pe-date.picking{border-color:var(--pc) !important;box-shadow:0 0 0 1px color-mix(in srgb, var(--pc) 60%, transparent)}
+.pe-arrow{padding-bottom:9px;color:var(--muted)}
+.pe-days{padding-bottom:10px;margin-left:auto;font-family:var(--font-mono);font-size:11.5px;color:var(--muted)}
+.pe-note{margin:-4px 0 0;font-size:12px;color:var(--muted)}
+
+/* mini month picker */
+.pe-picker{
+  position:absolute;top:calc(100% + 8px);left:0;z-index:6;width:264px;
+  display:flex;flex-direction:column;gap:6px;padding:10px;
+  background:var(--surface2);border:1px solid var(--line);border-radius:12px;
+  box-shadow:var(--shadow-lg);
+}
+.pp-head{display:flex;align-items:center;justify-content:space-between}
+.pp-title{font-family:var(--font-display);font-size:14px;font-weight:700}
+.pp-nav{font-size:16px;line-height:1}
+.pp-grid{display:grid;grid-template-columns:repeat(7, 1fr);gap:2px}
+.pp-dow{text-align:center;font-family:var(--font-mono);font-size:9.5px;color:var(--muted);padding:2px 0}
+.pp-day{
+  position:relative;height:30px;border-radius:6px;
+  font-family:var(--font-mono);font-size:12px;
+  transition:background .1s;
+}
+.pp-day:hover{background:#221F33}
+.pp-day.other{color:#4A4963}
+.pp-day.today{color:#D8B4FE;font-weight:700}
+.pp-day.in-range{background:color-mix(in srgb, var(--pc) 22%, transparent);border-radius:0}
+.pp-day.range-start{border-radius:6px 0 0 6px}
+.pp-day.range-end{border-radius:0 6px 6px 0}
+.pp-day.range-start.range-end{border-radius:6px}
+.pp-day.range-start,.pp-day.range-end{background:var(--pc);color:#100F18;font-weight:700}
+.pp-dots{position:absolute;left:0;right:0;bottom:3px;display:flex;justify-content:center;gap:2px}
+.pp-dots i{width:4px;height:4px;border-radius:50%}
+.pp-hint{margin:0;text-align:center;font-size:11.5px;color:var(--muted)}
