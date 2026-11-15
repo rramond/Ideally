@@ -3,6 +3,8 @@ import { openPopup, closePopup, isPopupOpen } from '../lib/history.js';
 import { addCloseX } from '../lib/popups.js';
 import { eventsOn, typeOf, getEvent, onEventsChange } from './events.js';
 import { openEventEditor } from './eventEditor.js';
+import { periodsOn, getPeriod, onPeriodsChange } from './periods.js';
+import { openPeriodEditor } from './periodEditor.js';
 
 /* ============================================================
    DETAILS PANEL (3d) — double-click a date: a window in the
@@ -15,6 +17,7 @@ const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frida
 
 let refresh = null;   // re-renders the open panel when events change
 onEventsChange(() => { if (refresh) refresh(); });
+onPeriodsChange(() => { if (refresh) refresh(); });
 
 const el = (tag, cls, text) => {
   const x = document.createElement(tag);
@@ -36,6 +39,9 @@ export function openDayDetails(dateStr){
     el('span', 'dd-date', pad(d.getDate()) + '.' + pad(d.getMonth() + 1)),
     el('span', 'dd-weekday', WEEKDAYS[d.getDay()] + ' ' + d.getFullYear())
   );
+  /* 3e: the periods this day belongs to (click one to edit it) */
+  const periodRow = el('div', 'dd-periods');
+  head.appendChild(periodRow);
   card.setAttribute('aria-label', 'Events on ' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1));
   const list = el('div', 'dd-list');
   card.append(head, list);
@@ -48,6 +54,16 @@ export function openDayDetails(dateStr){
   overlay.addEventListener('pointerdown', e => { if (e.target === overlay) close(); });
 
   refresh = () => {
+    periodRow.innerHTML = '';
+    periodsOn(dateStr).forEach(p => {
+      const chip = el('button', 'dd-period');
+      chip.type = 'button';
+      chip.title = 'Edit period';
+      chip.style.setProperty('--tc', p.color);
+      chip.append(el('i'), document.createTextNode(p.name));
+      chip.addEventListener('click', () => { const per = getPeriod(p.id); if (per) openPeriodEditor({ period: per }); });
+      periodRow.appendChild(chip);
+    });
     list.innerHTML = '';
     const evs = eventsOn(dateStr);
     if (!evs.length){

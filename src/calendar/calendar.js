@@ -1,10 +1,12 @@
 import { clamp } from '../lib/utils.js';
-import { pad, isoDate, addDays, mondayOf, toHours, fromHours } from '../lib/dates.js';
+import { pad, isoDate, addDays, mondayOf, parseIso, toHours, fromHours } from '../lib/dates.js';
 import { toast } from '../lib/toast.js';
 import { showContextMenu } from '../lib/contextMenu.js';
 import { eventsOn, typeOf, getEvent, deleteEvent, onEventsChange } from './events.js';
 import { openEventEditor } from './eventEditor.js';
 import { openDayDetails } from './dayDetails.js';
+import { periodsOn, periodsBetween, getPeriod, deletePeriod, onPeriodsChange } from './periods.js';
+import { openPeriodEditor } from './periodEditor.js';
 import { anyPopupOpen } from '../lib/history.js';
 
 /* ============================================================
@@ -25,6 +27,7 @@ const colScroll = Array(7).fill(FIRST_HOUR);      // per weekday: top visible ho
 let calHidden = true;
 let renderedToday = isoDate(new Date());
 let selectedDate = null;                          // 3d: clicked date, the others are dimmed
+let suppressHeadClick = false;                    // a header drag (new period) just ended on a header
 
 function urgency(dateStr){
   /* 0 → past, 0.12 → far away, 1 → today/tomorrow */
@@ -82,6 +85,16 @@ function renderWeek(){
   weekEl.innerHTML = '';
   renderedToday = isoDate(new Date());
   weekEl.classList.toggle('has-selection', !!selectedDate);
+  periodTag.hidden = true;
+
+  /* 3e: periods touching this week get a band row each (overlaps stack) */
+  const weekPeriods = periodsBetween(isoDate(weekStart), isoDate(addDays(weekStart, 6)));
+  const laneOf = new Map(), laneEnds = [];
+  weekPeriods.forEach(p => {
+    let lane = laneEnds.findIndex(end => end < p.start);
+    if (lane < 0){ lane = laneEnds.length; laneEnds.push(p.end); } else laneEnds[lane] = p.end;
+    laneOf.set(p.id, lane);
+  });
 
   for (let i = 0; i < 7; i++){
     const d = addDays(weekStart, i);
@@ -101,9 +114,18 @@ function renderWeek(){
     date.className = 'dh-date';
     date.textContent = pad(d.getDate()) + '.' + pad(d.getMonth() + 1);
     head.append(init, date);
-    head.title = 'Click to select · double-click for the day's details';
+    /* 3e: the header is tinted with the day's period colors (stripes if several);
+       the period names show in a tag on hover instead of a tooltip */
+    const dayPeriods = periodsOn(dStr);
+    if (dayPeriods.length){
+      head.classList.add('in-period');
+      head.style.background = periodTint(dayPeriods);
+    } else {
+      head.title = 'Click to select · double-click for the day’s details · drag across days for a period';
+    }
     /* click selects the date (again: unselects); double-click opens its details */
     head.addEventListener('click', e => {
+      if (suppressHeadClick){ suppressHeadClick = false; return; }
       if (e.detail > 1) return;              // 2nd click of a double-click: keep it selected
       selectDate(selectedDate === dStr ? null : dStr);
     });
@@ -172,6 +194,26 @@ function renderWeek(){
       colScroll[i] = clamp(colScroll[i] + dir, 0, 24 - HOURS_VISIBLE);
       body.scrollTo({ top: colScroll[i] * hourPx, behavior: 'smooth' });
     }, { passive: false });
+    if (laneEnds.length){
+      /* the periods' color bands above the header, one row per lane */
+      const bands = document.createElement('div');
+      bands.className = 'day-bands';
+      for (let l = 0; l < laneEnds.length; l++){
+        const slot = document.createElement('div');
+        slot.className = 'pb-slot';
+        const p = weekPeriods.find(x => laneOf.get(x.id) === l && x.start <= dStr && dStr <= x.end);
+        if (p){
+          slot.classList.add('period-band');
+          if (dStr === p.start) slot.classList.add('starts');
+          if (dStr === p.end) slot.classList.add('ends');
+          slot.style.setProperty('--pc', p.color);
+          slot.dataset.periodId = p.id;
+          slot.addEventListener('click', () => openPeriodEditor({ period: getPeriod(p.id) }));
+        }
+        bands.appendChild(slot);
+      }
+      col.appendChild(bands);
+    }
     col.append(head, body);
     weekEl.appendChild(col);
   }
@@ -190,6 +232,87 @@ export function slotAt(x, y, dur){
   const h = Math.floor((y - grid.getBoundingClientRect().top) / hourPx * 2) / 2;
   const latest = Math.max(0, Math.floor((24 - dur) * 2) / 2);
   return { date: body.parentElement.dataset.date, hour: clamp(h, 0, latest), grid };
+}
+
+/* header / band background: the period color, or equal stripes of several */
+function periodTint(list){
+  const tint = c => 'color-mix(in srgb, ' + c + ' 26%, transparent)';
+  if (list.length === 1) return tint(list[0].color);
+  const n = list.length;
+  return 'linear-gradient(90deg,' + list.map((p, k) =>
+    tint(p.color) + ' ' + (k * 100 / n) + '% ' + ((k + 1) * 100 / n) + '%').join(',') + ')';
+}
+
+function periodMenuItems(p, named){
+  const suffix = named ? ' “' + p.name + '”' : '';
+  return [
+    { label: 'Edit period' + suffix, action: () => openPeriodEditor({ period: getPeriod(p.id) }) },
+    { label: 'Delete period' + suffix, danger: true,
+      action: () => { deletePeriod(p.id); toast('Deleted period “' + p.name + '”'); } }
+  ];
+}
+
+/* hovering a header or band: a small tag with the period color(s) and name(s) */
+const periodTag = document.createElement('div');
+periodTag.className = 'period-tag';
+periodTag.hidden = true;
+document.body.appendChild(periodTag);
+weekEl.addEventListener('mouseover', e => {
+  const band = e.target.closest('.period-band');
+  const head = e.target.closest('.day-head');
+  const list = (band ? [getPeriod(band.dataset.periodId)] : head ? periodsOn(head.parentElement.dataset.date) : [])
+    .filter(Boolean);
+  if (!list.length || hdrDrag){ periodTag.hidden = true; return; }
+  periodTag.innerHTML = '';
+  list.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'pt-row';
+    const dot = document.createElement('i');
+    dot.style.background = p.color;
+    dot.style.setProperty('--pc', p.color);
+    row.append(dot, document.createTextNode(p.name));
+    periodTag.appendChild(row);
+  });
+  periodTag.hidden = false;
+  const r = (band || head).getBoundingClientRect();
+  const headBottom = (band || head).closest('.day-col').querySelector('.day-head').getBoundingClientRect().bottom;
+  periodTag.style.left = clamp(r.left + r.width / 2 - periodTag.offsetWidth / 2, 8, innerWidth - periodTag.offsetWidth - 8) + 'px';
+  periodTag.style.top = (headBottom + 6) + 'px';
+});
+weekEl.addEventListener('mouseleave', () => { periodTag.hidden = true; });
+
+/* press on a day's header and drag across other days: a new period over them */
+let hdrDrag = null;   // { from, to }
+weekEl.addEventListener('pointerdown', e => {
+  suppressHeadClick = false;     // a drag that ended off its own header leaves no click to swallow
+  if (e.button !== 0 || !e.target.closest('.day-head')) return;
+  hdrDrag = { from: e.target.closest('.day-col').dataset.date, to: null };
+});
+document.addEventListener('pointermove', e => {
+  if (!hdrDrag) return;
+  const col = document.elementFromPoint(e.clientX, e.clientY)?.closest('#week .day-col');
+  if (!col || (col.dataset.date === hdrDrag.from && !hdrDrag.to)) return;
+  hdrDrag.to = col.dataset.date;
+  periodTag.hidden = true;
+  const [lo, hi] = hdrDrag.from <= hdrDrag.to ? [hdrDrag.from, hdrDrag.to] : [hdrDrag.to, hdrDrag.from];
+  weekEl.querySelectorAll('.day-col').forEach(c =>
+    c.classList.toggle('period-drag', lo <= c.dataset.date && c.dataset.date <= hi));
+});
+document.addEventListener('pointerup', e => {
+  if (!hdrDrag) return;
+  const { from, to } = hdrDrag;
+  hdrDrag = null;
+  weekEl.querySelectorAll('.period-drag').forEach(c => c.classList.remove('period-drag'));
+  if (!to) return;
+  if (e.target.closest && e.target.closest('.day-head')) suppressHeadClick = true;   // released on a header: no date selection
+  openPeriodEditor({ start: from <= to ? from : to, end: from <= to ? to : from });
+});
+
+/* jump to the week containing dateStr (Periods list → "Show in calendar") */
+export function showWeekOf(dateStr){
+  selectedDate = null;
+  weekStart = mondayOf(parseIso(dateStr));
+  renderWeek();
 }
 
 function selectDate(dStr){
@@ -223,6 +346,24 @@ weekEl.addEventListener('contextmenu', e => {
       { label: repeats ? 'Delete event (all repeats)' : 'Delete event', danger: true,
         action: () => { deleteEvent(ev.id); toast('Deleted “' + ev.title + '”'); } }
     ]);
+    return;
+  }
+  const band = e.target.closest('.period-band');
+  if (band){
+    const p = getPeriod(band.dataset.periodId);
+    if (p) showContextMenu(e.clientX, e.clientY, periodMenuItems(p));
+    return;
+  }
+  if (e.target.closest('.day-head, .day-bands')){
+    /* header: a new event at the top visible hour, a new period from this day,
+       and the periods this day belongs to */
+    const h0 = colScroll[col.dataset.index];
+    const items = [
+      { label: 'New event', action: () => openEventEditor({ date: col.dataset.date, start: fromHours(h0), end: fromHours(Math.min(24, h0 + 1)) }) },
+      { label: 'New period from here', action: () => openPeriodEditor({ start: col.dataset.date, pickEnd: true }) }
+    ];
+    periodsOn(col.dataset.date).forEach(p => items.push(...periodMenuItems(p, true)));
+    showContextMenu(e.clientX, e.clientY, items);
     return;
   }
   let h = colScroll[col.dataset.index];             // on the daysRow: the top visible hour
@@ -278,4 +419,5 @@ document.getElementById('cal-today').addEventListener('click', () => {
   renderWeek();
 });
 onEventsChange(renderWeek);
+onPeriodsChange(renderWeek);
 renderWeek();
