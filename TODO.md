@@ -44,14 +44,21 @@ d) ✅ DONE — DETAILS PANNEL
 clicking on a date selects that date, dimming the rest, highlighting its borders and enhacing its brightness. Double clicking on a date opens a detailed overlay in the center of the screen, rectangular shape (with the w:h ratio of the screen, but smaller). The bg gets dimmer, the opened window has 90 percent opacity, and shows a row with DD.MM, and a vertically scrollable window with the events of the day and their added descriptions added below
 
 e) PERIODS
+A period is marked by a big block of a choose-able (by colorwheel) color, that marks a window of time, coloring the header of the days it covers. It is set using a startDate and an endDate, and marks all the days in the interval. when a certain day is appended to a period, it gets a label (not user side). This will be important later since im planning on adding a discord querry system.
 
 f) RECCURENCE
+
+g) PERIOD-AWARE EVENTS (planned, implement later)
+events and their repeats can be tied to a period: e.g. "repeat only during Exams" (the repeats stop when the period ends), or hide / dim events that fall outside a chosen period. Fits together with f) RECCURENCE.
 
 ### **GENERAL**
 
 a) ✅ DONE — pressing on the Ideally icon acts as a back button between tabs and pop-ups
 
 b) ✅ DONE — every and any pop-up/overlay should have an "x" button, small, subtle, that appears, in the top left corner of the pop up, when cursor hovers over it. It acts as a overlay closing button.
+
+c) IDEALLY API — LOCAL SERVER (planned, implement later)
+move the app's data out of the browser (localStorage) into a small local Node server: an "Ideally API". The app saves to and loads from it, and the planned Discord query system reads from it (e.g. the period labels in ideally.dayLabels / ideally.periodColors). Also removes the "data is tied to the browser address" problem (file:// vs localhost, different ports).
 
 ### **EXTRAS** (added along the way, not in the original spec)
 
@@ -95,7 +102,7 @@ b) ✅ DONE — daysRow shows a dim weekday initial above the bold DD.MM, in the
 
 c) ✅ DONE — weekend columns slightly darker
 
-d) ✅ DONE — Events / Periods / Time Blocks show a "coming soon" message until built (only Periods left)
+d) ✅ DONE — Events / Periods / Time Blocks showed a "coming soon" message until built (all three are built now)
 
 e) ✅ DONE — hour label in each hour row; half-hour lines
 
@@ -148,6 +155,26 @@ ab) ✅ DONE — dragging a block shows where it will land (dashed preview with 
 ac) ✅ DONE — a date is selected by clicking its DD.MM; clicking it again, Esc or changing week unselects it
 
 ad) ✅ DONE — details window: weekday + year next to the DD.MM (glowing if today); each event shows time, type (↻ if repeating) and its full description; clicking an event opens it for editing on top, and the list updates after a save / delete; "Nothing planned" when empty
+
+ae) ✅ DONE — periods: the name is the period's label and is never shown on the calendar; overlapping periods stack their color bands in rows, and a day in several periods gets a striped header
+
+af) ✅ DONE — period colors must be clearly different: OKLab distance ≥ 0.10 (tunable, MIN_COLOR_DISTANCE in src/calendar/periods.js); a too-close color is rejected with a hint naming the clashing period; a new period is offered the color farthest from the existing ones (0.10 tested and confirmed to hold well)
+
+ag) ✅ DONE — period names are unique (case-insensitive)
+
+ah) ✅ DONE — backend indexes rebuilt on every change: ideally.dayLabels (each covered day → its periods' names) and ideally.periodColors (name, color, OKLab value)
+
+ai) ✅ DONE — hovering a day's DD.MM or a color band shows a tag with the period color(s) and name(s)
+
+aj) ✅ DONE — new period: drag across day headers, right-click a header → "New period from here", or the Periods panel; right-click a header / band → Edit / Delete the period; clicking a band edits it
+
+ak) ✅ DONE — period overlay: name heading, color circle (color wheel), Start → End fields with a mini month picker (click first day, then last day; hovering previews the range; dots mark days in other periods); dates can also be typed ("1611" → 16.11) and ↑/↓ move them by a day
+
+al) ✅ DONE — Periods side panel (its own Back step): New Period + every period with its dates and length, past ones dimmed, the current one glowing; click edits, ↗ / right-click → "Show in calendar" jumps to its week
+
+am) ✅ DONE — the day details window lists the day's periods (click one to edit it)
+
+an) ✅ DONE — fixed: an apostrophe in the date-header tooltip broke the calendar code in the "added Details Pannel" commit (the app wouldn't load)
 
 #### **4. General**
 
