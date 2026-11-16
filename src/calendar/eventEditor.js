@@ -36,6 +36,11 @@ function parseTime(str, isEnd){
   return pad(h) + ':' + pad(m);
 }
 
+/* hours from start to end; an end before the start is on the next day */
+const span = (start, end) => { const d = toHours(end) - toHours(start); return d < 0 ? d + 24 : d; };
+/* the end time `dur` hours after start (wraps past midnight; exactly midnight → 24:00) */
+const endAfter = (start, dur) => { const h = toHours(start) + dur; return fromHours(h > 24 ? h - 24 : h); };
+
 const TEMPLATE =
   '<div class="ee-head">' +
     '<h2 class="ee-name"></h2>' +
@@ -148,7 +153,7 @@ function openEditor(isBlock, item, fresh){
     const d = parseIso(draft.date);
     dateLabel.textContent = DAY_NAMES[d.getDay()] + ' ' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear();
   };
-  const shiftDay = n => { draft.date = isoDate(addDays(parseIso(draft.date), n)); showDate(); };
+  const shiftDay = n => { draft.date = isoDate(addDays(parseIso(draft.date), n)); showDate(); refresh(); };
   if (!isBlock){
     $('.ee-day-prev').addEventListener('click', () => shiftDay(-1));
     $('.ee-day-next').addEventListener('click', () => shiftDay(1));
@@ -157,13 +162,14 @@ function openEditor(isBlock, item, fresh){
   /* ---- start / end (24-hour), or a block's duration ---- */
   const timeFields = isBlock ? [[durIn, 'duration']] : [[startIn, 'start'], [endIn, 'end']];
   function commitTime(input, key){
-    const v = parseTime(input.value, key !== 'start');
+    let v = parseTime(input.value, key !== 'start');
+    if (v && key === 'end' && v === '00:00') v = '24:00';   // ending at midnight = end of the start day
     if (!v || v === draft[key]){ input.value = draft[key]; return; }
     if (key === 'start'){
-      /* moving the start keeps the duration */
-      const dur = toHours(draft.end) - toHours(draft.start);
+      /* moving the start keeps the duration (the end may move into the next day) */
+      const dur = span(draft.start, draft.end);
       draft.start = v;
-      if (dur > 0){ draft.end = fromHours(Math.min(24, toHours(v) + dur)); endIn.value = draft.end; }
+      if (dur > 0){ draft.end = endAfter(v, dur); endIn.value = draft.end; }
     } else {
       draft[key] = v;
     }
@@ -179,7 +185,10 @@ function openEditor(isBlock, item, fresh){
         e.preventDefault();
         const cur = parseTime(input.value, key !== 'start') || draft[key];
         const step = (e.shiftKey ? 1 : 0.25) * (e.key === 'ArrowUp' ? 1 : -1);
-        input.value = fromHours(clamp(toHours(cur) + step, key === 'duration' ? 0.25 : 0, key === 'start' ? 23.75 : 24));
+        /* the end steps the duration, so it can roll past midnight into the next day */
+        input.value = key === 'end'
+          ? endAfter(draft.start, clamp(span(draft.start, cur) + step, 0.25, toHours(draft.start) === 0 ? 24 : 23.75))
+          : fromHours(clamp(toHours(cur) + step, key === 'duration' ? 0.25 : 0, key === 'start' ? 23.75 : 24));
         commitTime(input, key);
       } else if (e.key === 'Enter'){
         e.preventDefault();
@@ -207,14 +216,21 @@ function openEditor(isBlock, item, fresh){
   nSel.addEventListener('change', readRecur);
 
   /* ---- save / delete ---- */
-  const badTime = () => isBlock ? toHours(draft.duration) <= 0 : toHours(draft.end) <= toHours(draft.start);
+  /* an event's end may be earlier than its start: it then ends the next day */
+  const badTime = () => isBlock ? toHours(draft.duration) <= 0 : span(draft.start, draft.end) <= 0;
   const problem = () => !draft.title ? 'name' : badTime() ? 'time' : null;
   const timeIn = isBlock ? durIn : endIn;   // the field that is wrong when the time is
   function refresh(){
     const p = problem();
     saveBtn.setAttribute('aria-disabled', p ? 'true' : 'false');
     timeIn.classList.toggle('invalid', p === 'time');
-    hint.textContent = p !== 'time' ? '' : isBlock ? 'Duration must be longer than 0' : 'End must be after start';
+    const nextDay = !isBlock && !p && toHours(draft.end) < toHours(draft.start);
+    hint.classList.toggle('info', nextDay);
+    if (p === 'time') hint.textContent = isBlock ? 'Duration must be longer than 0' : 'End can’t be the same as start';
+    else if (nextDay){
+      const d = addDays(parseIso(draft.date), 1);
+      hint.textContent = 'Ends next day, ' + DAY_NAMES[d.getDay()] + ' ' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1);
+    } else hint.textContent = '';
   }
   function trySave(){
     timeFields.forEach(([input, key]) => commitTime(input, key));

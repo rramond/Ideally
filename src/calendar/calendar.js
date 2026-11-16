@@ -2,7 +2,7 @@ import { clamp } from '../lib/utils.js';
 import { pad, isoDate, addDays, mondayOf, parseIso, toHours, fromHours } from '../lib/dates.js';
 import { toast } from '../lib/toast.js';
 import { showContextMenu } from '../lib/contextMenu.js';
-import { eventsOn, typeOf, getEvent, deleteEvent, onEventsChange } from './events.js';
+import { segmentsOn, timeLabel, typeOf, getEvent, deleteEvent, onEventsChange } from './events.js';
 import { openEventEditor } from './eventEditor.js';
 import { openDayDetails } from './dayDetails.js';
 import { periodsOn, periodsBetween, getPeriod, deletePeriod, onPeriodsChange } from './periods.js';
@@ -52,18 +52,18 @@ function blockStyle(el, color, u){
 
 const atHour = h => 'calc(var(--hour, 40px) * ' + h + ')';
 
-/* side-by-side lanes for events that overlap */
-function layoutDay(evs){
+/* side-by-side lanes for events that overlap (segs from segmentsOn, sorted by start) */
+function layoutDay(segs){
   const out = [];
   let cluster = [], clusterEnd = -1, laneEnds = [];
   const flush = () => { cluster.forEach(o => { o.lanes = laneEnds.length; }); cluster = []; laneEnds = []; };
-  evs.forEach(e => {
-    const start = toHours(e.start);
-    const end = Math.max(toHours(e.end), start + 0.25);
+  segs.forEach(seg => {
+    const start = seg.start;
+    const end = Math.max(seg.end, start + 0.25);
     if (start >= clusterEnd) flush();
     let lane = laneEnds.findIndex(t => t <= start);
     if (lane < 0){ lane = laneEnds.length; laneEnds.push(end); } else laneEnds[lane] = end;
-    const o = { e, start, end, lane };
+    const o = { ...seg, start, end, lane };
     cluster.push(o); out.push(o);
     clusterEnd = Math.max(clusterEnd, end);
   });
@@ -144,15 +144,16 @@ function renderWeek(){
       row.className = 'hour-row';
       const label = document.createElement('span');
       label.className = 'hour-label';
-      label.textContent = pad(h) + ':00';
+      label.textContent = pad(h);
       row.appendChild(label);
       grid.appendChild(row);
     }
 
     const u = urgency(dStr);
-    layoutDay(eventsOn(dStr)).forEach(({ e, start, end, lane, lanes }) => {
+    layoutDay(segmentsOn(dStr)).forEach(({ e, start, end, lane, lanes, cont }) => {
       const block = document.createElement('div');
-      block.className = 'ev-block';
+      /* an overnight event: .to-next on its first day, .cont where it continues */
+      block.className = 'ev-block' + (cont ? ' cont' : end >= 24 && e.end !== '24:00' ? ' to-next' : '');
       block.dataset.id = e.id;
       block.style.top = atHour(start);
       block.style.height = 'calc(var(--hour, 40px) * ' + (end - start) + ' - 3px)';
@@ -161,11 +162,11 @@ function renderWeek(){
       const repeats = e.recur && e.recur.kind !== 'none';
       const t = document.createElement('span');
       t.className = 'ev-time';
-      t.textContent = e.start + '–' + e.end + (repeats ? ' ↻' : '');
+      t.textContent = timeLabel(e) + (repeats ? ' ↻' : '');
       const ti = document.createElement('span');
       ti.className = 'ev-title';
       ti.textContent = e.title;
-      block.title = e.start + '–' + e.end + ' ' + e.title + ' (' + typeOf(e).name + ')' + (e.description ? '\n' + e.description : '');
+      block.title = timeLabel(e) + ' ' + e.title + ' (' + typeOf(e).name + ')' + (e.description ? '\n' + e.description : '');
       block.append(t, ti);
       blockStyle(block, typeOf(e).color, u);
       block.addEventListener('click', () => openEventEditor({ event: getEvent(e.id) }));

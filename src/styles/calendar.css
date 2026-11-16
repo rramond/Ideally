@@ -44,19 +44,22 @@
   font-family:var(--font-mono);font-size:9.5px;color:var(--muted);opacity:.6;
 }
 
-/* events: from start to end, tinted with their type color */
+/* events: from start to end, tinted with their type color, right of the hour labels */
 .ev-block{
   --lane:0;--lanes:1;
   position:absolute;z-index:1;height:calc(var(--hour, 40px) - 3px);margin-top:1px;
   /* after the hour labels, out to the right edge (2px between lanes, 1px at the edge) */
-  left:calc(38px + (100% - 37px) * var(--lane) / var(--lanes));
-  width:calc((100% - 37px) / var(--lanes) - 2px);
+  left:calc(22px + (100% - 21px) * var(--lane) / var(--lanes));
+  width:calc((100% - 21px) / var(--lanes) - 2px);
   display:flex;flex-direction:column;gap:1px;overflow:hidden;
   border-radius:6px;padding:3px 7px;
   font-size:11.5px;line-height:1.3;color:#F1EEFA;border:1px solid transparent;
   cursor:pointer;transition:filter .12s;
 }
 .ev-block:hover{filter:brightness(1.18)}
+/* overnight events: the two halves meet flat at midnight */
+.ev-block.to-next{border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom-style:dashed}
+.ev-block.cont{border-top-left-radius:0;border-top-right-radius:0;border-top-style:dashed}
 .ev-block .ev-time{font-family:var(--font-mono);font-size:10px;opacity:.8}
 .ev-block .ev-title{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
@@ -101,7 +104,7 @@ body.tb-dragging,body.tb-dragging *{cursor:grabbing !important}
 .tb-ghost[hidden]{display:none}
 /* where the block will land: full width of the column, above the events */
 .ev-block.tb-preview{
-  left:38px;width:calc(100% - 39px);z-index:3;pointer-events:none;
+  left:22px;width:calc(100% - 23px);z-index:3;pointer-events:none;
   background:color-mix(in srgb, var(--tc) 32%, transparent);
   border:1px dashed var(--tc);
   box-shadow:0 0 10px color-mix(in srgb, var(--tc) 50%, transparent);

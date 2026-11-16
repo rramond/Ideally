@@ -1,10 +1,12 @@
 import { store } from '../lib/storage.js';
-import { isoDate, addDays, mondayOf, dayNumber, daysInMonth, toHours, fromHours } from '../lib/dates.js';
+import { isoDate, addDays, mondayOf, parseIso, dayNumber, daysInMonth, toHours, fromHours } from '../lib/dates.js';
 
 /* ============================================================
    Calendar data: events (with recurrence) and event types.
    Event: { id, title, date, start, end, description, typeId,
             recur: { kind, n? } }   — date = first occurrence
+   An end earlier than the start means the event runs past
+   midnight and ends on the next day (22:00–02:00).
 ============================================================ */
 export const RECURRENCE = [
   ['none', 'Does not repeat'],
@@ -115,6 +117,24 @@ export function occursOn(e, dateStr){
 
 export function eventsOn(dateStr){
   return events.filter(e => occursOn(e, dateStr)).sort((a, b) => a.start.localeCompare(b.start));
+}
+
+/* runs past midnight into the next day? (an end of 24:00 is still the same day) */
+export const isOvernight = e => toHours(e.end) < toHours(e.start);
+/* "09:00–10:00", or "22:00–02:00 (+1)" for an event ending the next day */
+export const timeLabel = e => e.start + '–' + e.end + (isOvernight(e) ? ' (+1)' : '');
+
+/* what fills dateStr's hours: { e, start, end (hours), cont }. An overnight
+   event gives its first day start→24 and the next day 0→end (cont = true). */
+export function segmentsOn(dateStr){
+  const prev = isoDate(addDays(parseIso(dateStr), -1));
+  const segs = [];
+  events.forEach(e => {
+    const start = toHours(e.start), end = toHours(e.end), over = end < start;
+    if (occursOn(e, dateStr)) segs.push({ e, start, end: over ? 24 : end, cont: false });
+    if (over && end > 0 && occursOn(e, prev)) segs.push({ e, start: 0, end, cont: true });
+  });
+  return segs.sort((a, b) => a.start - b.start || b.end - a.end);
 }
 
 /* ============================================================

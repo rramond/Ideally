@@ -1,7 +1,7 @@
 import { pad, parseIso, isoDate } from '../lib/dates.js';
 import { openPopup, closePopup, isPopupOpen } from '../lib/history.js';
 import { addCloseX } from '../lib/popups.js';
-import { eventsOn, typeOf, getEvent, onEventsChange } from './events.js';
+import { segmentsOn, timeLabel, typeOf, getEvent, onEventsChange } from './events.js';
 import { openEventEditor } from './eventEditor.js';
 import { periodsOn, getPeriod, onPeriodsChange } from './periods.js';
 import { openPeriodEditor } from './periodEditor.js';
@@ -65,12 +65,13 @@ export function openDayDetails(dateStr){
       periodRow.appendChild(chip);
     });
     list.innerHTML = '';
-    const evs = eventsOn(dateStr);
-    if (!evs.length){
+    /* includes events that started the day before and run past midnight */
+    const segs = segmentsOn(dateStr);
+    if (!segs.length){
       list.appendChild(el('p', 'dd-empty', 'Nothing planned for this day.'));
       return;
     }
-    evs.forEach(e => {
+    segs.forEach(({ e, cont }) => {
       const t = typeOf(e);
       const item = el('button', 'dd-item');
       item.type = 'button';
@@ -79,7 +80,7 @@ export function openDayDetails(dateStr){
       const top = el('div', 'dd-item-top');
       const repeats = e.recur && e.recur.kind !== 'none';
       top.append(
-        el('span', 'dd-time', e.start + '–' + e.end),
+        el('span', 'dd-time', cont ? 'until ' + e.end : timeLabel(e)),
         el('span', 'dd-title', e.title),
         el('span', 'dd-type', t.name + (repeats ? ' ↻' : ''))
       );
