@@ -48,7 +48,7 @@ clicking on a date selects that date, dimming the rest, highlighting its borders
 e) ✅ DONE — PERIODS
 A period is marked by a big block of a choose-able (by colorwheel) color, that marks a window of time, coloring the header of the days it covers. It is set using a startDate and an endDate, and marks all the days in the interval. when a certain day is appended to a period, it gets a label (not user side). This will be important later since im planning on adding a discord querry system.
 
-    e.1) When creating editing -> CANCEL EVENTS button. Can be checked, and upon checking the events that exist within the period get canceled. If a recurring event is caught inside a cancelling period, it gets halted just for the duration of that period but continues on schedule from where it ends. One-time events get cancelled and thats it. (this feature is targeted heavier towards recurring events. If i have Gym and Math study recurring during a vacation period, i would want them cancelled so as to not appear when querrying about days withing the period, as well as not deleting manually, but they should continue normally after periodEndDate)
+    e.1) ✅ DONE — When creating editing -> CANCEL EVENTS button. Can be checked, and upon checking the events that exist within the period get canceled. If a recurring event is caught inside a cancelling period, it gets halted just for the duration of that period but continues on schedule from where it ends. One-time events get cancelled and thats it. (this feature is targeted heavier towards recurring events. If i have Gym and Math study recurring during a vacation period, i would want them cancelled so as to not appear when querrying about days withing the period, as well as not deleting manually, but they should continue normally after periodEndDate)
 
 f) FEATURE: TYPE COLOR OVERRIDE
 in event creation/edit pannel, on the right of the color circle where type is chosen, add another circle, empty at first, that when hovered shows override color. This makes so that an event can have a certain type to adhere to a broad category, but can also be differentiated from that type in the case where it is someting more unique.
@@ -151,7 +151,7 @@ q) ✅ DONE — new events start with the last type used
 
 r) ✅ DONE — ‹ › buttons in the event overlay move the event to the previous / next day
 
-s) ✅ DONE — Start / End are typed 24-hour fields ("930" → 09:30); ↑/↓ change them by 15 min (Shift: 1 h); moving the start keeps the duration; an end before the start shows a hint and blocks saving
+s) ✅ DONE — Start / End are typed 24-hour fields ("930" → 09:30); ↑/↓ change them by 15 min (Shift: 1 h); moving the start keeps the duration; an end equal to the start blocks saving (an end *before* the start means next day, see ao)
 
 t) ✅ DONE — Create needs a name: pressing it without one makes the heading pulse; Ctrl+Enter saves from anywhere in the overlay
 
@@ -194,6 +194,22 @@ al) ✅ DONE — Periods side panel (its own Back step): New Period + every peri
 am) ✅ DONE — the day details window lists the day's periods (click one to edit it)
 
 an) ✅ DONE — fixed: an apostrophe in the date-header tooltip broke the calendar code in the "added Details Pannel" commit (the app wouldn't load)
+
+ao) ✅ DONE — overnight events: an end earlier than the start means the event ends the next day (22:00–02:00); the overlay says "Ends next day, Tue 17.11"; ↑ on End rolls past 24:00; the block is drawn on both days with a flat dashed edge at midnight, its time shown as "22:00–02:00 (+1)"; the next day's details list it as "until 02:00"; typing 00:00 as the end still means midnight of the same day (24:00)
+
+ap) ✅ DONE — hour labels show just the hour (00 … 23, no ":00"); event blocks start closer to the labels to use the freed space
+
+aq) ✅ DONE — cancelling periods (3e.1), how it works: only events that existed before the period started cancelling are cancelled (each event remembers when it was made; a period remembers when cancelling was switched on) — events made later, during the period, stay, so a "Flight" added inside a vacation is kept. Nothing is deleted: unchecking the box, shrinking or deleting the period brings the events back. A repeating event skips the period's days and goes on after it. Overnight events count by their start day
+
+ar) ✅ DONE — cancelled events are ghosted on the calendar (faint, dashed, struck through, no glow) with the tooltip "Cancelled by <period>"; right-click → "Keep event" takes one out of the cancelling (it then counts as made now); the event overlay notes "⊘ Cancelled by <period> on this day"; the day details window lists them last under a "Cancelled" heading
+
+as) ✅ DONE — period overlay: "Cancel events in this period" checkbox with a live count ("cancels 4 events, 2 repeating", or "would cancel …" while unchecked), updating as the dates change; the Periods panel marks such periods with "⊘ cancels events"
+
+at) ✅ DONE — for the queries: eventsOn(day) leaves cancelled events out; ideally.periodColors entries carry cancelEvents
+
+au) ✅ DONE — clicking a ghost (cancelled event) inside a period washes the period's ghosts away: one big wave in the period's color, as wide as the period, rolls slowly (1.8 s) down from its date bar through the period's columns only, each ghost fading as the glowing crest reaches it; the period then keeps them hidden (hideCancelled), so the days are free for new events. Ghosts are still edited via right-click → Edit, still listed in the day details under "Cancelled", and come back with right-click on the period's band / header → "Show cancelled events" (or by switching cancelling off and on)
+
+av) idea: a time block dropped near the end of a day still stops at 24:00 — it could wrap into the next day like a typed end time does
 
 #### **4. General**
 
