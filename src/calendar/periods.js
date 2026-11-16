@@ -99,7 +99,7 @@ export function suggestColor(exceptId){
 export function savePeriod(p){
   /* cancelSince marks when cancelling was switched on; switching it off forgets it */
   if (p.cancelEvents){ if (!p.cancelSince) p.cancelSince = Date.now(); }
-  else delete p.cancelSince;
+  else { delete p.cancelSince; delete p.hideCancelled; }   // hideCancelled: the ghosts were washed away (calendar.js)
   const i = periods.findIndex(x => x.id === p.id);
   if (i < 0) periods.push(p); else periods[i] = p;
   persist();

@@ -7,9 +7,9 @@
 .cal-nav{margin-left:auto;display:flex;gap:6px;align-items:center}
 
 /* ---- week: one column per day ---- */
-.week{flex:1;min-height:0;display:grid;grid-template-columns:repeat(7, minmax(0, 1fr))}
+.week{position:relative;flex:1;min-height:0;display:grid;grid-template-columns:repeat(7, minmax(0, 1fr))}
 .day-col{
-  display:flex;flex-direction:column;min-width:0;min-height:0;
+  position:relative;display:flex;flex-direction:column;min-width:0;min-height:0;
   border-right:1px solid var(--line);background:var(--surface);
 }
 .day-col:last-child{border-right:none}
@@ -64,6 +64,22 @@
 .ev-block.cancelled{opacity:.35;border-style:dashed;box-shadow:none !important}
 .ev-block.cancelled:hover{opacity:.6;filter:none}
 .ev-block.cancelled .ev-time,.ev-block.cancelled .ev-title{text-decoration:line-through}
+.ev-block.cancelled.washed{animation:wash-out .4s ease forwards}
+@keyframes wash-out{to{opacity:0;transform:translateY(10px) scale(.94)}}
+
+/* the wave that washes a period's ghosts away: one big band in the period
+   color, as wide as the period, with a glowing rounded crest, rolling from
+   the date bar to the bottom of the week; clipped to the period's columns so
+   nothing outside the period is touched (left/width set from calendar.js) */
+.period-wave{position:absolute;top:0;bottom:0;z-index:6;overflow:hidden;pointer-events:none}
+.period-wave::before{
+  content:"";position:absolute;left:-6%;right:-6%;top:-60%;height:55%;
+  border-radius:0 0 50% 50% / 0 0 70% 70%;
+  background:linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--pc) 22%, transparent) 50%, color-mix(in srgb, var(--pc) 60%, transparent) 100%);
+  box-shadow:0 2px 0 color-mix(in srgb, var(--pc) 85%, white 15%),0 8px 30px color-mix(in srgb, var(--pc) 60%, transparent);
+  animation:period-wave var(--dur, 1.8s) cubic-bezier(.5,0,.5,1) forwards;
+}
+@keyframes period-wave{to{top:115%}}
 .ev-block .ev-time{font-family:var(--font-mono);font-size:10px;opacity:.8}
 .ev-block .ev-title{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 

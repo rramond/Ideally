@@ -5,7 +5,7 @@ import { showContextMenu } from '../lib/contextMenu.js';
 import { segmentsOn, timeLabel, typeOf, getEvent, deleteEvent, keepEvent, onEventsChange } from './events.js';
 import { openEventEditor } from './eventEditor.js';
 import { openDayDetails } from './dayDetails.js';
-import { periodsOn, periodsBetween, getPeriod, deletePeriod, onPeriodsChange } from './periods.js';
+import { periodsOn, periodsBetween, getPeriod, savePeriod, deletePeriod, onPeriodsChange } from './periods.js';
 import { openPeriodEditor } from './periodEditor.js';
 import { anyPopupOpen } from '../lib/history.js';
 
@@ -150,7 +150,9 @@ function renderWeek(){
     }
 
     const u = urgency(dStr);
-    layoutDay(segmentsOn(dStr)).forEach(({ e, start, end, lane, lanes, cont, cancelled }) => {
+    /* ghosts washed away from a period (hideCancelled) are left out until "Show cancelled events" */
+    const segs = segmentsOn(dStr).filter(s => !(s.cancelled && s.cancelled.hideCancelled));
+    layoutDay(segs).forEach(({ e, start, end, lane, lanes, cont, cancelled }) => {
       const block = document.createElement('div');
       /* an overnight event: .to-next on its first day, .cont where it continues;
          3e.1: one cancelled by a period is ghosted */
@@ -168,11 +170,12 @@ function renderWeek(){
       const ti = document.createElement('span');
       ti.className = 'ev-title';
       ti.textContent = e.title;
-      block.title = (cancelled ? 'Cancelled by ' + cancelled.name + '\n' : '') +
+      block.title = (cancelled ? 'Cancelled by ' + cancelled.name + '\nClick to wash the cancelled events out of ' + cancelled.name + ' (right-click to edit)\n' : '') +
                     timeLabel(e) + ' ' + e.title + ' (' + typeOf(e).name + ')' + (e.description ? '\n' + e.description : '');
       block.append(t, ti);
       blockStyle(block, typeOf(e).color, u);
-      block.addEventListener('click', () => openEventEditor({ event: getEvent(e.id) }));
+      /* a ghost: clicking washes every ghost of its period away (edit via right-click) */
+      block.addEventListener('click', () => cancelled ? washPeriod(cancelled) : openEventEditor({ event: getEvent(e.id) }));
       grid.appendChild(block);
     });
 
@@ -238,6 +241,43 @@ export function slotAt(x, y, dur){
   return { date: body.parentElement.dataset.date, hour: clamp(h, 0, latest), grid };
 }
 
+/* clicking a ghost: a wave in the period's color rolls down from its date bar
+   through the period's columns (only those), the ghosts fading as it passes;
+   then the period remembers to keep them hidden (hideCancelled) */
+const WAVE_MS = 1800;
+let washing = false;
+function washPeriod(p){
+  if (washing) return;
+  washing = true;
+  const cols = [...weekEl.querySelectorAll('.day-col')].filter(c => p.start <= c.dataset.date && c.dataset.date <= p.end);
+  if (!cols.length){ washing = false; return; }
+  /* one wave spanning the period's columns, laid over the week */
+  const weekR = weekEl.getBoundingClientRect();
+  const first = cols[0].getBoundingClientRect(), last = cols[cols.length - 1].getBoundingClientRect();
+  const wave = document.createElement('div');
+  wave.className = 'period-wave';
+  wave.style.left = (first.left - weekR.left) + 'px';
+  wave.style.width = (last.right - first.left) + 'px';
+  wave.style.setProperty('--pc', p.color);
+  wave.style.setProperty('--dur', WAVE_MS + 'ms');
+  weekEl.appendChild(wave);
+  cols.forEach(col => {
+    col.querySelectorAll('.ev-block.cancelled').forEach(b => {
+      if (b.dataset.cancelledBy !== p.name) return;
+      /* each ghost fades when the wave's crest reaches it (the crest covers the column in ~70% of the run) */
+      const frac = clamp((b.getBoundingClientRect().top - weekR.top) / weekR.height, 0, 1);
+      b.style.animationDelay = Math.round(frac * WAVE_MS * 0.7) + 'ms';
+      b.classList.add('washed');
+    });
+  });
+  setTimeout(() => {
+    washing = false;
+    const cur = getPeriod(p.id);
+    if (cur) savePeriod({ ...cur, hideCancelled: true });   // re-renders without the ghosts
+    toast('Cancelled events hidden in “' + p.name + '” — right-click its band to show them again');
+  }, WAVE_MS + 150);
+}
+
 /* header / band background: the period color, or equal stripes of several */
 function periodTint(list){
   const tint = c => 'color-mix(in srgb, ' + c + ' 26%, transparent)';
@@ -251,6 +291,8 @@ function periodMenuItems(p, named){
   const suffix = named ? ' “' + p.name + '”' : '';
   return [
     { label: 'Edit period' + suffix, action: () => openPeriodEditor({ period: getPeriod(p.id) }) },
+    ...(p.cancelEvents && p.hideCancelled ? [{ label: 'Show cancelled events' + suffix,
+      action: () => { const cur = getPeriod(p.id); if (cur){ delete cur.hideCancelled; savePeriod({ ...cur }); } } }] : []),
     { label: 'Delete period' + suffix, danger: true,
       action: () => { deletePeriod(p.id); toast('Deleted period “' + p.name + '”'); } }
   ];
