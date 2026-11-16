@@ -2,7 +2,7 @@ import { clamp } from '../lib/utils.js';
 import { pad, isoDate, addDays, mondayOf, parseIso, toHours, fromHours } from '../lib/dates.js';
 import { toast } from '../lib/toast.js';
 import { showContextMenu } from '../lib/contextMenu.js';
-import { segmentsOn, timeLabel, typeOf, getEvent, deleteEvent, onEventsChange } from './events.js';
+import { segmentsOn, timeLabel, typeOf, getEvent, deleteEvent, keepEvent, onEventsChange } from './events.js';
 import { openEventEditor } from './eventEditor.js';
 import { openDayDetails } from './dayDetails.js';
 import { periodsOn, periodsBetween, getPeriod, deletePeriod, onPeriodsChange } from './periods.js';
@@ -150,10 +150,12 @@ function renderWeek(){
     }
 
     const u = urgency(dStr);
-    layoutDay(segmentsOn(dStr)).forEach(({ e, start, end, lane, lanes, cont }) => {
+    layoutDay(segmentsOn(dStr)).forEach(({ e, start, end, lane, lanes, cont, cancelled }) => {
       const block = document.createElement('div');
-      /* an overnight event: .to-next on its first day, .cont where it continues */
-      block.className = 'ev-block' + (cont ? ' cont' : end >= 24 && e.end !== '24:00' ? ' to-next' : '');
+      /* an overnight event: .to-next on its first day, .cont where it continues;
+         3e.1: one cancelled by a period is ghosted */
+      block.className = 'ev-block' + (cont ? ' cont' : end >= 24 && e.end !== '24:00' ? ' to-next' : '') + (cancelled ? ' cancelled' : '');
+      if (cancelled) block.dataset.cancelledBy = cancelled.name;
       block.dataset.id = e.id;
       block.style.top = atHour(start);
       block.style.height = 'calc(var(--hour, 40px) * ' + (end - start) + ' - 3px)';
@@ -166,7 +168,8 @@ function renderWeek(){
       const ti = document.createElement('span');
       ti.className = 'ev-title';
       ti.textContent = e.title;
-      block.title = timeLabel(e) + ' ' + e.title + ' (' + typeOf(e).name + ')' + (e.description ? '\n' + e.description : '');
+      block.title = (cancelled ? 'Cancelled by ' + cancelled.name + '\n' : '') +
+                    timeLabel(e) + ' ' + e.title + ' (' + typeOf(e).name + ')' + (e.description ? '\n' + e.description : '');
       block.append(t, ti);
       blockStyle(block, typeOf(e).color, u);
       block.addEventListener('click', () => openEventEditor({ event: getEvent(e.id) }));
@@ -342,11 +345,17 @@ weekEl.addEventListener('contextmenu', e => {
     const ev = getEvent(block.dataset.id);
     if (!ev) return;
     const repeats = ev.recur && ev.recur.kind !== 'none';
-    showContextMenu(e.clientX, e.clientY, [
-      { label: 'Edit event', action: () => openEventEditor({ event: getEvent(ev.id) }) },
-      { label: repeats ? 'Delete event (all repeats)' : 'Delete event', danger: true,
-        action: () => { deleteEvent(ev.id); toast('Deleted “' + ev.title + '”'); } }
-    ]);
+    const items = [
+      { label: 'Edit event', action: () => openEventEditor({ event: getEvent(ev.id) }) }
+    ];
+    /* 3e.1: a cancelled event can be kept after all (it then counts as made now) */
+    if (block.dataset.cancelledBy) items.push({
+      label: 'Keep event (cancelled by ' + block.dataset.cancelledBy + ')',
+      action: () => { keepEvent(ev.id); toast('“' + ev.title + '” is back on'); }
+    });
+    items.push({ label: repeats ? 'Delete event (all repeats)' : 'Delete event', danger: true,
+      action: () => { deleteEvent(ev.id); toast('Deleted “' + ev.title + '”'); } });
+    showContextMenu(e.clientX, e.clientY, items);
     return;
   }
   const band = e.target.closest('.period-band');

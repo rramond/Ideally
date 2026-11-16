@@ -65,24 +65,29 @@ export function openDayDetails(dateStr){
       periodRow.appendChild(chip);
     });
     list.innerHTML = '';
-    /* includes events that started the day before and run past midnight */
+    /* includes events that started the day before and run past midnight;
+       3e.1: the ones cancelled by a period come last, under their own heading */
     const segs = segmentsOn(dateStr);
+    const active = segs.filter(s => !s.cancelled), cancelled = segs.filter(s => s.cancelled);
     if (!segs.length){
       list.appendChild(el('p', 'dd-empty', 'Nothing planned for this day.'));
       return;
     }
-    segs.forEach(({ e, cont }) => {
+    if (!active.length) list.appendChild(el('p', 'dd-empty dd-empty-top', 'Nothing planned for this day.'));
+    if (cancelled.length) cancelled.unshift({ heading: 'Cancelled' });
+    [...active, ...cancelled].forEach(({ e, cont, cancelled: by, heading }) => {
+      if (heading){ list.appendChild(el('p', 'dd-group', heading)); return; }
       const t = typeOf(e);
-      const item = el('button', 'dd-item');
+      const item = el('button', 'dd-item' + (by ? ' cancelled' : ''));
       item.type = 'button';
       item.style.setProperty('--tc', t.color);
-      item.title = 'Edit event';
+      item.title = by ? 'Cancelled by ' + by.name + '\nClick to edit' : 'Edit event';
       const top = el('div', 'dd-item-top');
       const repeats = e.recur && e.recur.kind !== 'none';
       top.append(
         el('span', 'dd-time', cont ? 'until ' + e.end : timeLabel(e)),
         el('span', 'dd-title', e.title),
-        el('span', 'dd-type', t.name + (repeats ? ' ↻' : ''))
+        by ? el('span', 'dd-cancelled-by', 'Cancelled by ' + by.name) : el('span', 'dd-type', t.name + (repeats ? ' ↻' : ''))
       );
       item.appendChild(top);
       if (e.description) item.appendChild(el('p', 'dd-desc', e.description));

@@ -12,10 +12,16 @@ import { hsvToHex } from '../colorWheel.js';
    Discord queries):
    - ideally.dayLabels:    { 'YYYY-MM-DD': ['Exams', …] }
                            every covered day → its periods' names
-   - ideally.periodColors: [{ name, color, oklab: [L, a, b] }]
+   - ideally.periodColors: [{ name, color, oklab: [L, a, b], cancelEvents }]
                            the colors in use
    Rules: names are unique (case-insensitive); colors must be
    clearly different (OKLab distance ≥ MIN_COLOR_DISTANCE).
+
+   Cancelling (3e.1): a period with cancelEvents cancels the
+   events on its days that existed before it started cancelling
+   (event.created < period.cancelSince). Nothing is deleted —
+   a repeating event just skips those days and goes on after
+   the period; events made later, during the period, stay.
 ============================================================ */
 export const MIN_COLOR_DISTANCE = 0.10;
 
@@ -33,7 +39,7 @@ function writeIndexes(){
   });
   store.set('ideally.dayLabels', labels);
   store.set('ideally.periodColors', periods.map(p => ({
-    name: p.name, color: p.color, oklab: hexToOklab(p.color).map(v => +v.toFixed(4))
+    name: p.name, color: p.color, oklab: hexToOklab(p.color).map(v => +v.toFixed(4)), cancelEvents: !!p.cancelEvents
   })));
 }
 function persist(){
@@ -53,6 +59,13 @@ export const periodsBetween = (from, to) => periods.filter(p => p.start <= to &&
 /* the backend label(s) of a day */
 export const labelsOn = dateStr => store.get('ideally.dayLabels', {})[dateStr] || [];
 export const dayCount = p => dayNumber(p.end) - dayNumber(p.start) + 1;
+
+/* the period that cancels event e on dateStr (the day the event starts), or null.
+   `among` lets the period editor test an unsaved draft instead of the stored periods. */
+export function cancelledBy(e, dateStr, among = periods){
+  const created = e.created || 0;
+  return among.find(p => p.cancelEvents && p.start <= dateStr && dateStr <= p.end && created < (p.cancelSince || 0)) || null;
+}
 
 export function nameTaken(name, exceptId){
   const n = name.trim().toLowerCase();
@@ -84,6 +97,9 @@ export function suggestColor(exceptId){
 }
 
 export function savePeriod(p){
+  /* cancelSince marks when cancelling was switched on; switching it off forgets it */
+  if (p.cancelEvents){ if (!p.cancelSince) p.cancelSince = Date.now(); }
+  else delete p.cancelSince;
   const i = periods.findIndex(x => x.id === p.id);
   if (i < 0) periods.push(p); else periods[i] = p;
   persist();

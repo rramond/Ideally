@@ -6,6 +6,7 @@ import { toast } from '../lib/toast.js';
 import { attachColorWheel } from '../colorWheel.js';
 import { RECURRENCE, getTypes, typeOf, saveType, deleteType, lastTypeId, rememberType,
          saveEvent, deleteEvent, saveBlock, deleteBlock } from './events.js';
+import { cancelledBy } from './periods.js';
 
 /* ============================================================
    NEW EVENT OVERLAY (3c.1) — also used to edit an event, and
@@ -51,6 +52,7 @@ const TEMPLATE =
     '<span class="ee-date-label"></span>' +
     '<button class="icon-btn ee-day-next" type="button" title="Next day"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>' +
   '</div>' +
+  '<p class="ee-cancel-note" hidden></p>' +
   '<div class="ee-times">' +
     '<label class="ee-field"><span>Start</span><input class="ee-time ee-start" inputmode="numeric" maxlength="5" autocomplete="off"></label>' +
     '<label class="ee-field"><span>End</span><input class="ee-time ee-end" inputmode="numeric" maxlength="5" autocomplete="off"></label>' +
@@ -82,7 +84,7 @@ function openEditor(isBlock, item, fresh){
   const noun = isBlock ? 'block' : 'event';
   const draft = editing
     ? JSON.parse(JSON.stringify(item))
-    : { id: uid(), title: '', ...fresh, description: '', typeId: lastTypeId(), recur: { kind: 'none' } };
+    : { id: uid(), title: '', ...fresh, description: '', typeId: lastTypeId(), recur: { kind: 'none' }, created: Date.now() };
 
   const overlay = el('div', 'ev-overlay');
   const card = el('div', 'ev-card');
@@ -91,13 +93,13 @@ function openEditor(isBlock, item, fresh){
   card.setAttribute('aria-label', (editing ? 'Edit ' : 'New ') + noun);
   card.innerHTML = TEMPLATE;
   /* a block has a duration; an event has a date, start and end */
-  if (isBlock){ card.querySelector('.ee-date').remove(); card.querySelector('.ee-times').remove(); }
+  if (isBlock){ card.querySelector('.ee-date').remove(); card.querySelector('.ee-cancel-note').remove(); card.querySelector('.ee-times').remove(); }
   else card.querySelector('.ee-dur-field').remove();
   overlay.appendChild(card);
   document.body.appendChild(overlay);
 
   const $ = sel => card.querySelector(sel);
-  const nameEl = $('.ee-name'), typeBtn = $('.ee-type'), dateLabel = $('.ee-date-label');
+  const nameEl = $('.ee-name'), typeBtn = $('.ee-type'), dateLabel = $('.ee-date-label'), cancelNote = $('.ee-cancel-note');
   const startIn = $('.ee-start'), endIn = $('.ee-end'), durIn = $('.ee-dur'), descIn = $('.ee-desc');
   const kindSel = $('.ee-recur-kind'), nSel = $('.ee-recur-n');
   const delBtn = $('.ee-delete'), hint = $('.ee-hint'), saveBtn = $('.ee-save');
@@ -152,6 +154,11 @@ function openEditor(isBlock, item, fresh){
     if (isBlock) return;
     const d = parseIso(draft.date);
     dateLabel.textContent = DAY_NAMES[d.getDay()] + ' ' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear();
+    /* 3e.1: this day falls in a period that cancels the event */
+    const by = cancelledBy(draft, draft.date);
+    cancelNote.hidden = !by;
+    if (by) cancelNote.textContent = '⊘ Cancelled by ' + by.name + ' on this day' +
+      (draft.recur.kind !== 'none' ? ' — repeats continue after the period' : '');
   };
   const shiftDay = n => { draft.date = isoDate(addDays(parseIso(draft.date), n)); showDate(); refresh(); };
   if (!isBlock){

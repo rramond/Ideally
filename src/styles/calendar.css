@@ -60,6 +60,10 @@
 /* overnight events: the two halves meet flat at midnight */
 .ev-block.to-next{border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom-style:dashed}
 .ev-block.cont{border-top-left-radius:0;border-top-right-radius:0;border-top-style:dashed}
+/* 3e.1: cancelled by a period — ghosted, struck through, no glow */
+.ev-block.cancelled{opacity:.35;border-style:dashed;box-shadow:none !important}
+.ev-block.cancelled:hover{opacity:.6;filter:none}
+.ev-block.cancelled .ev-time,.ev-block.cancelled .ev-title{text-decoration:line-through}
 .ev-block .ev-time{font-family:var(--font-mono);font-size:10px;opacity:.8}
 .ev-block .ev-title{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
@@ -166,6 +170,12 @@ body.tb-dragging,body.tb-dragging *{cursor:grabbing !important}
 .dd-title{flex:1;min-width:0;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dd-type{font-family:var(--font-mono);font-size:10.5px;color:var(--tc);flex-shrink:0}
 .dd-desc{margin:0;font-size:13px;line-height:1.55;color:#C9C6DA;white-space:pre-wrap;overflow-wrap:anywhere}
+/* 3e.1: the day's cancelled events, after the live ones */
+.dd-empty-top{margin:6px 0 0}
+.dd-group{margin:8px 0 -4px;font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.dd-item.cancelled{opacity:.5;border-style:dashed;border-left-style:solid}
+.dd-item.cancelled .dd-title{text-decoration:line-through;font-weight:500}
+.dd-cancelled-by{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);flex-shrink:0}
 
 /* ============ PERIODS (3e) ============ */
 /* color bands above the headers: one row per overlapping period, no names */

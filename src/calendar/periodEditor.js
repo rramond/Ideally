@@ -5,6 +5,7 @@ import { addCloseX } from '../lib/popups.js';
 import { toast } from '../lib/toast.js';
 import { attachColorWheel } from '../colorWheel.js';
 import { periodsOn, nameTaken, colorClash, suggestColor, savePeriod, deletePeriod, dayCount } from './periods.js';
+import { cancelCount } from './events.js';
 
 /* ============================================================
    PERIOD OVERLAY (3e) — name (= the period's label), color
@@ -49,6 +50,11 @@ const TEMPLATE =
     '<label class="ee-field"><span>End</span><input class="pe-date pe-end" maxlength="10" autocomplete="off" spellcheck="false"></label>' +
     '<span class="pe-days"></span>' +
   '</div>' +
+  '<label class="pe-cancel">' +
+    '<input type="checkbox" class="pe-cancel-box">' +
+    '<span>Cancel events in this period</span>' +
+    '<span class="pe-cancel-count"></span>' +
+  '</label>' +
   '<p class="pe-note">Only the color shows on the calendar — hover a day to see the name.</p>' +
   '<div class="ee-foot">' +
     '<button class="danger-link ee-delete" type="button"></button>' +
@@ -78,6 +84,7 @@ export function openPeriodEditor({ period = null, start, end, pickEnd = false } 
   const $ = sel => card.querySelector(sel);
   const nameEl = $('.ee-name'), colorBtn = $('.pe-color');
   const datesRow = $('.pe-dates'), startIn = $('.pe-start'), endIn = $('.pe-end'), daysEl = $('.pe-days');
+  const cancelBox = $('.pe-cancel-box'), cancelCountEl = $('.pe-cancel-count');
   const delBtn = $('.ee-delete'), hint = $('.ee-hint'), saveBtn = $('.ee-save');
 
   const close = () => closePopup(EDITOR);
@@ -130,11 +137,24 @@ export function openPeriodEditor({ period = null, start, end, pickEnd = false } 
     endIn.value = fmtDate(draft.end);
     const n = dayCount(draft);
     daysEl.textContent = n + (n === 1 ? ' day' : ' days');
+    showCancel();
   };
   function setRange(a, b){
     [draft.start, draft.end] = a <= b ? [a, b] : [b, a];
     showDates();
   }
+
+  /* ---- 3e.1: cancel the events on these days (only ones made before the
+     period started cancelling; a repeating event goes on after the period) ---- */
+  function showCancel(){
+    cancelBox.checked = !!draft.cancelEvents;
+    const { events, repeating } = cancelCount(draft);
+    const what = events + (events === 1 ? ' event' : ' events') + (repeating ? ', ' + repeating + ' repeating' : '');
+    cancelCountEl.textContent = !events ? (draft.cancelEvents ? 'nothing to cancel' : '')
+      : draft.cancelEvents ? 'cancels ' + what : 'would cancel ' + what;
+    cancelCountEl.classList.toggle('on', !!draft.cancelEvents && events > 0);
+  }
+  cancelBox.addEventListener('change', () => { draft.cancelEvents = cancelBox.checked; showCancel(); });
   function commitDate(input, key){
     const v = parseDateInput(input.value, Number(draft[key].slice(0, 4)));
     if (!v){ input.value = fmtDate(draft[key]); return; }

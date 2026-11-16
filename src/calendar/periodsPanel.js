@@ -40,7 +40,7 @@ function render(){
     const n = dayCount(p);
     const meta = document.createElement('span');
     meta.className = 'tb-meta';
-    meta.textContent = short(p.start) + ' – ' + short(p.end) + ' · ' + n + 'd';
+    meta.textContent = short(p.start) + ' – ' + short(p.end) + ' · ' + n + 'd' + (p.cancelEvents ? ' · ⊘ cancels events' : '');
     const jump = document.createElement('button');
     jump.type = 'button';
     jump.className = 'pe-jump';
