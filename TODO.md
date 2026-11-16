@@ -14,6 +14,8 @@ e) ✅ DONE — when having a note selected, pressing backspace should delete th
 
 ### **2. Project window**
 
+The project window simulates the entire app on a smaller scale. Its purpose is to work on isolated projects, creating timelines, making notes, adding files and structuring the workflow.
+
 ## **3. Calendar rework**
 
 a) ✅ DONE — LAYOUT:
@@ -43,13 +45,30 @@ created in the Time Blocks tab, they are premade events with fixed durations, fr
 d) ✅ DONE — DETAILS PANNEL
 clicking on a date selects that date, dimming the rest, highlighting its borders and enhacing its brightness. Double clicking on a date opens a detailed overlay in the center of the screen, rectangular shape (with the w:h ratio of the screen, but smaller). The bg gets dimmer, the opened window has 90 percent opacity, and shows a row with DD.MM, and a vertically scrollable window with the events of the day and their added descriptions added below
 
-e) PERIODS
+e) ✅ DONE — PERIODS
 A period is marked by a big block of a choose-able (by colorwheel) color, that marks a window of time, coloring the header of the days it covers. It is set using a startDate and an endDate, and marks all the days in the interval. when a certain day is appended to a period, it gets a label (not user side). This will be important later since im planning on adding a discord querry system.
 
-f) RECCURENCE
+    e.1) When creating editing -> CANCEL EVENTS button. Can be checked, and upon checking the events that exist within the period get canceled. If a recurring event is caught inside a cancelling period, it gets halted just for the duration of that period but continues on schedule from where it ends. One-time events get cancelled and thats it. (this feature is targeted heavier towards recurring events. If i have Gym and Math study recurring during a vacation period, i would want them cancelled so as to not appear when querrying about days withing the period, as well as not deleting manually, but they should continue normally after periodEndDate)
+
+f) FEATURE: TYPE COLOR OVERRIDE
+in event creation/edit pannel, on the right of the color circle where type is chosen, add another circle, empty at first, that when hovered shows override color. This makes so that an event can have a certain type to adhere to a broad category, but can also be differentiated from that type in the case where it is someting more unique.
+
+clicking that blank circle opens a color wheel where a color needs to be chosen. implement the same "required different enough color" system from periods, but make the forbidden range a little smaller.
+
+After choosing the overrideColor, the block will appear with a horizotal gradient between the two colors, with overrideColor on the right and typeColor on the left, to match the positions from creation page.
 
 g) PERIOD-AWARE EVENTS (planned, implement later)
-events and their repeats can be tied to a period: e.g. "repeat only during Exams" (the repeats stop when the period ends), or hide / dim events that fall outside a chosen period. Fits together with f) RECCURENCE.
+events and their repeats can be tied to a period: e.g. "repeat only during Exams" (the repeats stop when the period ends), or hide / dim events that fall outside a chosen period.
+
+h) EVENT TYPE LIBRARY
+special dedicated library for storing, creating, editing even types. Clicking on one opens it up on screen and shows, in cronological order, all event with that type appended. Event are shown in the sidebar in descending order of nr of events/time blocks appended.
+
+Clicking on event -> the screen shows the title of the event top left with number of EVENTS/TIME BLOCKS appended to it on the same line on the right side of the screen.
+
+editable name for changes, color circle before it for changing type color
+
+below is a list of all events appended to it, in cronological order in the format NAME - hour - DD.MM.YY (only last 2 trailing digits for year for readability)
+each event/time block will have its row colored with its color (neon glow border, round corners) and should have interactive touch => when cursor is on a certan event row it gets a big bigger.
 
 ### **GENERAL**
 
