@@ -1,0 +1,48 @@
+/* ============================================================
+   THEME TOKENS — every color the UI uses, as the default theme
+   (Violet, the original look). Themes change these values; the
+   rest of the CSS only ever refers to the tokens.
+   Alpha variants are color-mix()es of a token, so they follow it.
+   User-chosen colors (event types, periods, stickies, the Focus
+   scene glows) are data, not theme — they stay as they are.
+============================================================ */
+:root{
+  /* the neon accent family */
+  --accent:#B14CF8;          /* base: buttons, outlines */
+  --accent-dim:#7C3AED;      /* pressed / primary button fill */
+  --accent-bright:#C084FC;   /* glow lines, now-line, logo stroke, hot arrows */
+  --accent-pale:#D8B4FE;     /* hover text */
+  --accent-tint:#E9D5FF;     /* the brightest touch (now-line dot) */
+  --accent-iris:#A855F7;     /* the logo's iris */
+  --accent-soft:color-mix(in srgb, var(--accent) 13%, transparent);
+  --neon:0 0 10px color-mix(in srgb, var(--accent) 45%, transparent);
+  --neon-strong:0 0 6px color-mix(in srgb, var(--accent) 80%, transparent),0 0 18px color-mix(in srgb, var(--accent) 45%, transparent);
+
+  /* text */
+  --ink:#E9E7F4;             /* body text */
+  --ink-bright:#F4ECFF;      /* headings with a glow, text on colored blocks */
+  --ink-soft:#C9C6DA;        /* descriptions, secondary text */
+  --muted:#8B89A0;           /* labels, hints */
+  --dim:#5E5B7A;             /* arrows, idle placeholders */
+  --dim-2:#4A4963;           /* faint placeholders, other-month days */
+  --dim-3:#3C3B52;           /* the faintest placeholders (notes) */
+
+  /* surfaces, darkest first */
+  --bg-deep:#0A0A10;         /* board floor, sidebar bottom */
+  --bg:#0B0B11;              /* page */
+  --bg-side:#0D0D15;         /* sidebar top */
+  --surface-weekend:#0F0F17; /* weekend columns */
+  --surface:#111119;         /* day columns, cards */
+  --surface2:#171723;        /* pop-ups, pills, menus */
+  --hover:#171622;           /* hovered nav / list row */
+  --hover2:#221F33;          /* hovered small control, menu item */
+  --line:#26253A;            /* borders, hour lines, the board's dot grid */
+  --scrollbar:#2C2B42;
+  --overlay:#05050A;         /* the dim behind pop-ups (used at 10–74%) */
+
+  --danger:#FB7185;
+  --brand-eye:#0E0617;       /* the logo's eye fill */
+  --brand-pupil:#08020E;
+
+  --scene-glow:#C084FC;      /* Focus tab: set per scene by timer.js */
+}

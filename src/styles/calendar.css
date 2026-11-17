@@ -34,7 +34,7 @@
   border-right:1px solid var(--line);background:var(--surface);
 }
 .day-col:last-child{border-right:none}
-.day-col.weekend{background:#0F0F17}
+.day-col.weekend{background:var(--surface-weekend)}
 
 /* daysRow: thin, discreet, set off from the column by a thin border */
 .day-head{
@@ -45,8 +45,8 @@
 .dh-init{font-size:10px;font-weight:500;letter-spacing:.1em;color:var(--muted);opacity:.55}
 .dh-date{font-size:calc(15px * var(--scale-h, 1));font-weight:700;color:var(--ink);letter-spacing:.01em}
 .day-col.today .dh-date{
-  color:#F4ECFF;
-  text-shadow:0 0 6px rgba(192,132,252,.95),0 0 16px rgba(177,76,248,.7),0 0 28px rgba(177,76,248,.4);
+  color:var(--ink-bright);
+  text-shadow:0 0 6px color-mix(in srgb, var(--accent-bright) 95%, transparent),0 0 16px color-mix(in srgb, var(--accent) 70%, transparent),0 0 28px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 /* ---- hours: each column scrolls on its own ---- */
@@ -58,7 +58,7 @@
 .hour-row:first-child{border-top:none}
 .hour-row::after{ /* half-hour line */
   content:"";position:absolute;left:0;right:0;top:50%;
-  border-top:1px solid rgba(38,37,58,.5);
+  border-top:1px solid color-mix(in srgb, var(--line) 50%, transparent);
 }
 .hour-label{
   position:absolute;left:6px;top:3px;
@@ -74,7 +74,7 @@
   width:calc((100% - 21px) / var(--lanes) - 2px);
   display:flex;flex-direction:column;gap:1px;overflow:hidden;
   border-radius:6px;padding:calc(3px * var(--scale, 1)) calc(7px * var(--scale, 1));
-  font-size:calc(11.5px * var(--scale, 1));line-height:1.3;color:#F1EEFA;border:1px solid transparent;
+  font-size:calc(11.5px * var(--scale, 1));line-height:1.3;color:var(--ink-bright);border:1px solid transparent;
   cursor:pointer;transition:filter .12s;
 }
 .ev-block:hover{filter:brightness(1.18)}
@@ -125,11 +125,11 @@
 
 .now-line{
   position:absolute;left:0;right:0;z-index:2;height:2px;margin-top:-1px;pointer-events:none;
-  background:#C084FC;box-shadow:0 0 6px rgba(192,132,252,.9),0 0 14px rgba(177,76,248,.6);
+  background:var(--accent-bright);box-shadow:0 0 6px color-mix(in srgb, var(--accent-bright) 90%, transparent),0 0 14px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 .now-line::before{
   content:"";position:absolute;left:-1px;top:-3px;width:8px;height:8px;border-radius:50%;
-  background:#E9D5FF;box-shadow:0 0 8px rgba(192,132,252,1);
+  background:var(--accent-tint);box-shadow:0 0 8px color-mix(in srgb, var(--accent-bright) 100%, transparent);
 }
 
 /* ============ TIME BLOCKS (side panel + drag & drop) ============ */
@@ -159,8 +159,8 @@ body.tb-dragging,body.tb-dragging *{cursor:grabbing !important}
 .tb-ghost{
   position:fixed;left:0;top:0;z-index:60;pointer-events:none;
   max-width:180px;padding:5px 10px;border-radius:7px;
-  font-size:12px;font-weight:500;color:#F1EEFA;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  background:linear-gradient(90deg, color-mix(in srgb, var(--tc) 30%, #12121B), color-mix(in srgb, var(--tc2, var(--tc)) 30%, #12121B));
+  font-size:12px;font-weight:500;color:var(--ink-bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  background:linear-gradient(90deg, color-mix(in srgb, var(--tc) 30%, var(--surface)), color-mix(in srgb, var(--tc2, var(--tc)) 30%, var(--surface)));
   border:1px solid color-mix(in srgb, var(--tc), var(--tc2, var(--tc)));
   box-shadow:0 0 12px color-mix(in srgb, color-mix(in srgb, var(--tc), var(--tc2, var(--tc))) 45%, transparent);
 }
@@ -182,22 +182,22 @@ body.tb-dragging,body.tb-dragging *{cursor:grabbing !important}
 .week.has-selection .day-col:not(.selected){filter:brightness(.5) saturate(.8)}
 .day-col.selected{
   position:relative;z-index:1;filter:brightness(1.18);
-  box-shadow:inset 0 0 0 1px rgba(192,132,252,.75),0 0 14px rgba(177,76,248,.35);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent-bright) 75%, transparent),0 0 14px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 .day-col.selected .day-head{background:var(--accent-soft)}
 
 /* the window: same w:h ratio as the screen, but smaller; 90% opaque */
 .dd-overlay{
   position:fixed;inset:0;z-index:50;display:grid;place-items:center;
-  background:rgba(4,4,8,.74);backdrop-filter:blur(3px);
+  background:color-mix(in srgb, var(--overlay) 74%, transparent);backdrop-filter:blur(3px);
   animation:ee-fade .14s ease;
 }
 .dd-card{
   position:relative;width:68vw;height:68vh;
   display:flex;flex-direction:column;
   border-radius:16px;border:1px solid var(--line);
-  background:rgba(23,23,35,.9);
-  box-shadow:var(--shadow-lg),0 0 0 1px rgba(177,76,248,.1),0 0 50px rgba(177,76,248,.1);
+  background:color-mix(in srgb, var(--surface2) 90%, transparent);
+  box-shadow:var(--shadow-lg),0 0 0 1px color-mix(in srgb, var(--accent) 10%, transparent),0 0 50px color-mix(in srgb, var(--accent) 10%, transparent);
 }
 .dd-head{
   display:flex;align-items:baseline;gap:14px;flex-shrink:0;
@@ -206,8 +206,8 @@ body.tb-dragging,body.tb-dragging *{cursor:grabbing !important}
 }
 .dd-date{font-size:26px;font-weight:700;letter-spacing:.01em}
 .dd-head.today .dd-date{
-  color:#F4ECFF;
-  text-shadow:0 0 6px rgba(192,132,252,.95),0 0 16px rgba(177,76,248,.7),0 0 28px rgba(177,76,248,.4);
+  color:var(--ink-bright);
+  text-shadow:0 0 6px color-mix(in srgb, var(--accent-bright) 95%, transparent),0 0 16px color-mix(in srgb, var(--accent) 70%, transparent),0 0 28px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 .dd-weekday{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .dd-list{
@@ -228,7 +228,7 @@ body.tb-dragging,body.tb-dragging *{cursor:grabbing !important}
 .dd-time{font-family:var(--font-mono);font-size:12px;color:var(--muted);flex-shrink:0}
 .dd-title{flex:1;min-width:0;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dd-type{font-family:var(--font-mono);font-size:10.5px;color:var(--tc);flex-shrink:0}
-.dd-desc{margin:0;font-size:13px;line-height:1.55;color:#C9C6DA;white-space:pre-wrap;overflow-wrap:anywhere}
+.dd-desc{margin:0;font-size:13px;line-height:1.55;color:var(--ink-soft);white-space:pre-wrap;overflow-wrap:anywhere}
 /* 3e.1: the day's cancelled events, after the live ones */
 .dd-empty-top{margin:6px 0 0}
 .dd-group{margin:8px 0 -4px;font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
@@ -254,7 +254,7 @@ body.tb-dragging,body.tb-dragging *{cursor:grabbing !important}
 .day-head.in-period .dh-init{opacity:.8;color:var(--ink)}
 
 /* dragging across headers to make a period */
-.day-col.period-drag .day-head{box-shadow:inset 0 0 0 1px rgba(192,132,252,.8);background:var(--accent-soft) !important}
+.day-col.period-drag .day-head{box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent-bright) 80%, transparent);background:var(--accent-soft) !important}
 
 /* hover tag with the period color(s) and name(s) */
 .period-tag{
@@ -283,7 +283,7 @@ body.tb-dragging,body.tb-dragging *{cursor:grabbing !important}
 .pe-item.now{box-shadow:0 0 10px color-mix(in srgb, var(--tc) 35%, transparent)}
 .pe-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .pe-jump{width:22px;height:22px;border-radius:6px;color:var(--muted);font-size:12px;flex-shrink:0}
-.pe-jump:hover{background:rgba(255,255,255,.06);color:#D8B4FE}
+.pe-jump:hover{background:rgba(255,255,255,.06);color:var(--accent-pale)}
 
 /* details window: the day's periods */
 .dd-periods{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto}
@@ -306,8 +306,8 @@ body.tb-dragging,body.tb-dragging *{cursor:grabbing !important}
   padding:7px 10px;border-radius:8px;cursor:pointer;border:1px solid transparent;
   transition:background .12s,border-color .12s;
 }
-.ty-item:hover,.ty-item:focus-visible{background:#171622;outline:none}
-.ty-item.on{background:var(--accent-soft);border-color:rgba(177,76,248,.3)}
+.ty-item:hover,.ty-item:focus-visible{background:var(--hover);outline:none}
+.ty-item.on{background:var(--accent-soft);border-color:color-mix(in srgb, var(--accent) 30%, transparent)}
 .ty-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;background:var(--tc);box-shadow:0 0 7px var(--tc)}
 .ty-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
 
@@ -344,6 +344,6 @@ body.tb-dragging,body.tb-dragging *{cursor:grabbing !important}
 .ty-row.past:hover{opacity:.8}
 .ty-row-name{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ty-sep{font-family:var(--font-mono);color:var(--muted);flex-shrink:0}
-.ty-row-time,.ty-row-date{font-family:var(--font-mono);font-size:12.5px;color:#C9C6DA;flex-shrink:0}
+.ty-row-time,.ty-row-date{font-family:var(--font-mono);font-size:12.5px;color:var(--ink-soft);flex-shrink:0}
 .ty-row-recur{margin-left:auto;font-family:var(--font-mono);font-size:10.5px;color:var(--muted);flex-shrink:0}
 .ty-foot{display:flex;padding:8px 28px 18px}

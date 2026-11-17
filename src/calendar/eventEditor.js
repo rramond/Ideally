@@ -7,6 +7,7 @@ import { attachColorWheel } from '../colorWheel.js';
 import { RECURRENCE, getTypes, typeOf, saveType, deleteType, lastTypeId, rememberType,
          saveEvent, deleteEvent, saveBlock, deleteBlock, overrideClash, suggestOverride, periodOf } from './events.js';
 import { cancelledBy, getPeriods } from './periods.js';
+import { themeColor } from '../themes/theme.js';
 
 /* ============================================================
    NEW EVENT OVERLAY (3c.1) — also used to edit an event, and
@@ -386,7 +387,7 @@ function toggleTypePicker(typeBtn, draft, onPicked){
     if (!form){
       const add = el('button', 'tp-new', '+ New type');
       add.type = 'button';
-      add.addEventListener('click', () => render({ name: '', color: '#C084FC' }));
+      add.addEventListener('click', () => render({ name: '', color: themeColor('--accent-bright') }));
       pop.appendChild(add);
       return;
     }

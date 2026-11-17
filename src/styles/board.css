@@ -7,7 +7,7 @@
 .board-bar h2{font-family:var(--font-display);font-size:18px;font-weight:700;letter-spacing:-.01em}
 .color-pick{position:relative;display:flex;align-items:center;margin-left:8px}
 .swatch{
-  width:26px;height:26px;border-radius:7px;border:2px solid #EFE6FF;box-shadow:var(--neon);
+  width:26px;height:26px;border-radius:7px;border:2px solid var(--ink-bright);box-shadow:var(--neon);
   transition:transform .12s,box-shadow .12s;
 }
 .swatch:hover{transform:scale(1.1);box-shadow:var(--neon-strong)}
@@ -25,7 +25,7 @@
   font-size:14px;color:var(--ink);
   transition:background .12s,color .12s,box-shadow .12s;
 }
-.fmt-btn:hover{background:#221F33;color:#D8B4FE}
+.fmt-btn:hover{background:var(--hover2);color:var(--accent-pale)}
 .fmt-btn.on{background:var(--accent-dim);color:#fff;box-shadow:var(--neon)}
 #fmt-bold{font-weight:700}
 #fmt-italic{font-family:Georgia,serif;font-style:italic}
@@ -39,7 +39,7 @@
   border-radius:8px;padding:7px 13px;font-size:13px;font-weight:600;
   transition:border-color .12s,color .12s,background .12s,box-shadow .12s;
 }
-.tool-btn:hover{border-color:var(--accent);color:#D8B4FE;box-shadow:var(--neon)}
+.tool-btn:hover{border-color:var(--accent);color:var(--accent-pale);box-shadow:var(--neon)}
 .tool-btn.on{background:var(--accent-dim);border-color:var(--accent);color:#fff;box-shadow:var(--neon-strong)}
 .tool-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .zoom-pill{
@@ -47,13 +47,13 @@
   border:1px solid var(--line);border-radius:99px;padding:4px 12px;background:var(--surface2);
   transition:border-color .12s,color .12s;
 }
-.zoom-pill:hover{border-color:var(--accent);color:#D8B4FE}
+.zoom-pill:hover{border-color:var(--accent);color:var(--accent-pale)}
 
 .board-stage{
   flex:1;position:relative;overflow:hidden;
   perspective:1600px;perspective-origin:50% 38%;
-  background-color:#0A0A10;
-  background-image:radial-gradient(circle at 1px 1px, #232238 1.1px, transparent 0);
+  background-color:var(--bg-deep);
+  background-image:radial-gradient(circle at 1px 1px, var(--line) 1.1px, transparent 0);
   background-size:26px 26px;
   cursor:grab;
 }
@@ -61,26 +61,28 @@
 .board-stage.connecting,.board-stage.connecting .sticky{cursor:crosshair}
 .board-stage::after{ /* vignette */
   content:"";position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(5,5,10,.55));
+  background:radial-gradient(ellipse at 50% 45%, transparent 55%, color-mix(in srgb, var(--overlay) 55%, transparent));
 }
 .board-world{
   position:absolute;left:0;top:0;width:100%;height:100%;
   transform-origin:0 0;transform-style:preserve-3d;
 }
 #arrow-layer{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+#arrowhead path{fill:var(--dim)}
+#arrowhead-hot path{fill:var(--accent-bright)}
 .arrow{
-  fill:none;stroke:#5E5B7A;stroke-width:2;
+  fill:none;stroke:var(--dim);stroke-width:2;
   pointer-events:visibleStroke;cursor:pointer;
   transition:stroke .12s;
 }
-.arrow:hover{stroke:#C084FC;filter:drop-shadow(0 0 4px rgba(177,76,248,.7))}
-.arrow.sel{stroke:#C084FC;filter:drop-shadow(0 0 5px rgba(177,76,248,.85))}
+.arrow:hover{stroke:var(--accent-bright);filter:drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 70%, transparent))}
+.arrow.sel{stroke:var(--accent-bright);filter:drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 85%, transparent))}
 .a-handle{
-  fill:#0B0B11;stroke:#C084FC;stroke-width:2;
+  fill:var(--bg);stroke:var(--accent-bright);stroke-width:2;
   pointer-events:all;cursor:grab;
-  filter:drop-shadow(0 0 4px rgba(177,76,248,.8));
+  filter:drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 80%, transparent));
 }
-.a-handle:hover{fill:#C084FC}
+.a-handle:hover{fill:var(--accent-bright)}
 
 .board-floor{position:absolute;left:0;top:0;width:100%;height:100%;transform-style:preserve-3d;pointer-events:none}
 .sticky{
@@ -102,7 +104,7 @@
   box-shadow:0 1px 2px rgba(0,0,0,.25);
 }
 .sticky.dragging{cursor:grabbing;box-shadow:var(--shadow-lg)}
-.sticky.selected{outline:2px solid rgba(192,132,252,.9);outline-offset:3px}
+.sticky.selected{outline:2px solid color-mix(in srgb, var(--accent-bright) 90%, transparent);outline-offset:3px}
 .sticky.link-from{outline:2px solid var(--accent);outline-offset:3px;box-shadow:var(--neon-strong)}
 .sticky .s-text{
   flex:1;font-family:var(--font-body);font-size:13.5px;line-height:1.55;
@@ -131,23 +133,23 @@
 .sticky.title{padding:2px 6px;background:none;box-shadow:none;border-radius:4px}
 .sticky.title::before{display:none}
 .sticky.title.dragging{box-shadow:none}
-.sticky.title:not(.link-from):not(.selected):hover{outline:1px dashed rgba(192,132,252,.45);outline-offset:4px}
-.sticky.title:has(.s-text[contenteditable="true"]){outline:1.5px solid rgba(192,132,252,.8);outline-offset:4px}
+.sticky.title:not(.link-from):not(.selected):hover{outline:1px dashed color-mix(in srgb, var(--accent-bright) 45%, transparent);outline-offset:4px}
+.sticky.title:has(.s-text[contenteditable="true"]){outline:1.5px solid color-mix(in srgb, var(--accent-bright) 80%, transparent);outline-offset:4px}
 .sticky.title .s-text{
   flex:none;font-family:var(--font-display);font-weight:700;line-height:1.15;letter-spacing:-.01em;
-  color:#F4F0FF;text-shadow:0 0 18px rgba(177,76,248,.45);
+  color:var(--ink-bright);text-shadow:0 0 18px color-mix(in srgb, var(--accent) 45%, transparent);
   white-space:pre;overflow:visible;min-width:1ch;
 }
 .sticky.title .s-text[contenteditable="true"]{overflow:visible}
-.sticky.title .s-text:empty::before{content:"Title";color:rgba(244,240,255,.3)}
+.sticky.title .s-text:empty::before{content:"Title";color:color-mix(in srgb, var(--ink-bright) 30%, transparent)}
 .sticky.title .s-del{top:-12px;right:-12px;color:var(--muted);background:var(--surface2);border:1px solid var(--line)}
-.sticky.title .s-del:hover{background:var(--surface2);color:#FB7185}
+.sticky.title .s-del:hover{background:var(--surface2);color:var(--danger)}
 .sticky.title .s-resize{right:-10px;bottom:-10px}
-.sticky.title .s-resize::after{border-color:rgba(192,132,252,.8)}
+.sticky.title .s-resize::after{border-color:color-mix(in srgb, var(--accent-bright) 80%, transparent)}
 
 .board-empty{
   position:absolute;inset:0;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:8px;color:var(--muted);
   pointer-events:none;z-index:2;
 }
-.board-empty .be-big{font-family:var(--font-display);font-size:20px;font-weight:700;color:#4B4965;text-shadow:0 0 18px rgba(177,76,248,.25)}
+.board-empty .be-big{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--dim-2);text-shadow:0 0 18px color-mix(in srgb, var(--accent) 25%, transparent)}

@@ -4,7 +4,7 @@
   display:grid;place-items:center;color:var(--muted);
   transition:background .12s,color .12s,box-shadow .12s;
 }
-.icon-btn:hover{background:#1A1928;color:#D8B4FE;box-shadow:var(--neon)}
+.icon-btn:hover{background:var(--hover2);color:var(--accent-pale);box-shadow:var(--neon)}
 .icon-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
 
 .ghost-btn{
@@ -12,7 +12,7 @@
   font-size:13px;font-weight:500;background:var(--surface2);
   transition:border-color .12s,color .12s,box-shadow .12s;
 }
-.ghost-btn:hover{border-color:var(--accent);color:#D8B4FE;box-shadow:var(--neon)}
+.ghost-btn:hover{border-color:var(--accent);color:var(--accent-pale);box-shadow:var(--neon)}
 
 .primary-btn{
   background:var(--accent-dim);color:#fff;border-radius:8px;padding:8px 14px;
@@ -30,7 +30,7 @@
   opacity:0;transition:opacity .12s,color .12s,border-color .12s;
 }
 .has-pop-x:hover > .pop-x,.has-pop-x > .pop-x:focus-visible{opacity:1}
-.has-pop-x > .pop-x:hover{color:#FB7185;border-color:rgba(251,113,133,.5)}
+.has-pop-x > .pop-x:hover{color:var(--danger);border-color:color-mix(in srgb, var(--danger) 50%, transparent)}
 
 /* Right-click menu */
 .ctx-menu{
@@ -40,14 +40,14 @@
   box-shadow:var(--shadow-lg);
 }
 .ctx-item{text-align:left;padding:7px 10px;border-radius:6px;font-size:13px}
-.ctx-item:hover,.ctx-item:focus-visible{background:#221F33;color:#D8B4FE;outline:none}
-.ctx-item.danger:hover,.ctx-item.danger:focus-visible{background:rgba(251,113,133,.12);color:#FB7185}
+.ctx-item:hover,.ctx-item:focus-visible{background:var(--hover2);color:var(--accent-pale);outline:none}
+.ctx-item.danger:hover,.ctx-item.danger:focus-visible{background:color-mix(in srgb, var(--danger) 12%, transparent);color:var(--danger)}
 
 /* Short-lived status message */
 .toast{
   position:fixed;left:50%;bottom:28px;z-index:100;
   transform:translate(-50%, 8px);opacity:0;pointer-events:none;
-  background:var(--surface2);border:1px solid rgba(177,76,248,.35);border-radius:9px;
+  background:var(--surface2);border:1px solid color-mix(in srgb, var(--accent) 35%, transparent);border-radius:9px;
   padding:9px 16px;font-size:13px;color:var(--ink);
   box-shadow:var(--shadow-md),var(--neon);
   transition:opacity .18s,transform .18s;

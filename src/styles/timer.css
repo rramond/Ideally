@@ -1,10 +1,10 @@
 #view-timer{position:relative;overflow:hidden}
 #scene-canvas{position:absolute;inset:0;width:100%;height:100%}
 .scene-dim{
-  position:absolute;inset:0;background:rgba(7,7,12,.58);
+  position:absolute;inset:0;background:color-mix(in srgb, var(--overlay) 58%, transparent);
   transition:background .8s ease;pointer-events:none;
 }
-#view-timer.running .scene-dim{background:rgba(7,7,12,.10)}
+#view-timer.running .scene-dim{background:color-mix(in srgb, var(--overlay) 10%, transparent)}
 .timer-shell{
   position:relative;z-index:2;flex:1;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;
@@ -21,13 +21,13 @@
 .t-num{
   font-family:var(--font-mono);font-weight:700;
   font-size:clamp(64px,11vw,120px);line-height:1;
-  color:#F4F0FF;
+  color:var(--ink-bright);
   text-shadow:0 0 8px var(--scene-glow),0 0 26px var(--scene-glow),0 0 64px color-mix(in srgb, var(--scene-glow) 55%, transparent);
   font-variant-numeric:tabular-nums;
 }
 .t-colon{
   font-family:var(--font-mono);font-weight:700;font-size:clamp(48px,8vw,88px);
-  color:#F4F0FF;opacity:.75;line-height:1;padding-bottom:6px;
+  color:var(--ink-bright);opacity:.75;line-height:1;padding-bottom:6px;
   text-shadow:0 0 18px var(--scene-glow);
 }
 .t-step{

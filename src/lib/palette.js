@@ -1,9 +1,10 @@
 import { hsvToHex } from '../colorWheel.js';
 import { colorDistance } from './oklab.js';
+import { themeColor } from '../themes/theme.js';
 
 /* a vivid color as far as possible (in OKLab) from every color in `used` —
    what a new period, or a first override color, is offered */
-export function farthestColor(used, fallback = '#C084FC'){
+export function farthestColor(used, fallback = themeColor('--accent-bright')){
   if (!used.length) return fallback;
   let best = fallback, bestD = -1;
   for (let h = 0; h < 360; h += 6){

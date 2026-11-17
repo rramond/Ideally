@@ -40,7 +40,7 @@ function saveTimerPrefs(){
   store.set('ideally.timer', { scene: sceneSel.value, preset: presetSel.value, sound: soundSel.value, customDur: tCustomDur });
 }
 function applySceneGlow(){
-  document.documentElement.style.setProperty('--scene-glow', SCENE_GLOW[sceneSel.value] || '#C084FC');
+  document.documentElement.style.setProperty('--scene-glow', SCENE_GLOW[sceneSel.value] || getComputedStyle(document.documentElement).getPropertyValue('--accent-bright').trim());
 }
 function playAmbience(){
   if (soundSel.value === 'on') startAudio(sceneSel.value);

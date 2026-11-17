@@ -1,22 +1,11 @@
+/* colors live in src/themes/tokens.css (the theme); only shape and type here */
 :root{
-  --bg:#0B0B11;
-  --surface:#111119;
-  --surface2:#171723;
-  --ink:#E9E7F4;
-  --muted:#8B89A0;
-  --line:#26253A;
-  --accent:#B14CF8;
-  --accent-dim:#7C3AED;
-  --accent-soft:rgba(177,76,248,.13);
-  --neon:0 0 10px rgba(177,76,248,.45);
-  --neon-strong:0 0 6px rgba(177,76,248,.8),0 0 18px rgba(177,76,248,.45);
   --shadow-md:0 8px 22px rgba(0,0,0,.5);
   --shadow-lg:0 22px 48px rgba(0,0,0,.65);
   --radius:10px;
   --font-display:'Space Grotesk',system-ui,sans-serif;
   --font-body:'Inter',system-ui,sans-serif;
   --font-mono:'JetBrains Mono',ui-monospace,monospace;
-  --scene-glow:#C084FC;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
@@ -33,14 +22,14 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[contenteditable]:focus-visible{
   outline:2px solid var(--accent);outline-offset:2px;border-radius:4px;
 }
-::selection{background:rgba(177,76,248,.35)}
+::selection{background:color-mix(in srgb, var(--accent) 35%, transparent)}
 input,select,textarea{color:var(--ink)}
 
 /* ---------- Sidebar ---------- */
 .sidebar{
   width:212px;min-width:212px;height:100vh;
   border-right:1px solid var(--line);
-  background:linear-gradient(180deg,#0D0D15,#0A0A10);
+  background:linear-gradient(180deg,var(--bg-side),var(--bg-deep));
   display:flex;flex-direction:column;
   padding:20px 12px;
   gap:4px;
@@ -50,14 +39,17 @@ input,select,textarea{color:var(--ink)}
   letter-spacing:-.02em;
   padding:6px 10px 20px;
   display:flex;align-items:center;gap:10px;
-  color:#EFE6FF;
-  text-shadow:0 0 14px rgba(177,76,248,.55);
+  color:var(--ink-bright);
+  text-shadow:0 0 14px color-mix(in srgb, var(--accent) 55%, transparent);
 }
-.brand svg{width:26px;height:18px;filter:drop-shadow(0 0 5px rgba(177,76,248,.8))}
+.brand svg{width:26px;height:18px;filter:drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 80%, transparent))}
+.brand .b-eye{fill:var(--brand-eye);stroke:var(--accent-bright)}
+.brand .b-iris{fill:var(--accent-iris)}
+.brand .b-pupil{fill:var(--brand-pupil)}
 /* the logo is the back button */
 /* stays above overlay backdrops, so it can always be pressed to go back */
 button.brand{position:relative;z-index:55;width:100%;text-align:left;border-radius:8px;transition:text-shadow .12s}
-.brand:hover{text-shadow:0 0 18px rgba(177,76,248,.9)}
+.brand:hover{text-shadow:0 0 18px color-mix(in srgb, var(--accent) 90%, transparent)}
 .brand::after{content:"‹ back";margin-left:auto;font-family:var(--font-mono);font-size:10px;font-weight:400;color:var(--muted);text-shadow:none;opacity:0;transition:opacity .12s}
 .brand:hover::after{opacity:1}
 
@@ -74,11 +66,11 @@ button.brand{position:relative;z-index:55;width:100%;text-align:left;border-radi
   transition:background .12s ease,color .12s,box-shadow .12s;
   text-align:left;border:1px solid transparent;
 }
-.nav-btn:hover{background:#171622}
+.nav-btn:hover{background:var(--hover)}
 .nav-btn.active{
-  background:var(--accent-soft);color:#D8B4FE;
-  border-color:rgba(177,76,248,.3);
-  box-shadow:inset 0 0 14px rgba(177,76,248,.10),var(--neon);
+  background:var(--accent-soft);color:var(--accent-pale);
+  border-color:color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow:inset 0 0 14px color-mix(in srgb, var(--accent) 10%, transparent),var(--neon);
 }
 .nav-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 
@@ -91,5 +83,5 @@ main{flex:1;height:100vh;overflow:hidden;position:relative;background:var(--bg)}
   *{transition:none !important;animation:none !important}
 }
 ::-webkit-scrollbar{width:9px}
-::-webkit-scrollbar-thumb{background:#2C2B42;border-radius:8px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--scrollbar);border-radius:8px;border:2px solid var(--bg)}
 ::-webkit-scrollbar-track{background:transparent}
