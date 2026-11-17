@@ -39,14 +39,17 @@
 .ee-ovr-link.on{opacity:.9}
 .ee-ovr-wrap .cw-pop{left:auto;right:-8px}            /* open the color wheel leftwards */
 .ee-ovr{position:relative}
-/* no override yet: a dashed ring with a faint + */
+/* no override yet: a dashed ring with a faint + (drawn as two bars, so it is
+   exactly centered — a text glyph sits off-center) */
 .ee-ovr.empty{background:transparent;border:2px dashed rgba(255,255,255,.3);box-shadow:none}
-.ee-ovr.empty::after{
-  content:"+";position:absolute;inset:0;display:grid;place-items:center;
-  font-size:14px;line-height:1;color:rgba(255,255,255,.4);pointer-events:none;
+.ee-ovr.empty::before,.ee-ovr.empty::after{
+  content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:10px;height:2px;border-radius:1px;background:rgba(255,255,255,.4);pointer-events:none;
+  transition:background .12s;
 }
+.ee-ovr.empty::after{width:2px;height:10px}
 .ee-ovr.empty:hover{border-style:solid;border-color:rgba(255,255,255,.65)}
-.ee-ovr.empty:hover::after{color:rgba(255,255,255,.8)}
+.ee-ovr.empty:hover::before,.ee-ovr.empty:hover::after{background:rgba(255,255,255,.8)}
 /* the small x that removes the override, shown while hovering the ring (like a pop-up's close x) */
 .ee-ovr-x{
   position:absolute;top:-7px;right:-9px;z-index:3;
