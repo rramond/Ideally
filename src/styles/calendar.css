@@ -57,6 +57,9 @@
   cursor:pointer;transition:filter .12s;
 }
 .ev-block:hover{filter:brightness(1.18)}
+/* past events are ghosted: faint, dashed, no glow (like cancelled ones, but not struck through) */
+.ev-block.past{opacity:.4;border-style:dashed;box-shadow:none !important}
+.ev-block.past:hover{opacity:.7;filter:none}
 /* overnight events: the two halves meet flat at midnight */
 .ev-block.to-next{border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom-style:dashed}
 .ev-block.cont{border-top-left-radius:0;border-top-right-radius:0;border-top-style:dashed}

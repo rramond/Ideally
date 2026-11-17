@@ -36,13 +36,15 @@ function urgency(dateStr){
   if (d < 0) return 0;
   return clamp(1 - d / 14, 0.12, 1);
 }
-/* tint with the type color — or, with an override (3f), a left → right gradient
+/* fill with the type color — or, with an override (3f), a left → right gradient
    from the type color to the override (the left / right borders take each
-   color, the glow blends the two); the glow grows as the date nears, past
-   events are dim */
+   color, the glow blends the two). Today's events are FILL_NEAR% solid and
+   fade with distance to FILL_FAR% two weeks out (urgency()); the glow fades
+   with them. Past events are ghosted (.past: faint, dashed, no glow). */
+const FILL_NEAR = 60, FILL_FAR = 14, U_FAR = 0.12;   // U_FAR = urgency() two weeks out
 function blockStyle(el, item, u){
   const { type, override } = colorsOf(item);
-  const mix = (c, pct) => 'color-mix(in srgb, ' + c + ' ' + Math.round(pct) + '%, transparent)';
+  const mix = (c, pct) => 'color-mix(in srgb, ' + c + ' ' + Math.round(Math.min(100, pct)) + '%, transparent)';
   const fill = pct => override ? 'linear-gradient(90deg, ' + mix(type, pct) + ', ' + mix(override, pct) + ')' : mix(type, pct);
   const blend = override ? 'color-mix(in srgb, ' + type + ', ' + override + ')' : type;
   const border = pct => {
@@ -50,14 +52,16 @@ function blockStyle(el, item, u){
     if (override){ el.style.borderLeftColor = mix(type, pct + 20); el.style.borderRightColor = mix(override, pct + 20); }
   };
   if (u <= 0){
-    el.style.background = fill(9);
-    border(20);
+    el.classList.add('past');
+    el.style.background = fill(FILL_FAR);
+    border(FILL_FAR + 15);
     el.style.color = 'var(--muted)';
     return;
   }
-  el.style.background = fill(14 + 18 * u);
-  border(35 + 40 * u);
-  el.style.boxShadow = '0 0 ' + (2 + 6 * u) + 'px ' + mix(blend, 15 + 40 * u);
+  const t = Math.max(0, (u - U_FAR) / (1 - U_FAR));   // 1 today → 0 two weeks out
+  el.style.background = fill(FILL_FAR + (FILL_NEAR - FILL_FAR) * t);
+  border(35 + 45 * t);
+  el.style.boxShadow = '0 0 ' + (2 + 6 * t) + 'px ' + mix(blend, 15 + 45 * t);
 }
 
 const atHour = h => 'calc(var(--hour, 40px) * ' + h + ')';

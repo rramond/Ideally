@@ -2,7 +2,7 @@ import { uid } from '../lib/utils.js';
 import { isoDate } from '../lib/dates.js';
 import { toast } from '../lib/toast.js';
 import { showContextMenu } from '../lib/contextMenu.js';
-import { go, back, getState } from '../lib/history.js';
+import { go, replace, back, getState } from '../lib/history.js';
 import { attachColorWheel } from '../colorWheel.js';
 import { farthestColor } from '../lib/palette.js';
 import { RECURRENCE, getTypes, saveType, deleteType, getEvents, getBlocks, getEvent, getBlock,
@@ -41,6 +41,13 @@ const eventsOfType = id => getEvents().filter(e => e.typeId === id)
 const blocksOfType = id => getBlocks().filter(b => b.typeId === id).sort((a, b) => a.title.localeCompare(b.title));
 const usage = id => ({ events: eventsOfType(id).length, blocks: blocksOfType(id).length });
 const usageLabel = ({ events, blocks }) => plural(events, 'event') + (blocks ? ' · ' + plural(blocks, 'block') : '');
+/* open a type: a Back step from the calendar; from another type, the step is
+   replaced, so Back always returns to the calendar */
+function openType(id){
+  const st = getState();
+  if (st.typeId === id) return;
+  (st.typeId ? replace : go)({ typeId: id });
+}
 
 /* ---------------- side panel ---------------- */
 function renderPanel(){
@@ -57,9 +64,8 @@ function renderPanel(){
     text.append(el('span', 'tb-name', t.name), el('span', 'tb-meta', usageLabel(use)));
     item.append(el('i', 'ty-dot'), text);
     item.title = t.name + ' · ' + usageLabel(use) + '\nClick to open';
-    const openIt = () => { if (getState().typeId !== t.id) go({ typeId: t.id }); };
-    item.addEventListener('click', openIt);
-    item.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); openIt(); } });
+    item.addEventListener('click', () => openType(t.id));
+    item.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); openType(t.id); } });
     listEl.appendChild(item);
   });
 }
@@ -69,7 +75,7 @@ document.getElementById('ty-new').addEventListener('click', () => {
   const t = { id: uid(), name: 'New type', color: farthestColor(getTypes().map(x => x.color)) };
   saveType(t);
   renameOnOpen = t.id;
-  go({ typeId: t.id });
+  openType(t.id);
 });
 let renameOnOpen = null;
 
@@ -79,7 +85,7 @@ listEl.addEventListener('contextmenu', e => {
   e.preventDefault();
   const t = getTypes().find(x => x.id === item.dataset.id);
   if (!t) return;
-  const items = [{ label: 'Open type', action: () => { if (getState().typeId !== t.id) go({ typeId: t.id }); } }];
+  const items = [{ label: 'Open type', action: () => openType(t.id) }];
   if (getTypes().length > 1) items.push({ label: 'Delete type', danger: true, action: () => removeType(t) });
   showContextMenu(e.clientX, e.clientY, items);
 });
