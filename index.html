@@ -48,6 +48,10 @@
       <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="6" rx="1.5"/><rect x="4" y="11" width="16" height="4" rx="1.5"/><rect x="4" y="17" width="10" height="4" rx="1.5"/></svg>
       Time Blocks
     </button>
+    <button class="nav-btn" id="cal-types">
+      <svg viewBox="0 0 24 24"><path d="M3 4h8l10 10-8 8L3 12z"/><circle cx="8" cy="9" r="1.5"/></svg>
+      Types
+    </button>
   </nav>
   <!-- calendar side panel, Time Blocks mode (3c.2) -->
   <nav class="nav-blocks">
@@ -66,6 +70,15 @@
       New Period
     </button>
     <div class="tb-list" id="pe-list"></div>
+  </nav>
+  <!-- calendar side panel, Types mode (3h) -->
+  <nav class="nav-types">
+    <div class="nav-label">Event Types</div>
+    <button class="nav-btn" id="ty-new">
+      <svg viewBox="0 0 24 24"><path d="M3 4h8l10 10-8 8L3 12z"/><path d="M12 11v4M10 13h4"/></svg>
+      New Type
+    </button>
+    <div class="tb-list" id="ty-list"></div>
   </nav>
 </aside>
 
@@ -100,6 +113,8 @@
       </div>
     </div>
     <div class="week" id="week"></div>
+    <!-- 3h: an open event type, instead of the week -->
+    <div class="type-view" id="type-view"></div>
   </section>
 
   <!-- ================= BOARD ================= -->
