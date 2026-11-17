@@ -5,6 +5,8 @@ import { THEMES, DEFAULT_THEME, themeById } from './themes.js';
    THEME (4) — which theme is on, applying it (its tokens are set
    on <html>, overriding src/themes/tokens.css), remembering it,
    a short crossfade when it changes, and the favicon.
+   A theme may also bring an effect (fx: 'sakura'), named on <html>
+   as data-fx — src/themes/sakura.css draws it.
 ============================================================ */
 const root = document.documentElement;
 const saved = store.get('ideally.theme', DEFAULT_THEME);
@@ -15,6 +17,7 @@ export const onThemeChange = fn => listeners.push(fn);
 /* the current value of a token ('--accent-bright' → '#C084FC'), for JS defaults */
 export const themeColor = name => getComputedStyle(root).getPropertyValue(name).trim();
 export const getTheme = () => current;
+export const themeFx = () => current.fx || null;
 export const getThemes = () => THEMES;
 
 let fadeTimer = null;
@@ -27,6 +30,7 @@ function apply(animate){
   Object.entries(current.tokens).forEach(([k, v]) => root.style.setProperty(k, v));
   root.dataset.theme = current.id;
   root.dataset.glow = current.glow;
+  if (current.fx) root.dataset.fx = current.fx; else delete root.dataset.fx;
   root.style.colorScheme = current.light ? 'light' : 'dark';
   setFavicon(current.tokens);
   listeners.forEach(fn => fn(current));

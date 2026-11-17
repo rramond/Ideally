@@ -6,6 +6,8 @@
    (no glow at all, like VS Code); --glow / --glow-bright are the
    colors the neon glows are drawn in, --today-ink is today's
    date (it can't rely on a glow in a flat theme).
+   fx: 'sakura' grows roots around the side panel and sends a gust
+   of petals across the screen whenever the tab changes (sakura.css).
    Placeholders ({ placeholder: true }) are "???" cards: they can
    be centered in the carousel, but leave the theme as it is.
 ============================================================ */
@@ -50,10 +52,27 @@ const POLARIZED_DARK = {
   '--shadow-md': '0 4px 12px rgba(0,0,0,.45)', '--shadow-lg': '0 10px 28px rgba(0,0,0,.55)'
 };
 
+/* cherry blossom: pastel paper background, rose petals and deep plum ink,
+   a plum bark for the roots, and the petals that gust across the screen */
+const SAKURA = {
+  '--accent': '#E4698E', '--accent-dim': '#C9496F', '--accent-bright': '#F287A9',
+  '--accent-pale': '#B23E63', '--accent-tint': '#FFD9E4', '--accent-iris': '#E4698E',
+  '--ink': '#4A2C3A', '--ink-bright': '#3A1F2C', '--ink-soft': '#6E4658', '--muted': '#9C7386',
+  '--dim': '#C6A2B1', '--dim-2': '#D6B8C4', '--dim-3': '#E3CDD6',
+  '--bg-deep': '#F3E3E9', '--bg': '#FDF5F8', '--bg-side': '#FFF7FA', '--surface-weekend': '#FBEDF3',
+  '--surface': '#FFFCFD', '--surface2': '#FFFFFF', '--hover': '#FBE7EF', '--hover2': '#F6D6E2',
+  '--line': '#F2D3DE', '--scrollbar': '#EABBCB', '--overlay': '#F7E6EE',
+  '--danger': '#D93F5C', '--brand-eye': '#FFF8FB', '--brand-pupil': '#2E1420',
+  '--glow': '#F4A8BF', '--glow-bright': '#F7C6D6', '--today-ink': '#C9496F',
+  '--root': '#7A3F52', '--root-dark': '#53263A', '--petal': '#F7A8C0', '--petal-pale': '#FFD6E2',
+  '--shadow-md': '0 8px 24px rgba(150,80,105,.14)', '--shadow-lg': '0 22px 50px rgba(150,80,105,.20)'
+};
+
 export const THEMES = [
   { id: 'ideally', name: 'Ideally', glow: 'neon', tokens: IDEALLY },
   { id: 'ethereal-white', name: 'Ethereal White', glow: 'soft', light: true, tokens: ETHEREAL_WHITE },
   { id: 'polarized-dark', name: 'Polarized Dark', glow: 'flat', tokens: POLARIZED_DARK },
+  { id: 'sakura', name: 'Sakura', glow: 'soft', light: true, fx: 'sakura', tokens: SAKURA },
   { id: 'placeholder-1', name: '???', placeholder: true },
   { id: 'placeholder-2', name: '???', placeholder: true }
 ];
