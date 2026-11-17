@@ -16,6 +16,19 @@ e) ✅ DONE — when having a note selected, pressing backspace should delete th
 
 The project window simulates the entire app on a smaller scale. Its purpose is to work on isolated projects, creating timelines, making notes, adding files and structuring the workflow.
 
+a) PROJECT TAB ENTER
+a projects button should be added in the main side panel. when clicking on it opens the projectsTAB, with a cyberpunk coruption animation, where, from left to right, horizontal neon bars of various different theme shades flow in a swift swype, leaving behind the projects tab. They should have a glitchy effect and have different lengths and equal widths. EQ sound display look.
+
+b) PROJECT TAB HOMEPAGE
+in the projects tab, projects are displayed by circles, being "pulled" towards the center. the circles have a base size, and scale with the amount of content inside, up until a max decided based on the window resolution. Hovering one of the circles makes its border glow and displays its name. clicking it opens the project on a full screen. In essence it should look like the league of legens mastery chart. the circles have a water/oil droplet reaction/animation when cursor is hovering over them.
+[future plan: png for circles]
+
+c) PROJECT FULL SCREEN
+
+d) TIMELINE
+
+e) FILE ATTACHMENTS
+
 ## **3. Calendar rework**
 
 a) ✅ DONE — LAYOUT:
@@ -50,17 +63,17 @@ A period is marked by a big block of a choose-able (by colorwheel) color, that m
 
     e.1) ✅ DONE — When creating editing -> CANCEL EVENTS button. Can be checked, and upon checking the events that exist within the period get canceled. If a recurring event is caught inside a cancelling period, it gets halted just for the duration of that period but continues on schedule from where it ends. One-time events get cancelled and thats it. (this feature is targeted heavier towards recurring events. If i have Gym and Math study recurring during a vacation period, i would want them cancelled so as to not appear when querrying about days withing the period, as well as not deleting manually, but they should continue normally after periodEndDate)
 
-f) FEATURE: TYPE COLOR OVERRIDE
+f) ✅ DONE — FEATURE: TYPE COLOR OVERRIDE
 in event creation/edit pannel, on the right of the color circle where type is chosen, add another circle, empty at first, that when hovered shows override color. This makes so that an event can have a certain type to adhere to a broad category, but can also be differentiated from that type in the case where it is someting more unique.
 
 clicking that blank circle opens a color wheel where a color needs to be chosen. implement the same "required different enough color" system from periods, but make the forbidden range a little smaller.
 
 After choosing the overrideColor, the block will appear with a horizotal gradient between the two colors, with overrideColor on the right and typeColor on the left, to match the positions from creation page.
 
-g) PERIOD-AWARE EVENTS (planned, implement later)
+g) ✅ DONE — PERIOD-AWARE EVENTS
 events and their repeats can be tied to a period: e.g. "repeat only during Exams" (the repeats stop when the period ends), or hide / dim events that fall outside a chosen period.
 
-h) EVENT TYPE LIBRARY
+h) ✅ DONE — EVENT TYPE LIBRARY
 special dedicated library for storing, creating, editing even types. Clicking on one opens it up on screen and shows, in cronological order, all event with that type appended. Event are shown in the sidebar in descending order of nr of events/time blocks appended.
 
 Clicking on event -> the screen shows the title of the event top left with number of EVENTS/TIME BLOCKS appended to it on the same line on the right side of the screen.
@@ -151,7 +164,7 @@ q) ✅ DONE — new events start with the last type used
 
 r) ✅ DONE — ‹ › buttons in the event overlay move the event to the previous / next day
 
-s) ✅ DONE — Start / End are typed 24-hour fields ("930" → 09:30); ↑/↓ change them by 15 min (Shift: 1 h); moving the start keeps the duration; an end equal to the start blocks saving (an end *before* the start means next day, see ao)
+s) ✅ DONE — Start / End are typed 24-hour fields ("930" → 09:30); ↑/↓ change them by 15 min (Shift: 1 h); moving the start keeps the duration; an end equal to the start blocks saving (an end _before_ the start means next day, see ao)
 
 t) ✅ DONE — Create needs a name: pressing it without one makes the heading pulse; Ctrl+Enter saves from anywhere in the overlay
 
@@ -210,6 +223,32 @@ at) ✅ DONE — for the queries: eventsOn(day) leaves cancelled events out; ide
 au) ✅ DONE — clicking a ghost (cancelled event) inside a period washes the period's ghosts away: one big wave in the period's color, as wide as the period, rolls slowly (1.8 s) down from its date bar through the period's columns only, each ghost fading as the glowing crest reaches it; the period then keeps them hidden (hideCancelled), so the days are free for new events. Ghosts are still edited via right-click → Edit, still listed in the day details under "Cancelled", and come back with right-click on the period's band / header → "Show cancelled events" (or by switching cancelling off and on)
 
 av) idea: a time block dropped near the end of a day still stops at 24:00 — it could wrap into the next day like a typed end time does
+
+aw) ✅ DONE — override color (3f) is on time blocks too (a dropped block passes it to the event); the ring is a dashed "+" circle until a color is picked; the wheel opens on a color far from the type color; a short gradient bar between the two circles previews the blend; hover × on the ring, or right-click it, removes the override
+
+ax) ✅ DONE — the override only has to differ from its own type's color (OKLab distance ≥ 0.07, MIN_OVERRIDE_DISTANCE in src/calendar/events.js); too close → red ring + hint naming the type, saving blocked (also re-checked when the type is changed)
+
+ay) ✅ DONE — the type → override gradient shows everywhere the type color does: calendar blocks (gradient fill, type-colored left border, override-colored right border, blended glow), the day details rows and the Time Blocks list (gradient tint, type stripe on the left, override stripe on the right), the drag ghost and the drop preview
+
+az) ✅ DONE — tied events (3g): a "During" select in the event overlay — Any time, or one of the periods with its dates (a dot in the period's color appears beside it); a tied event and its repeats only happen on the period's days, and eventsOn() leaves the rest out so the queries agree; the start day must be inside the period (hint "Fri 05.12 is outside “Exams” (12.01 – 30.01)", saving blocked); the period never cancels its own tied events, other cancelling periods still do
+
+ba) ✅ DONE — tied events show a dot in the period's color before their time (tooltip "During <period>"); the day details rows show "· <period>"; the Periods panel lists the number of tied events and the period overlay says "3 events are tied to this period (1 repeating)"
+
+bb) ✅ DONE — a period shrunk past a tied event's start day leaves that day as a ghost ("Outside <period>", not struck through; right-click → Untie; listed in the day details under "Outside its period") — its repeats inside the period still happen; deleting a period unties its events (toast), nothing is deleted; time blocks can't be tied — tie the dropped event instead
+
+bc) note: the "hide / dim events outside a chosen period" half of 3g is already covered by cancelling periods (3e.1), so no separate focus mode was built
+
+bd) ✅ DONE — Types side panel (3h, its own Back step): New Type + every type, most used first, each with its color dot and "12 events · 3 blocks"; right-click → Open / Delete type; New Type makes the type right away (a color far from the other types') and opens it with the name selected, ready to type
+
+be) ✅ DONE — the type view replaces the week inside the calendar (Back / the logo returns): color circle (color wheel, saved live — the calendar follows) and the name (click to rename; Enter / clicking away saves, Esc reverts, 24 characters max) on the left, the count on the right; rows NAME - hour - DD.MM.YY in the event's type → override colors with a glow, growing a little under the cursor; past one-off events dimmed; repeating ones marked ↻ with their rule; time blocks last under "Time blocks" as NAME - 1h 30m - block; clicking a row opens it for editing; "delete type" at the bottom (its events fall back to the first type; the last type can't be deleted)
+
+bf) ✅ DONE — leaving the calendar with a type open and coming back, or reloading, reopens it; deleting the open type returns to the panel; opening another type from the panel replaces the step, so Back always returns to the calendar, never to the previous type
+
+bg) ✅ DONE — event blocks are 60% solid today and fade with distance to 14% two weeks out (FILL_NEAR / FILL_FAR in src/calendar/calendar.js), the glow fading with them; past events are ghosted (faint, dashed, no glow — like cancelled ones, but not struck through)
+
+bh) ✅ DONE — the number of days shown is togglable, 1 to 7 at once: a "7 days" pill with − / + next to Today, or keys 1–7 while the calendar is open (not while typing or with a pop-up open); remembered across reloads. A full week stays Monday-aligned; fewer days are a window starting on the selected date, else today if in view, else the current first day. ‹ › page by the shown count, Today starts the window on today (or shows this week at 7); the title becomes "16 – 18 Nov 2026" / "Mon 16 Nov 2026"; with 4 or fewer days the headers show the full weekday name; columns share the width, each column slot keeps its own hour position
+
+bi) ✅ DONE — the "7 days" label can be clicked and typed into (a digit 1–7 applies at once); event text grows as fewer days are shown (the --scale variables in src/styles/calendar.css): at 4–7 days the time stays above the title and the text grows only mildly (×1.09 at 4), so a 30-minute block still holds both lines; at 1–3 days time and title share one line and the text grows to ×1.32–×1.48; headers grow half as much; the 1-day view shows each event's description to the right of its title, wrapping and clipped to the block's height
 
 #### **4. General**
 

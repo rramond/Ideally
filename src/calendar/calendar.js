@@ -1,4 +1,5 @@
 import { clamp } from '../lib/utils.js';
+import { store } from '../lib/storage.js';
 import { pad, isoDate, addDays, mondayOf, parseIso, toHours, fromHours } from '../lib/dates.js';
 import { toast } from '../lib/toast.js';
 import { showContextMenu } from '../lib/contextMenu.js';
@@ -10,20 +11,24 @@ import { openPeriodEditor } from './periodEditor.js';
 import { anyPopupOpen } from '../lib/history.js';
 
 /* ============================================================
-   CALENDAR — week view: one column per day, Monday first.
-   Each column scrolls through the day's hours on its own;
-   12 hours fill the visible height. Events are tinted with
+   CALENDAR — day columns, 1 to 7 at once (EXTRAS 3.bh): a full
+   week is Monday first, fewer days are a sliding window starting
+   at any day. Each column scrolls through the day's hours on its
+   own; 12 hours fill the visible height. Events are tinted with
    their type's color and glow brighter as the date nears.
 ============================================================ */
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAY_INITIALS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const DAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];           // by getDay()
+const DAY_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const HOURS_VISIBLE = 12, FIRST_HOUR = 5;
 const WHEEL_STEP = 40;                            // wheel/trackpad distance (px) that moves one hour
 const weekEl = document.getElementById('week');
 
-let weekStart = mondayOf(new Date());
+let dayCount = clamp(Number(store.get('ideally.calDays', 7)) || 7, 1, 7);   // columns shown, remembered
+let weekStart = mondayOf(new Date());             // first shown day (a Monday when 7 days are shown)
+const lastShown = () => addDays(weekStart, dayCount - 1);
 let hourPx = 0;                                   // height of one hour row
-const colScroll = Array(7).fill(FIRST_HOUR);      // per weekday: top visible hour (whole hours), kept across weeks
+const colScroll = Array(7).fill(FIRST_HOUR);      // per column slot: top visible hour (whole hours), kept when paging
 let calHidden = true;
 let renderedToday = isoDate(new Date());
 let selectedDate = null;                          // 3d: clicked date, the others are dimmed
@@ -85,24 +90,76 @@ function layoutDay(segs){
   return out;
 }
 
-/* "October 2026", "Sep – Oct 2026" or "Dec 2026 – Jan 2027" */
+/* a full week: "October 2026", "Sep – Oct 2026" or "Dec 2026 – Jan 2027";
+   fewer days: "Mon 16 Nov 2026", "16 – 18 Nov 2026", "30 Nov – 2 Dec 2026" */
 function weekTitle(){
-  const end = addDays(weekStart, 6);
+  const end = lastShown();
   const short = d => MONTHS[d.getMonth()].slice(0, 3);
+  if (dayCount === 1) return DAY_FULL[weekStart.getDay()].slice(0, 3) + ' ' + weekStart.getDate() + ' ' + short(weekStart) + ' ' + weekStart.getFullYear();
+  if (dayCount < 7){
+    if (weekStart.getMonth() === end.getMonth()) return weekStart.getDate() + ' – ' + end.getDate() + ' ' + short(end) + ' ' + end.getFullYear();
+    if (weekStart.getFullYear() === end.getFullYear()) return weekStart.getDate() + ' ' + short(weekStart) + ' – ' + end.getDate() + ' ' + short(end) + ' ' + end.getFullYear();
+    return weekStart.getDate() + ' ' + short(weekStart) + ' ' + weekStart.getFullYear() + ' – ' + end.getDate() + ' ' + short(end) + ' ' + end.getFullYear();
+  }
   if (weekStart.getMonth() === end.getMonth()) return MONTHS[end.getMonth()] + ' ' + end.getFullYear();
   if (weekStart.getFullYear() === end.getFullYear()) return short(weekStart) + ' – ' + short(end) + ' ' + end.getFullYear();
   return short(weekStart) + ' ' + weekStart.getFullYear() + ' – ' + short(end) + ' ' + end.getFullYear();
 }
 
+/* ---- how many days: the − / + pill and the 1–7 keys ---- */
+const daysLabel = document.getElementById('cal-days-label');
+const daysLess = document.getElementById('cal-days-less'), daysMore = document.getElementById('cal-days-more');
+function showDayCount(){
+  if (document.activeElement !== daysLabel) daysLabel.value = dayCount + (dayCount === 1 ? ' day' : ' days');
+  weekEl.classList.toggle('wide', dayCount <= 3);       // 1–3 days: time and title on one line, bigger text
+  weekEl.classList.toggle('one-day', dayCount === 1);   // 1 day: the description to the right of the title
+  daysLess.disabled = dayCount <= 1;
+  daysMore.disabled = dayCount >= 7;
+  weekEl.style.setProperty('--days', dayCount);
+}
+/* the first shown day after a change: the selected date, else today if it is
+   in view, else the current first day — snapped to Monday for a full week */
+function setDayCount(n){
+  n = clamp(n, 1, 7);
+  if (n === dayCount) return;
+  const today = isoDate(new Date());
+  const anchor = selectedDate ? parseIso(selectedDate)
+    : isoDate(weekStart) <= today && today <= isoDate(lastShown()) ? parseIso(today) : weekStart;
+  dayCount = n;
+  store.set('ideally.calDays', n);
+  weekStart = n === 7 ? mondayOf(anchor) : anchor;
+  renderWeek();
+}
+daysLess.addEventListener('click', () => setDayCount(dayCount - 1));
+daysMore.addEventListener('click', () => setDayCount(dayCount + 1));
+/* the label can be typed into: a digit 1–7 applies right away */
+daysLabel.addEventListener('focus', () => { daysLabel.value = String(dayCount); daysLabel.select(); });
+daysLabel.addEventListener('input', () => {
+  const m = daysLabel.value.match(/[1-7]/);
+  if (!m) return;
+  daysLabel.blur();                                    // blur restores "N days"
+  setDayCount(Number(m[0]));
+});
+daysLabel.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === 'Escape'){ e.preventDefault(); daysLabel.blur(); } });
+daysLabel.addEventListener('blur', showDayCount);
+document.addEventListener('keydown', e => {
+  if (!/^[1-7]$/.test(e.key) || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (!weekEl.offsetParent || anyPopupOpen()) return;                       // calendar not in view, or a pop-up is open
+  const t = e.target;
+  if (t.closest && (t.closest('input, textarea, select') || t.isContentEditable)) return;
+  setDayCount(Number(e.key));
+});
+
 function renderWeek(){
   document.getElementById('cal-title').textContent = weekTitle();
+  showDayCount();
   weekEl.innerHTML = '';
   renderedToday = isoDate(new Date());
   weekEl.classList.toggle('has-selection', !!selectedDate);
   periodTag.hidden = true;
 
-  /* 3e: periods touching this week get a band row each (overlaps stack) */
-  const weekPeriods = periodsBetween(isoDate(weekStart), isoDate(addDays(weekStart, 6)));
+  /* 3e: periods touching the shown days get a band row each (overlaps stack) */
+  const weekPeriods = periodsBetween(isoDate(weekStart), isoDate(lastShown()));
   const laneOf = new Map(), laneEnds = [];
   weekPeriods.forEach(p => {
     let lane = laneEnds.findIndex(end => end < p.start);
@@ -110,20 +167,21 @@ function renderWeek(){
     laneOf.set(p.id, lane);
   });
 
-  for (let i = 0; i < 7; i++){
+  for (let i = 0; i < dayCount; i++){
     const d = addDays(weekStart, i);
     const dStr = isoDate(d);
+    const weekend = d.getDay() === 0 || d.getDay() === 6;
     const col = document.createElement('div');
-    col.className = 'day-col' + (dStr === renderedToday ? ' today' : '') + (i >= 5 ? ' weekend' : '') + (dStr === selectedDate ? ' selected' : '');
+    col.className = 'day-col' + (dStr === renderedToday ? ' today' : '') + (weekend ? ' weekend' : '') + (dStr === selectedDate ? ' selected' : '');
     col.dataset.date = dStr;
     col.dataset.index = i;
 
-    /* daysRow cell: dim weekday initial above the bold DD.MM */
+    /* daysRow cell: dim weekday initial (the full name when 4 or fewer days are shown) above the bold DD.MM */
     const head = document.createElement('div');
     head.className = 'day-head';
     const init = document.createElement('span');
     init.className = 'dh-init';
-    init.textContent = DAY_INITIALS[i];
+    init.textContent = dayCount <= 4 ? DAY_FULL[d.getDay()] : DAY_INITIALS[d.getDay()];
     const date = document.createElement('span');
     date.className = 'dh-date';
     date.textContent = pad(d.getDate()) + '.' + pad(d.getMonth() + 1);
@@ -196,10 +254,15 @@ function renderWeek(){
       const ti = document.createElement('span');
       ti.className = 'ev-title';
       ti.textContent = e.title;
+      /* the description is shown inside the block in the 1-day view (CSS) */
+      const de = document.createElement('span');
+      de.className = 'ev-desc';
+      de.textContent = e.description || '';
       block.title = (outside ? 'Outside ' + outside.name + ' — the period no longer covers this day (right-click to untie)\n'
                      : cancelled ? 'Cancelled by ' + cancelled.name + '\nClick to wash the cancelled events out of ' + cancelled.name + ' (right-click to edit)\n' : '') +
                     timeLabel(e) + ' ' + e.title + ' (' + typeOf(e).name + ')' + (tie ? '\nDuring ' + tie.name : '') + (e.description ? '\n' + e.description : '');
       block.append(t, ti);
+      if (e.description) block.appendChild(de);
       blockStyle(block, e, u);
       /* a cancelled ghost: clicking washes every ghost of its period away (edit via right-click) */
       block.addEventListener('click', () => cancelled && !outside ? washPeriod(cancelled) : openEventEditor({ event: getEvent(e.id) }));
@@ -381,10 +444,11 @@ document.addEventListener('pointerup', e => {
   openPeriodEditor({ start: from <= to ? from : to, end: from <= to ? to : from });
 });
 
-/* jump to the week containing dateStr (Periods list → "Show in calendar") */
+/* jump to dateStr: its week, or a window starting on it (Periods list → "Show in calendar") */
 export function showWeekOf(dateStr){
   selectedDate = null;
-  weekStart = mondayOf(parseIso(dateStr));
+  const d = parseIso(dateStr);
+  weekStart = dayCount === 7 ? mondayOf(d) : d;
   renderWeek();
 }
 
@@ -487,19 +551,21 @@ setInterval(() => {
   else updateNowLine();
 }, 30000);
 
+/* ‹ › page by the number of days shown; Today shows this week, or starts the window on today */
 document.getElementById('cal-prev').addEventListener('click', () => {
   selectedDate = null;
-  weekStart = addDays(weekStart, -7);
+  weekStart = addDays(weekStart, -dayCount);
   renderWeek();
 });
 document.getElementById('cal-next').addEventListener('click', () => {
   selectedDate = null;
-  weekStart = addDays(weekStart, 7);
+  weekStart = addDays(weekStart, dayCount);
   renderWeek();
 });
 document.getElementById('cal-today').addEventListener('click', () => {
   selectedDate = null;
-  weekStart = mondayOf(new Date());
+  const today = new Date();
+  weekStart = dayCount === 7 ? mondayOf(today) : new Date(today.getFullYear(), today.getMonth(), today.getDate());
   renderWeek();
 });
 onEventsChange(renderWeek);

@@ -103,6 +103,12 @@
     <div class="cal-bar">
       <h2 id="cal-title">Week</h2>
       <div class="cal-nav">
+        <!-- how many days are shown, 1–7 (keys 1–7 too) -->
+        <div class="cal-days" title="Days shown (keys 1–7)">
+          <button class="icon-btn" id="cal-days-less" title="Fewer days">−</button>
+          <input id="cal-days-label" value="7 days" maxlength="6" inputmode="numeric" autocomplete="off" spellcheck="false" aria-label="Days shown, 1 to 7" title="Click and type 1–7">
+          <button class="icon-btn" id="cal-days-more" title="More days">+</button>
+        </div>
         <button class="ghost-btn" id="cal-today">Today</button>
         <button class="icon-btn" id="cal-prev" title="Previous week">
           <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>

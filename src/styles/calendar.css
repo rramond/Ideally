@@ -5,9 +5,30 @@
 }
 .cal-bar h2{font-family:var(--font-display);font-size:18px;font-weight:700;letter-spacing:-.01em}
 .cal-nav{margin-left:auto;display:flex;gap:6px;align-items:center}
+/* the − / + pill: how many days are shown */
+.cal-days{
+  display:flex;align-items:center;gap:2px;margin-right:6px;padding:2px;
+  border:1px solid var(--line);border-radius:8px;background:var(--surface2);
+}
+.cal-days .icon-btn{width:24px;height:24px;font-size:15px;line-height:1}
+.cal-days .icon-btn:disabled{opacity:.3;cursor:default;background:none;box-shadow:none;color:var(--muted)}
+#cal-days-label{
+  width:54px;padding:0;border:none;background:none;text-align:center;
+  font-family:var(--font-mono);font-size:11.5px;color:var(--muted);cursor:text;
+}
+#cal-days-label:focus{outline:none;color:var(--ink);box-shadow:inset 0 -1px 0 var(--accent)}
 
-/* ---- week: one column per day ---- */
-.week{position:relative;flex:1;min-height:0;display:grid;grid-template-columns:repeat(7, minmax(0, 1fr))}
+/* ---- the day columns: one per shown day (--days, 1–7) ---- */
+.week{
+  position:relative;flex:1;min-height:0;display:grid;grid-template-columns:repeat(var(--days, 7), minmax(0, 1fr));
+  /* text grows as fewer days share the width. With the time stacked above the
+     title (4–7 days) only mildly (×1.09 at 4 days), or a 30-minute block can't
+     hold both lines; at 1–3 days (.wide) they sit on one line, so ×1.32 at
+     3 days up to ×1.48 at 1 day. Headers grow half as much. */
+  --scale:calc(1 + (7 - var(--days, 7)) * 0.03);
+  --scale-h:calc(1 + (7 - var(--days, 7)) * 0.04);
+}
+.week.wide{--scale:calc(1 + (7 - var(--days, 7)) * 0.08)}
 .day-col{
   position:relative;display:flex;flex-direction:column;min-width:0;min-height:0;
   border-right:1px solid var(--line);background:var(--surface);
@@ -22,7 +43,7 @@
   font-family:var(--font-display);line-height:1.15;
 }
 .dh-init{font-size:10px;font-weight:500;letter-spacing:.1em;color:var(--muted);opacity:.55}
-.dh-date{font-size:15px;font-weight:700;color:var(--ink);letter-spacing:.01em}
+.dh-date{font-size:calc(15px * var(--scale-h, 1));font-weight:700;color:var(--ink);letter-spacing:.01em}
 .day-col.today .dh-date{
   color:#F4ECFF;
   text-shadow:0 0 6px rgba(192,132,252,.95),0 0 16px rgba(177,76,248,.7),0 0 28px rgba(177,76,248,.4);
@@ -52,8 +73,8 @@
   left:calc(22px + (100% - 21px) * var(--lane) / var(--lanes));
   width:calc((100% - 21px) / var(--lanes) - 2px);
   display:flex;flex-direction:column;gap:1px;overflow:hidden;
-  border-radius:6px;padding:3px 7px;
-  font-size:11.5px;line-height:1.3;color:#F1EEFA;border:1px solid transparent;
+  border-radius:6px;padding:calc(3px * var(--scale, 1)) calc(7px * var(--scale, 1));
+  font-size:calc(11.5px * var(--scale, 1));line-height:1.3;color:#F1EEFA;border:1px solid transparent;
   cursor:pointer;transition:filter .12s;
 }
 .ev-block:hover{filter:brightness(1.18)}
@@ -91,8 +112,16 @@
   animation:period-wave var(--dur, 1.8s) cubic-bezier(.5,0,.5,1) forwards;
 }
 @keyframes period-wave{to{top:115%}}
-.ev-block .ev-time{font-family:var(--font-mono);font-size:10px;opacity:.8}
+.ev-block .ev-time{font-family:var(--font-mono);font-size:calc(10px * var(--scale, 1));opacity:.8}
 .ev-block .ev-title{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 1–3 days: one line — time, then the title (ellipsis), baselines aligned; one
+   line of ×1.48 text is ~31px, so a 30-minute block still shows it */
+.week.wide .ev-block{display:grid;grid-template-columns:max-content minmax(0, 1fr);column-gap:12px;align-items:baseline}
+/* 1 day: the description takes the empty space to the right of the title,
+   wrapping as needed; the block's overflow:hidden clips it at the block's height */
+.week.one-day .ev-block{grid-template-columns:max-content minmax(80px, 32%) minmax(0, 1fr)}
+.ev-block .ev-desc{display:none;font-size:calc(10.5px * var(--scale, 1));line-height:1.4;opacity:.85;white-space:pre-wrap;overflow-wrap:anywhere;overflow:hidden}
+.week.one-day .ev-block .ev-desc{display:block}
 
 .now-line{
   position:absolute;left:0;right:0;z-index:2;height:2px;margin-top:-1px;pointer-events:none;
