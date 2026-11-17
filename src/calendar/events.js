@@ -117,6 +117,7 @@ export function paintColors(el, item){
 }
 
 /* ---- events ---- */
+export const getEvents = () => events;
 export const getEvent = id => events.find(e => e.id === id);
 export function saveEvent(ev){
   if (ev.created == null) ev.created = Date.now();

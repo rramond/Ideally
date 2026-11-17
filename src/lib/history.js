@@ -3,9 +3,10 @@
    browser history step, so the Ideally logo, the browser's Back,
    the mouse back button and Alt+← all behave the same.
 
-   State: { view, calMode, blocks, periods, popups, depth }
-   - blocks / periods: the calendar side panel shows the Time Blocks /
-     Periods list
+   State: { view, calMode, blocks, periods, types, typeId, popups, depth }
+   - blocks / periods / types: the calendar side panel shows the Time
+     Blocks / Periods / Types list; typeId: the type open in the main
+     area (3h)
    - popups: ids of the pop-ups open at that step, oldest first.
      Pop-ups can nest (overlay → type picker → color wheel).
    - Going back closes every pop-up the target step doesn't have.
@@ -22,8 +23,9 @@ const openNow = new Map(); // pop-up id → hide(), in opening order
 export const getState = () => current;
 
 const sameView = (a, b) => a.view === b.view && !!a.calMode === !!b.calMode
-  && !!a.blocks === !!b.blocks && !!a.periods === !!b.periods;
-const viewOf = s => ({ view: s.view, calMode: s.calMode, blocks: s.blocks, periods: s.periods });
+  && !!a.blocks === !!b.blocks && !!a.periods === !!b.periods && !!a.types === !!b.types
+  && (a.typeId || null) === (b.typeId || null);
+const viewOf = s => ({ view: s.view, calMode: s.calMode, blocks: s.blocks, periods: s.periods, types: s.types, typeId: s.typeId || null });
 
 /* hide pop-ups newest first, without touching history */
 function hideAll(ids){

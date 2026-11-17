@@ -264,3 +264,54 @@ body.tb-dragging,body.tb-dragging *{cursor:grabbing !important}
 }
 .dd-period:hover{filter:brightness(1.2)}
 .dd-period i{width:8px;height:8px;border-radius:50%;background:var(--tc)}
+
+/* ============ EVENT TYPE LIBRARY (3h) ============ */
+/* side panel: every type, most used first */
+.nav-types{display:flex;flex-direction:column;gap:4px;flex:1;min-height:0}
+.sidebar.types-mode .nav-cal,.sidebar:not(.types-mode) .nav-types{display:none}
+.ty-item{
+  display:flex;align-items:center;gap:10px;flex-shrink:0;
+  padding:7px 10px;border-radius:8px;cursor:pointer;border:1px solid transparent;
+  transition:background .12s,border-color .12s;
+}
+.ty-item:hover,.ty-item:focus-visible{background:#171622;outline:none}
+.ty-item.on{background:var(--accent-soft);border-color:rgba(177,76,248,.3)}
+.ty-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;background:var(--tc);box-shadow:0 0 7px var(--tc)}
+.ty-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+
+/* the type view fills the main area instead of the week */
+#view-calendar.type-open .cal-bar,#view-calendar.type-open .week{display:none}
+.type-view{display:none;flex:1;min-height:0;flex-direction:column}
+#view-calendar.type-open .type-view{display:flex}
+.ty-head{display:flex;align-items:center;gap:16px;padding:18px 28px;border-bottom:1px solid var(--line)}
+.ty-head .ee-type{width:28px;height:28px}
+.ty-name{font-size:26px;flex:0 1 auto}
+.ty-total{margin-left:auto;font-family:var(--font-mono);font-size:12px;letter-spacing:.12em;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.ty-list{
+  flex:1;min-height:0;overflow-y:auto;
+  display:flex;flex-direction:column;gap:10px;padding:18px 28px 24px;
+}
+.ty-empty{color:var(--muted);font-size:13px}
+.ty-group{margin-top:10px}
+/* a row in the event's colors: neon glow border, round corners, grows a little under the cursor */
+.ty-row{
+  display:flex;align-items:baseline;gap:10px;flex-shrink:0;width:100%;text-align:left;
+  padding:11px 18px;border-radius:10px;
+  background:linear-gradient(90deg, color-mix(in srgb, var(--tc) 13%, transparent), color-mix(in srgb, var(--tc2, var(--tc)) 13%, transparent));
+  border:1px solid color-mix(in srgb, color-mix(in srgb, var(--tc), var(--tc2, var(--tc))) 65%, transparent);
+  border-left-color:var(--tc);border-right-color:var(--tc2, var(--tc));
+  box-shadow:0 0 10px color-mix(in srgb, color-mix(in srgb, var(--tc), var(--tc2, var(--tc))) 35%, transparent);
+  transform-origin:center;
+  transition:transform .14s ease,box-shadow .14s,filter .14s,opacity .14s;
+}
+.ty-row:hover,.ty-row:focus-visible{
+  transform:scale(1.015);outline:none;filter:brightness(1.1);
+  box-shadow:0 0 18px color-mix(in srgb, color-mix(in srgb, var(--tc), var(--tc2, var(--tc))) 60%, transparent);
+}
+.ty-row.past{opacity:.45}
+.ty-row.past:hover{opacity:.8}
+.ty-row-name{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ty-sep{font-family:var(--font-mono);color:var(--muted);flex-shrink:0}
+.ty-row-time,.ty-row-date{font-family:var(--font-mono);font-size:12.5px;color:#C9C6DA;flex-shrink:0}
+.ty-row-recur{margin-left:auto;font-family:var(--font-mono);font-size:10.5px;color:var(--muted);flex-shrink:0}
+.ty-foot{display:flex;padding:8px 28px 18px}
