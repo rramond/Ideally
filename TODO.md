@@ -83,6 +83,14 @@ editable name for changes, color circle before it for changing type color
 below is a list of all events appended to it, in cronological order in the format NAME - hour - DD.MM.YY (only last 2 trailing digits for year for readability)
 each event/time block will have its row colored with its color (neon glow border, round corners) and should have interactive touch => when cursor is on a certan event row it gets a big bigger.
 
+## **4. Themes**
+
+a) ✅ DONE — TOKEN REFACTOR (no visual change): every UI color goes through a token in src/themes/tokens.css — the accent family (accent, dim, bright, pale, tint, iris + soft / neon glows), text (ink, ink-bright, ink-soft, muted, dim, dim-2, dim-3), surfaces (bg-deep, bg, bg-side, surface-weekend, surface, surface2, hover, hover2, line, scrollbar, overlay), danger and the logo's eye / pupil. Alpha variants are color-mix()es of a token, so they follow it. The logo, the board's arrowheads and the three JS defaults (new type color, palette fallback, scene-glow fallback) read the tokens too. User colors (types, periods, stickies, scene glows) are data and stay untouched. A few near-identical greys were unified (e.g. four off-whites → ink-bright).
+
+b) ✅ DONE — THEMES DROPDOWN (the spec above): a Themes button at the bottom of the main side panel; the dropdown falls from the top over the main area (rounded corners, thin border, shadow, the page dimmed behind it); a looping horizontal carousel of screen-shaped previews in a set order, opening with the current theme centered and bigger, "‹ THEME NAME ›" above it; arrows, the mouse wheel (up = right neighbour, down = left), ← / → and clicking a side card move it, and the centered theme is applied live; clicking outside, the × (or Esc / Back) closes it, keeping the theme. Previews are a small drawn copy of the app (sidebar, bar, a week with events) in each theme's own colors
+
+c) ✅ DONE — themes (src/themes/themes.js, each a full token set): Ideally (the original, default), Ethereal White (warm whites and off-whites, ochre accent, soft cloud-like shadows and a pale veil behind pop-ups), Polarized Dark (VS Code Dark+ greys and blue, flat: no glows, today's date in blue), and two "???" placeholders (their "?" preview can be centered, the theme stays as it is). Remembered across reloads (ideally.theme), applied before the first paint, a 0.45 s crossfade, the favicon follows. Glows are drawn in their own --glow colors so a theme can soften or drop them; hard ring outlines stay. User colors (event types, periods, stickies) are unchanged in every theme; the Focus tab keeps light text over its dark scenes
+
 ### **GENERAL**
 
 a) ✅ DONE — pressing on the Ideally icon acts as a back button between tabs and pop-ups
