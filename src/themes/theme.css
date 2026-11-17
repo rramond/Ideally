@@ -1,0 +1,93 @@
+/* ============ THEMES (4) ============ */
+/* while a theme is being switched, colors ease over instead of jumping */
+html.theming, html.theming *, html.theming *::before, html.theming *::after{
+  transition:background-color .45s ease, color .45s ease, border-color .45s ease,
+             box-shadow .45s ease, text-shadow .45s ease, fill .45s ease, stroke .45s ease,
+             outline-color .45s ease !important;
+}
+/* …except the carousel, which keeps its own slide */
+html.theming .tpk-card{transition:transform .32s cubic-bezier(.3,.7,.3,1), opacity .32s ease !important}
+html.theming .tpk-card.no-anim{transition:none !important}
+
+/* flat themes: no glow on the event blocks either (they glow in their type color) */
+html[data-glow="flat"] .ev-block,html[data-glow="flat"] .ty-row{box-shadow:none !important}
+html[data-glow="flat"] .period-band{box-shadow:none}
+
+/* the Focus tab's scenes are always dark: its text keeps light colors in every theme */
+#view-timer{--ink-bright:#F4F0FF;--muted:#B7B4CC;--line:rgba(255,255,255,.18);--surface2:rgba(18,18,28,.7);--overlay:#07070C}
+
+/* ---- the Themes button: bottom of the main side panel ---- */
+.nav-theme{margin-top:auto;padding-top:10px;border-top:1px solid var(--line)}
+.sidebar.cal-mode .nav-theme{display:none}
+
+/* ---- the dropdown: falls from the top, over the main area ---- */
+.tpk-overlay{
+  position:fixed;inset:0;z-index:50;
+  background:color-mix(in srgb, var(--overlay) 55%, transparent);backdrop-filter:blur(2px);
+  animation:ee-fade .16s ease;
+}
+.tpk-panel{
+  position:absolute;top:14px;left:calc(212px + (100vw - 212px) / 2);
+  width:min(1040px, calc(100vw - 212px - 40px));
+  display:flex;flex-direction:column;align-items:center;gap:18px;
+  padding:18px 24px 28px;border-radius:16px;
+  background:var(--surface2);border:1px solid var(--line);
+  box-shadow:var(--shadow-lg),0 0 40px color-mix(in srgb, var(--glow) 12%, transparent);
+  transform:translateX(-50%);
+  animation:tpk-drop .32s cubic-bezier(.2,.8,.3,1);
+}
+@keyframes tpk-drop{from{transform:translate(-50%, -110%);opacity:.4}}
+
+/* ‹ THEME NAME › above the centered card */
+.tpk-head{display:flex;align-items:center;gap:14px}
+.tpk-arrow{font-size:20px;line-height:1}
+.tpk-name{
+  min-width:200px;text-align:center;
+  font-family:var(--font-display);font-size:18px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink-bright);text-shadow:0 0 12px color-mix(in srgb, var(--glow) 60%, transparent);
+}
+
+/* the carousel: cards in screen proportions, the center one full size */
+.tpk-track{position:relative;width:100%;height:calc(var(--cw) / var(--ar));overflow:hidden}
+.tpk-card{
+  position:absolute;left:50%;top:0;width:var(--cw);aspect-ratio:var(--ar);padding:0;
+  border-radius:12px;overflow:hidden;border:1px solid var(--line);
+  transform-origin:center;
+  transition:transform .32s cubic-bezier(.3,.7,.3,1), opacity .32s ease, box-shadow .2s;
+}
+.tpk-card.no-anim{transition:none}
+.tpk-card:not(.center):hover{opacity:1 !important}
+.tpk-card.center{
+  border-color:var(--accent);
+  box-shadow:0 0 0 1px var(--accent),0 10px 30px rgba(0,0,0,.35),0 0 24px color-mix(in srgb, var(--glow) 45%, transparent);
+}
+
+/* ---- the drawn preview (its tokens are set on .tpk-mock) ---- */
+.tpk-mock{position:absolute;inset:0;display:flex;background:var(--bg);pointer-events:none}
+.m-side{width:16%;display:flex;flex-direction:column;gap:6%;padding:5% 2.5%;background:var(--bg-side);border-right:1px solid var(--line)}
+.m-side i{display:block;border-radius:3px}
+.m-logo{height:6%;width:70%;margin-bottom:8%;background:var(--accent-bright);box-shadow:0 0 6px var(--glow-bright)}
+.m-nav{height:5%;background:var(--dim-3)}
+.m-nav.on{background:color-mix(in srgb, var(--accent) 35%, transparent);box-shadow:0 0 5px color-mix(in srgb, var(--glow) 50%, transparent)}
+.m-main{flex:1;display:flex;flex-direction:column;min-width:0}
+.m-bar{height:11%;display:flex;align-items:center;gap:6%;padding:0 5%;border-bottom:1px solid var(--line)}
+.m-title{width:22%;height:32%;border-radius:2px;background:var(--ink)}
+.m-btn{margin-left:auto;width:12%;height:40%;border-radius:3px;background:var(--surface2);border:1px solid var(--line)}
+.m-week{flex:1;display:grid;grid-template-columns:repeat(7, 1fr)}
+.m-col{position:relative;background:var(--surface);border-right:1px solid var(--line)}
+.m-col:last-child{border-right:none}
+.m-col.weekend{background:var(--surface-weekend)}
+.m-head{display:block;height:9%;border-bottom:1px solid var(--line)}
+.m-col.today .m-head{background:linear-gradient(transparent 35%, var(--today-ink) 35% 60%, transparent 60%) center / 50% 100% no-repeat;filter:drop-shadow(0 0 3px var(--glow-bright))}
+.m-ev{
+  position:absolute;left:10%;right:8%;display:block;border-radius:3px;
+  background:color-mix(in srgb, var(--tc) 40%, transparent);border-left:2px solid var(--tc);
+  box-shadow:0 0 4px color-mix(in srgb, var(--tc) 40%, transparent);
+}
+.tpk-mock[data-glow="flat"] .m-ev,.tpk-mock[data-glow="flat"] .m-logo{box-shadow:none}
+/* "???" */
+.tpk-unknown{
+  align-items:center;justify-content:center;
+  background:repeating-linear-gradient(135deg, var(--surface) 0 14px, var(--surface2) 14px 28px);
+}
+.tpk-q{font-family:var(--font-display);font-size:64px;font-weight:700;color:var(--dim)}

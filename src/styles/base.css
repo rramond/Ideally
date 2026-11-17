@@ -1,7 +1,5 @@
 /* colors live in src/themes/tokens.css (the theme); only shape and type here */
 :root{
-  --shadow-md:0 8px 22px rgba(0,0,0,.5);
-  --shadow-lg:0 22px 48px rgba(0,0,0,.65);
   --radius:10px;
   --font-display:'Space Grotesk',system-ui,sans-serif;
   --font-body:'Inter',system-ui,sans-serif;
@@ -40,16 +38,16 @@ input,select,textarea{color:var(--ink)}
   padding:6px 10px 20px;
   display:flex;align-items:center;gap:10px;
   color:var(--ink-bright);
-  text-shadow:0 0 14px color-mix(in srgb, var(--accent) 55%, transparent);
+  text-shadow:0 0 14px color-mix(in srgb, var(--glow) 55%, transparent);
 }
-.brand svg{width:26px;height:18px;filter:drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 80%, transparent))}
+.brand svg{width:26px;height:18px;filter:drop-shadow(0 0 5px color-mix(in srgb, var(--glow) 80%, transparent))}
 .brand .b-eye{fill:var(--brand-eye);stroke:var(--accent-bright)}
 .brand .b-iris{fill:var(--accent-iris)}
 .brand .b-pupil{fill:var(--brand-pupil)}
 /* the logo is the back button */
 /* stays above overlay backdrops, so it can always be pressed to go back */
 button.brand{position:relative;z-index:55;width:100%;text-align:left;border-radius:8px;transition:text-shadow .12s}
-.brand:hover{text-shadow:0 0 18px color-mix(in srgb, var(--accent) 90%, transparent)}
+.brand:hover{text-shadow:0 0 18px color-mix(in srgb, var(--glow) 90%, transparent)}
 .brand::after{content:"‹ back";margin-left:auto;font-family:var(--font-mono);font-size:10px;font-weight:400;color:var(--muted);text-shadow:none;opacity:0;transition:opacity .12s}
 .brand:hover::after{opacity:1}
 
@@ -70,7 +68,7 @@ button.brand{position:relative;z-index:55;width:100%;text-align:left;border-radi
 .nav-btn.active{
   background:var(--accent-soft);color:var(--accent-pale);
   border-color:color-mix(in srgb, var(--accent) 30%, transparent);
-  box-shadow:inset 0 0 14px color-mix(in srgb, var(--accent) 10%, transparent),var(--neon);
+  box-shadow:inset 0 0 14px color-mix(in srgb, var(--glow) 10%, transparent),var(--neon);
 }
 .nav-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 

@@ -15,8 +15,15 @@
   --accent-tint:#E9D5FF;     /* the brightest touch (now-line dot) */
   --accent-iris:#A855F7;     /* the logo's iris */
   --accent-soft:color-mix(in srgb, var(--accent) 13%, transparent);
-  --neon:0 0 10px color-mix(in srgb, var(--accent) 45%, transparent);
-  --neon-strong:0 0 6px color-mix(in srgb, var(--accent) 80%, transparent),0 0 18px color-mix(in srgb, var(--accent) 45%, transparent);
+  /* glows: the colors the neon halos are drawn in (a flat theme sets them
+     transparent; a light theme to a soft warm haze) */
+  --glow:#B14CF8;
+  --glow-bright:#C084FC;
+  --neon:0 0 10px color-mix(in srgb, var(--glow) 45%, transparent);
+  --neon-strong:0 0 6px color-mix(in srgb, var(--glow) 80%, transparent),0 0 18px color-mix(in srgb, var(--glow) 45%, transparent);
+  --today-ink:#F4ECFF;       /* today's date (themes without glow color it instead) */
+  --shadow-md:0 8px 22px rgba(0,0,0,.5);
+  --shadow-lg:0 22px 48px rgba(0,0,0,.65);
 
   /* text */
   --ink:#E9E7F4;             /* body text */

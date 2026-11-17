@@ -1,4 +1,5 @@
 import './themes/tokens.css';
+import './themes/theme.css';
 import './styles/base.css';
 import './styles/components.css';
 import './styles/notes.css';
@@ -8,6 +9,7 @@ import './styles/color-wheel.css';
 import './styles/event-editor.css';
 import './styles/timer.css';
 
+import './themes/themePicker.js';   // applies the saved theme (theme.js) and wires the Themes dropdown
 import './notes.js';
 import './calendar/calendar.js';
 import { openEventEditor } from './calendar/eventEditor.js';

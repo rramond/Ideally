@@ -11,7 +11,7 @@
   display:flex;flex-direction:column;gap:14px;
   padding:22px 24px 18px;border-radius:14px;
   background:color-mix(in srgb, var(--surface2) 97%, transparent);border:1px solid var(--line);
-  box-shadow:var(--shadow-lg),0 0 0 1px color-mix(in srgb, var(--accent) 10%, transparent),0 0 40px color-mix(in srgb, var(--accent) 8%, transparent);
+  box-shadow:var(--shadow-lg),0 0 0 1px color-mix(in srgb, var(--accent) 10%, transparent),0 0 40px color-mix(in srgb, var(--glow) 8%, transparent);
 }
 
 /* heading + type circle on the same level */
@@ -23,12 +23,12 @@
   transition:background .12s;
 }
 .ee-name.placeholder{color:var(--dim)}
-.ee-name:hover{background:rgba(255,255,255,.03)}
+.ee-name:hover{background:color-mix(in srgb, var(--ink) 3%, transparent)}
 .ee-name[contenteditable="true"]{background:var(--bg);box-shadow:0 0 0 1px color-mix(in srgb, var(--accent-bright) 60%, transparent);text-overflow:clip}
 .ee-type-wrap{position:relative;flex-shrink:0}
 .ee-type{
   width:24px;height:24px;border-radius:50%;
-  border:2px solid rgba(255,255,255,.85);box-shadow:0 0 10px var(--tc, transparent);
+  border:2px solid color-mix(in srgb, var(--ink) 85%, transparent);box-shadow:0 0 10px var(--tc, transparent);
   transition:transform .12s;
 }
 .ee-type:hover{transform:scale(1.1)}
@@ -41,15 +41,15 @@
 .ee-ovr{position:relative}
 /* no override yet: a dashed ring with a faint + (drawn as two bars, so it is
    exactly centered — a text glyph sits off-center) */
-.ee-ovr.empty{background:transparent;border:2px dashed rgba(255,255,255,.3);box-shadow:none}
+.ee-ovr.empty{background:transparent;border:2px dashed color-mix(in srgb, var(--ink) 30%, transparent);box-shadow:none}
 .ee-ovr.empty::before,.ee-ovr.empty::after{
   content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  width:10px;height:2px;border-radius:1px;background:rgba(255,255,255,.4);pointer-events:none;
+  width:10px;height:2px;border-radius:1px;background:color-mix(in srgb, var(--ink) 40%, transparent);pointer-events:none;
   transition:background .12s;
 }
 .ee-ovr.empty::after{width:2px;height:10px}
-.ee-ovr.empty:hover{border-style:solid;border-color:rgba(255,255,255,.65)}
-.ee-ovr.empty:hover::before,.ee-ovr.empty:hover::after{background:rgba(255,255,255,.8)}
+.ee-ovr.empty:hover{border-style:solid;border-color:color-mix(in srgb, var(--ink) 65%, transparent)}
+.ee-ovr.empty:hover::before,.ee-ovr.empty:hover::after{background:color-mix(in srgb, var(--ink) 80%, transparent)}
 /* the small x that removes the override, shown while hovering the ring (like a pop-up's close x) */
 .ee-ovr-x{
   position:absolute;top:-7px;right:-9px;z-index:3;
@@ -118,7 +118,7 @@
 .tp-form{display:flex;flex-direction:column;gap:8px;margin-top:4px;padding:8px 4px 2px;border-top:1px solid var(--line)}
 .tp-form-row{display:flex;align-items:center;gap:8px}
 .tp-color{position:relative;display:flex}
-.tp-swatch{width:24px;height:24px;border-radius:50%;border:2px solid rgba(255,255,255,.85);flex-shrink:0}
+.tp-swatch{width:24px;height:24px;border-radius:50%;border:2px solid color-mix(in srgb, var(--ink) 85%, transparent);flex-shrink:0}
 .tp-name-in{flex:1;min-width:0;border:1px solid var(--line);border-radius:7px;padding:6px 9px;background:var(--bg);font-size:13px}
 .tp-form-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px}
 .tp-form-actions .danger-link{margin-right:auto}

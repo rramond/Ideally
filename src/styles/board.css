@@ -75,12 +75,12 @@
   pointer-events:visibleStroke;cursor:pointer;
   transition:stroke .12s;
 }
-.arrow:hover{stroke:var(--accent-bright);filter:drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 70%, transparent))}
-.arrow.sel{stroke:var(--accent-bright);filter:drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 85%, transparent))}
+.arrow:hover{stroke:var(--accent-bright);filter:drop-shadow(0 0 4px color-mix(in srgb, var(--glow) 70%, transparent))}
+.arrow.sel{stroke:var(--accent-bright);filter:drop-shadow(0 0 5px color-mix(in srgb, var(--glow) 85%, transparent))}
 .a-handle{
   fill:var(--bg);stroke:var(--accent-bright);stroke-width:2;
   pointer-events:all;cursor:grab;
-  filter:drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 80%, transparent));
+  filter:drop-shadow(0 0 4px color-mix(in srgb, var(--glow) 80%, transparent));
 }
 .a-handle:hover{fill:var(--accent-bright)}
 
@@ -137,7 +137,7 @@
 .sticky.title:has(.s-text[contenteditable="true"]){outline:1.5px solid color-mix(in srgb, var(--accent-bright) 80%, transparent);outline-offset:4px}
 .sticky.title .s-text{
   flex:none;font-family:var(--font-display);font-weight:700;line-height:1.15;letter-spacing:-.01em;
-  color:var(--ink-bright);text-shadow:0 0 18px color-mix(in srgb, var(--accent) 45%, transparent);
+  color:var(--ink-bright);text-shadow:0 0 18px color-mix(in srgb, var(--glow) 45%, transparent);
   white-space:pre;overflow:visible;min-width:1ch;
 }
 .sticky.title .s-text[contenteditable="true"]{overflow:visible}
@@ -152,4 +152,4 @@
   align-items:center;justify-content:center;gap:8px;color:var(--muted);
   pointer-events:none;z-index:2;
 }
-.board-empty .be-big{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--dim-2);text-shadow:0 0 18px color-mix(in srgb, var(--accent) 25%, transparent)}
+.board-empty .be-big{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--dim-2);text-shadow:0 0 18px color-mix(in srgb, var(--glow) 25%, transparent)}
