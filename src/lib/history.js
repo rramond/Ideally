@@ -78,6 +78,16 @@ export function go(partial){
   applyState(current);
 }
 
+/* change the current step in place — no new Back stop (opening another type
+   while one is open, 3h: Back then returns to the calendar, not to that type) */
+export function replace(partial){
+  hideAll([...openNow.keys()]);
+  current = { ...current, ...partial, popups: [] };
+  history.replaceState(current, '');
+  shown = viewOf(current);
+  applyState(current);
+}
+
 export function back(){
   if (current.depth > 0) history.back();
 }
