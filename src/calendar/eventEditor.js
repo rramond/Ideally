@@ -5,7 +5,7 @@ import { addCloseX } from '../lib/popups.js';
 import { toast } from '../lib/toast.js';
 import { attachColorWheel } from '../colorWheel.js';
 import { RECURRENCE, getTypes, typeOf, saveType, deleteType, lastTypeId, rememberType,
-         saveEvent, deleteEvent, saveBlock, deleteBlock } from './events.js';
+         saveEvent, deleteEvent, saveBlock, deleteBlock, overrideClash, suggestOverride } from './events.js';
 import { cancelledBy } from './periods.js';
 
 /* ============================================================
@@ -45,7 +45,14 @@ const endAfter = (start, dur) => { const h = toHours(start) + dur; return fromHo
 const TEMPLATE =
   '<div class="ee-head">' +
     '<h2 class="ee-name"></h2>' +
-    '<div class="ee-type-wrap"><button class="ee-type" type="button"></button></div>' +
+    '<div class="ee-colors">' +
+      '<div class="ee-type-wrap"><button class="ee-type" type="button"></button></div>' +
+      '<span class="ee-ovr-link"></span>' +
+      '<div class="ee-type-wrap ee-ovr-wrap">' +
+        '<button class="ee-type ee-ovr" type="button"></button>' +
+        '<button class="ee-ovr-x" type="button" title="Remove override" aria-label="Remove override color">×</button>' +
+      '</div>' +
+    '</div>' +
   '</div>' +
   '<div class="ee-date">' +
     '<button class="icon-btn ee-day-prev" type="button" title="Previous day"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>' +
@@ -100,12 +107,14 @@ function openEditor(isBlock, item, fresh){
 
   const $ = sel => card.querySelector(sel);
   const nameEl = $('.ee-name'), typeBtn = $('.ee-type'), dateLabel = $('.ee-date-label'), cancelNote = $('.ee-cancel-note');
+  const ovrBtn = $('.ee-ovr'), ovrX = $('.ee-ovr-x'), ovrLink = $('.ee-ovr-link');
   const startIn = $('.ee-start'), endIn = $('.ee-end'), durIn = $('.ee-dur'), descIn = $('.ee-desc');
   const kindSel = $('.ee-recur-kind'), nSel = $('.ee-recur-n');
   const delBtn = $('.ee-delete'), hint = $('.ee-hint'), saveBtn = $('.ee-save');
 
   const close = () => closePopup(EDITOR);
-  openPopup(EDITOR, () => overlay.remove());
+  let destroyOvrWheel = null;
+  openPopup(EDITOR, () => { if (destroyOvrWheel) destroyOvrWheel(); overlay.remove(); });
   addCloseX(card, close);
   overlay.addEventListener('pointerdown', e => { if (e.target === overlay) close(); });
 
@@ -147,7 +156,30 @@ function openEditor(isBlock, item, fresh){
     typeBtn.style.setProperty('--tc', t.color);
     typeBtn.title = 'Type: ' + t.name;
   };
-  typeBtn.addEventListener('click', () => toggleTypePicker(typeBtn, draft, showType));
+  typeBtn.addEventListener('click', () => toggleTypePicker(typeBtn, draft, typePicked));
+  function typePicked(){ showType(); showOvr(); refresh(); }
+
+  /* ---- 3f: override color — a second color that tells this event apart
+     within its type. Empty ring until a color is picked on the wheel (which
+     opens on a color far from the type's); the block is then drawn with a
+     type → override gradient. Hover × or right-click removes it. ---- */
+  const showOvr = () => {
+    const o = draft.overrideColor || null;
+    ovrBtn.classList.toggle('empty', !o);
+    ovrBtn.style.background = o || '';
+    ovrBtn.style.setProperty('--tc', o || 'transparent');
+    ovrBtn.title = o ? 'Override color ' + o + '\nRight-click to remove'
+                     : 'Override color — a second color to tell this ' + noun + ' apart within its type';
+    ovrX.hidden = !o;
+    ovrLink.classList.toggle('on', !!o);
+    ovrLink.style.background = o ? 'linear-gradient(90deg, ' + typeOf(draft).color + ', ' + o + ')' : '';
+  };
+  const clearOvr = () => { delete draft.overrideColor; showOvr(); refresh(); };
+  destroyOvrWheel = attachColorWheel(ovrBtn,
+    () => draft.overrideColor || suggestOverride(typeOf(draft).color),
+    hex => { draft.overrideColor = hex; showOvr(); refresh(); });
+  ovrX.addEventListener('click', e => { e.stopPropagation(); clearOvr(); });
+  ovrBtn.addEventListener('contextmenu', e => { e.preventDefault(); if (draft.overrideColor) clearOvr(); });
 
   /* ---- date ---- */
   const showDate = () => {
@@ -225,15 +257,19 @@ function openEditor(isBlock, item, fresh){
   /* ---- save / delete ---- */
   /* an event's end may be earlier than its start: it then ends the next day */
   const badTime = () => isBlock ? toHours(draft.duration) <= 0 : span(draft.start, draft.end) <= 0;
-  const problem = () => !draft.title ? 'name' : badTime() ? 'time' : null;
+  /* 3f: the override must be clearly different from the type color */
+  const badColor = () => !!draft.overrideColor && overrideClash(draft.overrideColor, typeOf(draft).color);
+  const problem = () => !draft.title ? 'name' : badTime() ? 'time' : badColor() ? 'color' : null;
   const timeIn = isBlock ? durIn : endIn;   // the field that is wrong when the time is
   function refresh(){
     const p = problem();
     saveBtn.setAttribute('aria-disabled', p ? 'true' : 'false');
     timeIn.classList.toggle('invalid', p === 'time');
+    ovrBtn.classList.toggle('clash', p === 'color');
     const nextDay = !isBlock && !p && toHours(draft.end) < toHours(draft.start);
     hint.classList.toggle('info', nextDay);
     if (p === 'time') hint.textContent = isBlock ? 'Duration must be longer than 0' : 'End can’t be the same as start';
+    else if (p === 'color') hint.textContent = 'Override too close to the “' + typeOf(draft).name + '” color — pick a clearly different one';
     else if (nextDay){
       const d = addDays(parseIso(draft.date), 1);
       hint.textContent = 'Ends next day, ' + DAY_NAMES[d.getDay()] + ' ' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1);
@@ -244,6 +280,7 @@ function openEditor(isBlock, item, fresh){
     const p = problem();
     if (p === 'name'){ pulse(nameEl); return; }
     if (p === 'time'){ pulse(timeIn); return; }
+    if (p === 'color'){ pulse(ovrBtn); return; }
     rememberType(draft.typeId);
     (isBlock ? saveBlock : saveEvent)(draft);
     close();
@@ -264,7 +301,7 @@ function openEditor(isBlock, item, fresh){
     delBtn.hidden = true;
   }
 
-  showName(); showType(); showDate(); showRecur(); refresh();
+  showName(); showType(); showOvr(); showDate(); showRecur(); refresh();
 }
 
 /* ============================================================

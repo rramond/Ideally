@@ -103,12 +103,14 @@
 .tb-item{
   display:flex;flex-direction:column;gap:2px;flex-shrink:0;
   padding:7px 10px 7px 12px;border-radius:8px;cursor:grab;user-select:none;
-  background:color-mix(in srgb, var(--tc) 14%, transparent);
-  border:1px solid color-mix(in srgb, var(--tc) 40%, transparent);
+  background:linear-gradient(90deg, color-mix(in srgb, var(--tc) 14%, transparent), color-mix(in srgb, var(--tc2, var(--tc)) 14%, transparent));
+  border:1px solid color-mix(in srgb, color-mix(in srgb, var(--tc), var(--tc2, var(--tc))) 40%, transparent);
   border-left:3px solid var(--tc);
   transition:filter .12s,opacity .12s;
 }
 .tb-item:hover,.tb-item:focus-visible{filter:brightness(1.2);outline:none}
+/* 3f: an override adds a stripe of its color on the right, mirroring the editor's two circles */
+.tb-item.overridden,.dd-item.overridden{border-right:3px solid var(--tc2)}
 .tb-item.dragging{opacity:.4}
 .tb-name{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tb-meta{font-family:var(--font-mono);font-size:10px;color:var(--muted)}
@@ -118,16 +120,17 @@ body.tb-dragging,body.tb-dragging *{cursor:grabbing !important}
   position:fixed;left:0;top:0;z-index:60;pointer-events:none;
   max-width:180px;padding:5px 10px;border-radius:7px;
   font-size:12px;font-weight:500;color:#F1EEFA;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  background:color-mix(in srgb, var(--tc) 30%, #12121B);border:1px solid var(--tc);
-  box-shadow:0 0 12px color-mix(in srgb, var(--tc) 45%, transparent);
+  background:linear-gradient(90deg, color-mix(in srgb, var(--tc) 30%, #12121B), color-mix(in srgb, var(--tc2, var(--tc)) 30%, #12121B));
+  border:1px solid color-mix(in srgb, var(--tc), var(--tc2, var(--tc)));
+  box-shadow:0 0 12px color-mix(in srgb, color-mix(in srgb, var(--tc), var(--tc2, var(--tc))) 45%, transparent);
 }
 .tb-ghost[hidden]{display:none}
 /* where the block will land: full width of the column, above the events */
 .ev-block.tb-preview{
   left:22px;width:calc(100% - 23px);z-index:3;pointer-events:none;
-  background:color-mix(in srgb, var(--tc) 32%, transparent);
-  border:1px dashed var(--tc);
-  box-shadow:0 0 10px color-mix(in srgb, var(--tc) 50%, transparent);
+  background:linear-gradient(90deg, color-mix(in srgb, var(--tc) 32%, transparent), color-mix(in srgb, var(--tc2, var(--tc)) 32%, transparent));
+  border:1px dashed color-mix(in srgb, var(--tc), var(--tc2, var(--tc)));
+  box-shadow:0 0 10px color-mix(in srgb, color-mix(in srgb, var(--tc), var(--tc2, var(--tc))) 50%, transparent);
   transition:top .06s;
 }
 
@@ -175,8 +178,8 @@ body.tb-dragging,body.tb-dragging *{cursor:grabbing !important}
 .dd-item{
   display:flex;flex-direction:column;gap:6px;flex-shrink:0;width:100%;text-align:left;
   padding:11px 14px 11px 16px;border-radius:10px;
-  background:color-mix(in srgb, var(--tc) 11%, transparent);
-  border:1px solid color-mix(in srgb, var(--tc) 30%, transparent);
+  background:linear-gradient(90deg, color-mix(in srgb, var(--tc) 11%, transparent), color-mix(in srgb, var(--tc2, var(--tc)) 11%, transparent));
+  border:1px solid color-mix(in srgb, color-mix(in srgb, var(--tc), var(--tc2, var(--tc))) 30%, transparent);
   border-left:3px solid var(--tc);
   transition:filter .12s;
 }

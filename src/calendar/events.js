@@ -1,15 +1,20 @@
 import { store } from '../lib/storage.js';
 import { isoDate, addDays, mondayOf, parseIso, dayNumber, daysInMonth, toHours, fromHours } from '../lib/dates.js';
 import { cancelledBy } from './periods.js';
+import { colorDistance } from '../lib/oklab.js';
+import { farthestColor } from '../lib/palette.js';
 
 /* ============================================================
    Calendar data: events (with recurrence) and event types.
    Event: { id, title, date, start, end, description, typeId,
-            recur: { kind, n? }, created }   — date = first occurrence,
-   created = when it was made (ms); cancelling periods only
-   cancel events made before they started cancelling (3e.1).
-   An end earlier than the start means the event runs past
-   midnight and ends on the next day (22:00–02:00).
+            recur: { kind, n? }, created, overrideColor? }
+   — date = first occurrence, created = when it was made (ms);
+   cancelling periods only cancel events made before they
+   started cancelling (3e.1). An end earlier than the start
+   means the event runs past midnight and ends on the next day
+   (22:00–02:00). overrideColor (3f): an optional second color
+   that tells the event apart within its type; it is drawn as a
+   left → right gradient from the type color to the override.
 ============================================================ */
 export const RECURRENCE = [
   ['none', 'Does not repeat'],
@@ -87,6 +92,25 @@ export function lastTypeId(){
   return types.some(t => t.id === id) ? id : types[0].id;
 }
 export const rememberType = id => store.set('ideally.lastEventType', id);
+
+/* ---- 3f: type color override ---- */
+/* an override must be clearly different from its type's color — a smaller
+   forbidden range than the one periods keep between each other (0.10) */
+export const MIN_OVERRIDE_DISTANCE = 0.07;
+export const overrideClash = (hex, typeColor) => colorDistance(hex, typeColor) < MIN_OVERRIDE_DISTANCE;
+/* the first override to offer: as far from the type color as possible */
+export const suggestOverride = typeColor => farthestColor([typeColor]);
+/* the colors an event or block is drawn with: { type, override | null } */
+export const colorsOf = item => ({ type: typeOf(item).color, override: item.overrideColor || null });
+/* set --tc (type color) and --tc2 (override, or the type color again) on an
+   element, so the CSS can draw the type → override gradient; .overridden marks
+   elements that really have two colors */
+export function paintColors(el, item){
+  const { type, override } = colorsOf(item);
+  el.style.setProperty('--tc', type);
+  el.style.setProperty('--tc2', override || type);
+  el.classList.toggle('overridden', !!override);
+}
 
 /* ---- events ---- */
 export const getEvent = id => events.find(e => e.id === id);
@@ -171,7 +195,8 @@ export function keepEvent(id){
 
 /* ============================================================
    Time blocks (3c.2): premade events without a date or start.
-   Block: { id, title, duration 'HH:MM', description, typeId, recur }
+   Block: { id, title, duration 'HH:MM', description, typeId, recur,
+            overrideColor? }   — a dropped block passes its override on
 ============================================================ */
 let blocks = store.get('ideally.timeBlocks', []);
 const saveBlocks = () => store.set('ideally.timeBlocks', blocks);

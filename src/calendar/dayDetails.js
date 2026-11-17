@@ -1,7 +1,7 @@
 import { pad, parseIso, isoDate } from '../lib/dates.js';
 import { openPopup, closePopup, isPopupOpen } from '../lib/history.js';
 import { addCloseX } from '../lib/popups.js';
-import { segmentsOn, timeLabel, typeOf, getEvent, onEventsChange } from './events.js';
+import { segmentsOn, timeLabel, typeOf, paintColors, getEvent, onEventsChange } from './events.js';
 import { openEventEditor } from './eventEditor.js';
 import { periodsOn, getPeriod, onPeriodsChange } from './periods.js';
 import { openPeriodEditor } from './periodEditor.js';
@@ -80,7 +80,7 @@ export function openDayDetails(dateStr){
       const t = typeOf(e);
       const item = el('button', 'dd-item' + (by ? ' cancelled' : ''));
       item.type = 'button';
-      item.style.setProperty('--tc', t.color);
+      paintColors(item, e);   // 3f: type → override gradient when the event has an override
       item.title = by ? 'Cancelled by ' + by.name + '\nClick to edit' : 'Edit event';
       const top = el('div', 'dd-item-top');
       const repeats = e.recur && e.recur.kind !== 'none';

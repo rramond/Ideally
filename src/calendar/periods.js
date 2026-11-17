@@ -1,7 +1,7 @@
 import { store } from '../lib/storage.js';
 import { isoDate, addDays, parseIso, dayNumber } from '../lib/dates.js';
 import { hexToOklab, colorDistance } from '../lib/oklab.js';
-import { hsvToHex } from '../colorWheel.js';
+import { farthestColor } from '../lib/palette.js';
 
 /* ============================================================
    PERIODS (3e) — a named span of days (start → end, both
@@ -82,19 +82,7 @@ export function colorClash(hex, exceptId){
   return worst;
 }
 /* a vivid color as far as possible from every existing period's color */
-export function suggestColor(exceptId){
-  const used = periods.filter(p => p.id !== exceptId).map(p => p.color);
-  if (!used.length) return '#C084FC';
-  let best = '#C084FC', bestD = -1;
-  for (let h = 0; h < 360; h += 6){
-    for (const [s, v] of [[0.6, 0.98], [0.45, 0.85], [0.75, 0.75]]){
-      const hex = hsvToHex(h, s, v);
-      const d = Math.min(...used.map(u => colorDistance(hex, u)));
-      if (d > bestD){ best = hex; bestD = d; }
-    }
-  }
-  return best;
-}
+export const suggestColor = exceptId => farthestColor(periods.filter(p => p.id !== exceptId).map(p => p.color));
 
 export function savePeriod(p){
   /* cancelSince marks when cancelling was switched on; switching it off forgets it */

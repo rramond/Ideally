@@ -2,7 +2,7 @@ import { uid } from '../lib/utils.js';
 import { pad, parseIso, toHours, fromHours } from '../lib/dates.js';
 import { toast } from '../lib/toast.js';
 import { showContextMenu } from '../lib/contextMenu.js';
-import { getBlocks, getBlock, deleteBlock, saveEvent, typeOf, onEventsChange } from './events.js';
+import { getBlocks, getBlock, deleteBlock, saveEvent, typeOf, paintColors, onEventsChange } from './events.js';
 import { openBlockEditor } from './eventEditor.js';
 import { slotAt } from './calendar.js';
 
@@ -37,7 +37,7 @@ function render(){
     item.className = 'tb-item';
     item.dataset.id = b.id;
     item.tabIndex = 0;
-    item.style.setProperty('--tc', t.color);
+    paintColors(item, b);   // 3f: type → override gradient when the block has an override
     const repeats = b.recur && b.recur.kind !== 'none';
     const name = document.createElement('span');
     name.className = 'tb-name';
@@ -78,7 +78,6 @@ listEl.addEventListener('pointerdown', e => {
   if (!block) return;
   const x0 = e.clientX, y0 = e.clientY;
   const dur = Math.min(24, toHours(block.duration));
-  const color = typeOf(block).color;
   let ghost = null, preview = null, slot = null;
 
   const startDrag = () => {
@@ -86,12 +85,12 @@ listEl.addEventListener('pointerdown', e => {
     document.body.classList.add('tb-dragging');
     ghost = document.createElement('div');
     ghost.className = 'tb-ghost';
-    ghost.style.setProperty('--tc', color);
+    paintColors(ghost, block);
     ghost.textContent = block.title;
     document.body.appendChild(ghost);
     preview = document.createElement('div');
     preview.className = 'ev-block tb-preview';
-    preview.style.setProperty('--tc', color);
+    paintColors(preview, block);
     preview.style.height = 'calc(var(--hour, 40px) * ' + dur + ' - 3px)';
     const time = document.createElement('span');
     time.className = 'ev-time';
@@ -157,6 +156,7 @@ function place(block, { date, hour }, dur){
     description: block.description || '',
     typeId: block.typeId,
     recur: { ...(block.recur || { kind: 'none' }) },
+    ...(block.overrideColor ? { overrideColor: block.overrideColor } : {}),   // 3f
     blockId: block.id
   });
   const d = parseIso(date);

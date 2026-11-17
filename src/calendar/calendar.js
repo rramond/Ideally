@@ -2,7 +2,7 @@ import { clamp } from '../lib/utils.js';
 import { pad, isoDate, addDays, mondayOf, parseIso, toHours, fromHours } from '../lib/dates.js';
 import { toast } from '../lib/toast.js';
 import { showContextMenu } from '../lib/contextMenu.js';
-import { segmentsOn, timeLabel, typeOf, getEvent, deleteEvent, keepEvent, onEventsChange } from './events.js';
+import { segmentsOn, timeLabel, typeOf, colorsOf, getEvent, deleteEvent, keepEvent, onEventsChange } from './events.js';
 import { openEventEditor } from './eventEditor.js';
 import { openDayDetails } from './dayDetails.js';
 import { periodsOn, periodsBetween, getPeriod, savePeriod, deletePeriod, onPeriodsChange } from './periods.js';
@@ -36,18 +36,28 @@ function urgency(dateStr){
   if (d < 0) return 0;
   return clamp(1 - d / 14, 0.12, 1);
 }
-/* tint with the type color; the glow grows as the date nears, past events are dim */
-function blockStyle(el, color, u){
-  const mix = pct => 'color-mix(in srgb, ' + color + ' ' + Math.round(pct) + '%, transparent)';
+/* tint with the type color — or, with an override (3f), a left → right gradient
+   from the type color to the override (the left / right borders take each
+   color, the glow blends the two); the glow grows as the date nears, past
+   events are dim */
+function blockStyle(el, item, u){
+  const { type, override } = colorsOf(item);
+  const mix = (c, pct) => 'color-mix(in srgb, ' + c + ' ' + Math.round(pct) + '%, transparent)';
+  const fill = pct => override ? 'linear-gradient(90deg, ' + mix(type, pct) + ', ' + mix(override, pct) + ')' : mix(type, pct);
+  const blend = override ? 'color-mix(in srgb, ' + type + ', ' + override + ')' : type;
+  const border = pct => {
+    el.style.borderColor = mix(blend, pct);
+    if (override){ el.style.borderLeftColor = mix(type, pct + 20); el.style.borderRightColor = mix(override, pct + 20); }
+  };
   if (u <= 0){
-    el.style.background = mix(9);
-    el.style.borderColor = mix(20);
+    el.style.background = fill(9);
+    border(20);
     el.style.color = 'var(--muted)';
     return;
   }
-  el.style.background = mix(14 + 18 * u);
-  el.style.borderColor = mix(35 + 40 * u);
-  el.style.boxShadow = '0 0 ' + (2 + 6 * u) + 'px ' + mix(15 + 40 * u);
+  el.style.background = fill(14 + 18 * u);
+  border(35 + 40 * u);
+  el.style.boxShadow = '0 0 ' + (2 + 6 * u) + 'px ' + mix(blend, 15 + 40 * u);
 }
 
 const atHour = h => 'calc(var(--hour, 40px) * ' + h + ')';
@@ -173,7 +183,7 @@ function renderWeek(){
       block.title = (cancelled ? 'Cancelled by ' + cancelled.name + '\nClick to wash the cancelled events out of ' + cancelled.name + ' (right-click to edit)\n' : '') +
                     timeLabel(e) + ' ' + e.title + ' (' + typeOf(e).name + ')' + (e.description ? '\n' + e.description : '');
       block.append(t, ti);
-      blockStyle(block, typeOf(e).color, u);
+      blockStyle(block, e, u);
       /* a ghost: clicking washes every ghost of its period away (edit via right-click) */
       block.addEventListener('click', () => cancelled ? washPeriod(cancelled) : openEventEditor({ event: getEvent(e.id) }));
       grid.appendChild(block);
