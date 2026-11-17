@@ -2,7 +2,7 @@ import { clamp } from '../lib/utils.js';
 import { pad, isoDate, addDays, mondayOf, parseIso, toHours, fromHours } from '../lib/dates.js';
 import { toast } from '../lib/toast.js';
 import { showContextMenu } from '../lib/contextMenu.js';
-import { segmentsOn, timeLabel, typeOf, colorsOf, getEvent, deleteEvent, keepEvent, onEventsChange } from './events.js';
+import { segmentsOn, timeLabel, typeOf, colorsOf, periodOf, getEvent, deleteEvent, keepEvent, untieEvent, onEventsChange } from './events.js';
 import { openEventEditor } from './eventEditor.js';
 import { openDayDetails } from './dayDetails.js';
 import { periodsOn, periodsBetween, getPeriod, savePeriod, deletePeriod, onPeriodsChange } from './periods.js';
@@ -162,12 +162,15 @@ function renderWeek(){
     const u = urgency(dStr);
     /* ghosts washed away from a period (hideCancelled) are left out until "Show cancelled events" */
     const segs = segmentsOn(dStr).filter(s => !(s.cancelled && s.cancelled.hideCancelled));
-    layoutDay(segs).forEach(({ e, start, end, lane, lanes, cont, cancelled }) => {
+    layoutDay(segs).forEach(({ e, start, end, lane, lanes, cont, cancelled, outside }) => {
       const block = document.createElement('div');
       /* an overnight event: .to-next on its first day, .cont where it continues;
-         3e.1: one cancelled by a period is ghosted */
-      block.className = 'ev-block' + (cont ? ' cont' : end >= 24 && e.end !== '24:00' ? ' to-next' : '') + (cancelled ? ' cancelled' : '');
+         3e.1: one cancelled by a period is ghosted; 3g: so is a tied event whose
+         period no longer covers its start day */
+      block.className = 'ev-block' + (cont ? ' cont' : end >= 24 && e.end !== '24:00' ? ' to-next' : '') +
+                        (cancelled ? ' cancelled' : '') + (outside ? ' outside' : '');
       if (cancelled) block.dataset.cancelledBy = cancelled.name;
+      if (outside) block.dataset.outside = outside.name;
       block.dataset.id = e.id;
       block.style.top = atHour(start);
       block.style.height = 'calc(var(--hour, 40px) * ' + (end - start) + ' - 3px)';
@@ -177,15 +180,25 @@ function renderWeek(){
       const t = document.createElement('span');
       t.className = 'ev-time';
       t.textContent = timeLabel(e) + (repeats ? ' ↻' : '');
+      /* 3g: a tied event carries a dot in its period's color */
+      const tie = periodOf(e);
+      if (tie){
+        block.classList.add('tied');
+        block.style.setProperty('--pc', tie.color);
+        const dot = document.createElement('i');
+        dot.className = 'ev-period-dot';
+        t.prepend(dot);
+      }
       const ti = document.createElement('span');
       ti.className = 'ev-title';
       ti.textContent = e.title;
-      block.title = (cancelled ? 'Cancelled by ' + cancelled.name + '\nClick to wash the cancelled events out of ' + cancelled.name + ' (right-click to edit)\n' : '') +
-                    timeLabel(e) + ' ' + e.title + ' (' + typeOf(e).name + ')' + (e.description ? '\n' + e.description : '');
+      block.title = (outside ? 'Outside ' + outside.name + ' — the period no longer covers this day (right-click to untie)\n'
+                     : cancelled ? 'Cancelled by ' + cancelled.name + '\nClick to wash the cancelled events out of ' + cancelled.name + ' (right-click to edit)\n' : '') +
+                    timeLabel(e) + ' ' + e.title + ' (' + typeOf(e).name + ')' + (tie ? '\nDuring ' + tie.name : '') + (e.description ? '\n' + e.description : '');
       block.append(t, ti);
       blockStyle(block, e, u);
-      /* a ghost: clicking washes every ghost of its period away (edit via right-click) */
-      block.addEventListener('click', () => cancelled ? washPeriod(cancelled) : openEventEditor({ event: getEvent(e.id) }));
+      /* a cancelled ghost: clicking washes every ghost of its period away (edit via right-click) */
+      block.addEventListener('click', () => cancelled && !outside ? washPeriod(cancelled) : openEventEditor({ event: getEvent(e.id) }));
       grid.appendChild(block);
     });
 
@@ -404,6 +417,11 @@ weekEl.addEventListener('contextmenu', e => {
     if (block.dataset.cancelledBy) items.push({
       label: 'Keep event (cancelled by ' + block.dataset.cancelledBy + ')',
       action: () => { keepEvent(ev.id); toast('“' + ev.title + '” is back on'); }
+    });
+    /* 3g: a tied event — or one stranded outside its period — can be untied */
+    if (ev.periodId) items.push({
+      label: 'Untie from “' + (periodOf(ev) ? periodOf(ev).name : 'its period') + '”' + (block.dataset.outside ? ' (outside it)' : ''),
+      action: () => { untieEvent(ev.id); toast('“' + ev.title + '” now happens any time'); }
     });
     items.push({ label: repeats ? 'Delete event (all repeats)' : 'Delete event', danger: true,
       action: () => { deleteEvent(ev.id); toast('Deleted “' + ev.title + '”'); } });

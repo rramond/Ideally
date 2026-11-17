@@ -5,7 +5,7 @@ import { addCloseX } from '../lib/popups.js';
 import { toast } from '../lib/toast.js';
 import { attachColorWheel } from '../colorWheel.js';
 import { periodsOn, nameTaken, colorClash, suggestColor, savePeriod, deletePeriod, dayCount } from './periods.js';
-import { cancelCount } from './events.js';
+import { cancelCount, tiedCount } from './events.js';
 
 /* ============================================================
    PERIOD OVERLAY (3e) — name (= the period's label), color
@@ -55,6 +55,7 @@ const TEMPLATE =
     '<span>Cancel events in this period</span>' +
     '<span class="pe-cancel-count"></span>' +
   '</label>' +
+  '<p class="pe-tied" hidden></p>' +
   '<p class="pe-note">Only the color shows on the calendar — hover a day to see the name.</p>' +
   '<div class="ee-foot">' +
     '<button class="danger-link ee-delete" type="button"></button>' +
@@ -155,6 +156,14 @@ export function openPeriodEditor({ period = null, start, end, pickEnd = false } 
     cancelCountEl.classList.toggle('on', !!draft.cancelEvents && events > 0);
   }
   cancelBox.addEventListener('change', () => { draft.cancelEvents = cancelBox.checked; showCancel(); });
+  /* 3g: how many events are tied to this period (they only happen on its days) */
+  if (editing){
+    const { events, repeating } = tiedCount(draft.id);
+    const tiedEl = $('.pe-tied');
+    tiedEl.hidden = !events;
+    if (events) tiedEl.textContent = events + (events === 1 ? ' event is' : ' events are') + ' tied to this period' +
+      (repeating ? ' (' + repeating + ' repeating)' : '') + ' — they only happen on its days';
+  }
   function commitDate(input, key){
     const v = parseDateInput(input.value, Number(draft[key].slice(0, 4)));
     if (!v){ input.value = fmtDate(draft[key]); return; }

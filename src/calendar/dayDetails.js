@@ -1,7 +1,7 @@
 import { pad, parseIso, isoDate } from '../lib/dates.js';
 import { openPopup, closePopup, isPopupOpen } from '../lib/history.js';
 import { addCloseX } from '../lib/popups.js';
-import { segmentsOn, timeLabel, typeOf, paintColors, getEvent, onEventsChange } from './events.js';
+import { segmentsOn, timeLabel, typeOf, paintColors, periodOf, getEvent, onEventsChange } from './events.js';
 import { openEventEditor } from './eventEditor.js';
 import { periodsOn, getPeriod, onPeriodsChange } from './periods.js';
 import { openPeriodEditor } from './periodEditor.js';
@@ -66,29 +66,44 @@ export function openDayDetails(dateStr){
     });
     list.innerHTML = '';
     /* includes events that started the day before and run past midnight;
-       3e.1: the ones cancelled by a period come last, under their own heading */
+       3e.1: the ones cancelled by a period come last, under their own heading;
+       3g: so do tied events stranded outside their period */
     const segs = segmentsOn(dateStr);
-    const active = segs.filter(s => !s.cancelled), cancelled = segs.filter(s => s.cancelled);
+    const live = segs.filter(s => !s.cancelled && !s.outside);
+    const cancelled = segs.filter(s => s.cancelled && !s.outside), outside = segs.filter(s => s.outside);
     if (!segs.length){
       list.appendChild(el('p', 'dd-empty', 'Nothing planned for this day.'));
       return;
     }
-    if (!active.length) list.appendChild(el('p', 'dd-empty dd-empty-top', 'Nothing planned for this day.'));
-    if (cancelled.length) cancelled.unshift({ heading: 'Cancelled' });
-    [...active, ...cancelled].forEach(({ e, cont, cancelled: by, heading }) => {
+    if (!live.length) list.appendChild(el('p', 'dd-empty dd-empty-top', 'Nothing planned for this day.'));
+    const ghosts = [
+      ...(cancelled.length ? [{ heading: 'Cancelled' }, ...cancelled] : []),
+      ...(outside.length ? [{ heading: 'Outside its period' }, ...outside] : [])
+    ];
+    [...live, ...ghosts].forEach(({ e, cont, cancelled: by, outside: out, heading }) => {
       if (heading){ list.appendChild(el('p', 'dd-group', heading)); return; }
       const t = typeOf(e);
-      const item = el('button', 'dd-item' + (by ? ' cancelled' : ''));
+      const item = el('button', 'dd-item' + (by || out ? ' cancelled' : ''));
       item.type = 'button';
       paintColors(item, e);   // 3f: type → override gradient when the event has an override
-      item.title = by ? 'Cancelled by ' + by.name + '\nClick to edit' : 'Edit event';
+      item.title = by ? 'Cancelled by ' + by.name + '\nClick to edit'
+                 : out ? 'Outside ' + out.name + ' — the period no longer covers this day\nClick to edit' : 'Edit event';
       const top = el('div', 'dd-item-top');
       const repeats = e.recur && e.recur.kind !== 'none';
       top.append(
         el('span', 'dd-time', cont ? 'until ' + e.end : timeLabel(e)),
         el('span', 'dd-title', e.title),
-        by ? el('span', 'dd-cancelled-by', 'Cancelled by ' + by.name) : el('span', 'dd-type', t.name + (repeats ? ' ↻' : ''))
+        by ? el('span', 'dd-cancelled-by', 'Cancelled by ' + by.name)
+          : out ? el('span', 'dd-cancelled-by', 'Outside ' + out.name)
+          : el('span', 'dd-type', t.name + (repeats ? ' ↻' : ''))
       );
+      /* 3g: the period the event is tied to */
+      const tie = periodOf(e);
+      if (tie && !out){
+        const during = el('span', 'dd-during', '· ' + tie.name);
+        during.style.setProperty('--pc', tie.color);
+        top.appendChild(during);
+      }
       item.appendChild(top);
       if (e.description) item.appendChild(el('p', 'dd-desc', e.description));
       item.addEventListener('click', () => {

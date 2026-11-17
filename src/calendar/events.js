@@ -1,6 +1,7 @@
 import { store } from '../lib/storage.js';
 import { isoDate, addDays, mondayOf, parseIso, dayNumber, daysInMonth, toHours, fromHours } from '../lib/dates.js';
-import { cancelledBy } from './periods.js';
+import { cancelledBy, getPeriod, getPeriods, onPeriodsChange } from './periods.js';
+import { toast } from '../lib/toast.js';
 import { colorDistance } from '../lib/oklab.js';
 import { farthestColor } from '../lib/palette.js';
 
@@ -15,6 +16,9 @@ import { farthestColor } from '../lib/palette.js';
    (22:00–02:00). overrideColor (3f): an optional second color
    that tells the event apart within its type; it is drawn as a
    left → right gradient from the type color to the override.
+   periodId (3g): tied to a period — the event and its repeats
+   only happen on the period's days (the repeats stop when it
+   ends), and that period never cancels it.
 ============================================================ */
 export const RECURRENCE = [
   ['none', 'Does not repeat'],
@@ -125,8 +129,45 @@ export function deleteEvent(id){
   saveEvents(); changed();
 }
 
-/* does event e happen on dateStr? */
+/* ---- 3g: tied to a period ---- */
+/* the period event e is tied to, or null (also null once that period is gone) */
+export const periodOf = e => (e.periodId && getPeriod(e.periodId)) || null;
+const inPeriod = (p, dateStr) => p.start <= dateStr && dateStr <= p.end;
+/* stranded: tied, but the period no longer covers the event's own start day
+   (it was shrunk) — that day is then shown as a ghost, "Outside <period>" */
+export const isStranded = e => { const p = periodOf(e); return !!p && !inPeriod(p, e.date); };
+/* the events tied to a period → { events, repeating } (Periods panel, period overlay) */
+export function tiedCount(periodId){
+  const list = events.filter(e => e.periodId === periodId);
+  return { events: list.length, repeating: list.filter(e => e.recur && e.recur.kind !== 'none').length };
+}
+export function untieEvent(id){
+  const e = getEvent(id);
+  if (!e || !e.periodId) return;
+  delete e.periodId;
+  saveEvents(); changed();
+}
+/* a deleted period lets its events go (nothing is deleted) */
+let periodNames = new Map(getPeriods().map(p => [p.id, p.name]));
+onPeriodsChange(() => {
+  const gone = events.filter(e => e.periodId && !getPeriod(e.periodId));
+  if (gone.length){
+    const name = periodNames.get(gone[0].periodId);
+    gone.forEach(e => { delete e.periodId; });
+    saveEvents(); changed();
+    toast(gone.length + (gone.length === 1 ? ' event' : ' events') + ' untied from “' + (name || 'the deleted period') + '” — they now happen any time');
+  }
+  periodNames = new Map(getPeriods().map(p => [p.id, p.name]));
+});
+
+/* does event e happen on dateStr? A tied event only on its period's days. */
 export function occursOn(e, dateStr){
+  if (!rawOccursOn(e, dateStr)) return false;
+  const p = periodOf(e);
+  return !p || inPeriod(p, dateStr);
+}
+/* the event's own schedule, before the period tie is applied */
+function rawOccursOn(e, dateStr){
   const diff = dayNumber(dateStr) - dayNumber(e.date);
   if (diff < 0) return false;
   const r = e.recur || { kind: 'none' };
@@ -157,16 +198,22 @@ export const isOvernight = e => toHours(e.end) < toHours(e.start);
 /* "09:00–10:00", or "22:00–02:00 (+1)" for an event ending the next day */
 export const timeLabel = e => e.start + '–' + e.end + (isOvernight(e) ? ' (+1)' : '');
 
-/* what fills dateStr's hours: { e, start, end (hours), cont, cancelled }. An
-   overnight event gives its first day start→24 and the next day 0→end
-   (cont = true). cancelled = the period cancelling it (by its start day), or null. */
+/* what fills dateStr's hours: { e, start, end (hours), cont, cancelled, outside }.
+   An overnight event gives its first day start→24 and the next day 0→end
+   (cont = true). cancelled = the period cancelling it (by its start day), or
+   null. outside (3g) = the event's period when this is its stranded start day
+   (shown as a ghost), or null. */
 export function segmentsOn(dateStr){
   const prev = isoDate(addDays(parseIso(dateStr), -1));
   const segs = [];
   events.forEach(e => {
     const start = toHours(e.start), end = toHours(e.end), over = end < start;
-    if (occursOn(e, dateStr)) segs.push({ e, start, end: over ? 24 : end, cont: false, cancelled: cancelledBy(e, dateStr) });
-    if (over && end > 0 && occursOn(e, prev)) segs.push({ e, start: 0, end, cont: true, cancelled: cancelledBy(e, prev) });
+    const stranded = isStranded(e);
+    /* a stranded event still shows on its own start day, as a ghost */
+    const on = d => occursOn(e, d) || (stranded && d === e.date);
+    const seg = (d, s) => ({ e, ...s, cancelled: cancelledBy(e, d), outside: stranded && d === e.date ? periodOf(e) : null });
+    if (on(dateStr)) segs.push(seg(dateStr, { start, end: over ? 24 : end, cont: false }));
+    if (over && end > 0 && on(prev)) segs.push(seg(prev, { start: 0, end, cont: true }));
   });
   return segs.sort((a, b) => a.start - b.start || b.end - a.end);
 }

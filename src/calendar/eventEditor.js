@@ -5,8 +5,8 @@ import { addCloseX } from '../lib/popups.js';
 import { toast } from '../lib/toast.js';
 import { attachColorWheel } from '../colorWheel.js';
 import { RECURRENCE, getTypes, typeOf, saveType, deleteType, lastTypeId, rememberType,
-         saveEvent, deleteEvent, saveBlock, deleteBlock, overrideClash, suggestOverride } from './events.js';
-import { cancelledBy } from './periods.js';
+         saveEvent, deleteEvent, saveBlock, deleteBlock, overrideClash, suggestOverride, periodOf } from './events.js';
+import { cancelledBy, getPeriods } from './periods.js';
 
 /* ============================================================
    NEW EVENT OVERLAY (3c.1) — also used to edit an event, and
@@ -23,6 +23,7 @@ const el = (tag, cls, text) => {
   return x;
 };
 const pulse = node => { node.classList.remove('pulse'); void node.offsetWidth; node.classList.add('pulse'); };
+const shortDate = iso => iso.slice(8, 10) + '.' + iso.slice(5, 7);   // 'YYYY-MM-DD' → 'DD.MM'
 
 /* "9" → 09:00, "930" → 09:30, "9:5" → 09:05; 24:00 is allowed only as an end time */
 function parseTime(str, isEnd){
@@ -70,6 +71,10 @@ const TEMPLATE =
     '<select class="ee-recur-kind" aria-label="Repeat"></select>' +
     '<select class="ee-recur-n" aria-label="Every how many days"></select>' +
   '</div></div>' +
+  '<div class="ee-field ee-during-field"><span>During</span><div class="ee-during">' +
+    '<i class="ee-period-dot" hidden></i>' +
+    '<select class="ee-period" aria-label="During a period"></select>' +
+  '</div></div>' +
   '<div class="ee-foot">' +
     '<button class="danger-link ee-delete" type="button"></button>' +
     '<span class="ee-hint"></span>' +
@@ -100,7 +105,7 @@ function openEditor(isBlock, item, fresh){
   card.setAttribute('aria-label', (editing ? 'Edit ' : 'New ') + noun);
   card.innerHTML = TEMPLATE;
   /* a block has a duration; an event has a date, start and end */
-  if (isBlock){ card.querySelector('.ee-date').remove(); card.querySelector('.ee-cancel-note').remove(); card.querySelector('.ee-times').remove(); }
+  if (isBlock){ ['.ee-date', '.ee-cancel-note', '.ee-times', '.ee-during-field'].forEach(s => card.querySelector(s).remove()); }
   else card.querySelector('.ee-dur-field').remove();
   overlay.appendChild(card);
   document.body.appendChild(overlay);
@@ -109,7 +114,7 @@ function openEditor(isBlock, item, fresh){
   const nameEl = $('.ee-name'), typeBtn = $('.ee-type'), dateLabel = $('.ee-date-label'), cancelNote = $('.ee-cancel-note');
   const ovrBtn = $('.ee-ovr'), ovrX = $('.ee-ovr-x'), ovrLink = $('.ee-ovr-link');
   const startIn = $('.ee-start'), endIn = $('.ee-end'), durIn = $('.ee-dur'), descIn = $('.ee-desc');
-  const kindSel = $('.ee-recur-kind'), nSel = $('.ee-recur-n');
+  const kindSel = $('.ee-recur-kind'), nSel = $('.ee-recur-n'), periodSel = $('.ee-period'), periodDot = $('.ee-period-dot');
   const delBtn = $('.ee-delete'), hint = $('.ee-hint'), saveBtn = $('.ee-save');
 
   const close = () => closePopup(EDITOR);
@@ -254,22 +259,49 @@ function openEditor(isBlock, item, fresh){
   kindSel.addEventListener('change', readRecur);
   nSel.addEventListener('change', readRecur);
 
+  /* ---- 3g: during a period — the event (and its repeats) then only happens
+     on that period's days; its start day must be inside it ---- */
+  const showPeriod = () => {
+    if (isBlock) return;
+    const p = periodOf(draft);
+    periodDot.hidden = !p;
+    if (p) periodDot.style.setProperty('--pc', p.color);
+    periodSel.classList.toggle('tied', !!p);
+  };
+  if (!isBlock){
+    if (draft.periodId && !periodOf(draft)) delete draft.periodId;   // its period is gone
+    periodSel.appendChild(new Option('Any time', ''));
+    getPeriods().forEach(p => periodSel.appendChild(new Option(p.name + '  ·  ' + shortDate(p.start) + ' – ' + shortDate(p.end), p.id)));
+    periodSel.value = draft.periodId || '';
+    periodSel.addEventListener('change', () => {
+      if (periodSel.value) draft.periodId = periodSel.value; else delete draft.periodId;
+      showPeriod(); showDate(); refresh();
+    });
+  }
+
   /* ---- save / delete ---- */
   /* an event's end may be earlier than its start: it then ends the next day */
   const badTime = () => isBlock ? toHours(draft.duration) <= 0 : span(draft.start, draft.end) <= 0;
   /* 3f: the override must be clearly different from the type color */
   const badColor = () => !!draft.overrideColor && overrideClash(draft.overrideColor, typeOf(draft).color);
-  const problem = () => !draft.title ? 'name' : badTime() ? 'time' : badColor() ? 'color' : null;
+  /* 3g: a tied event must start inside its period, or it would never show */
+  const badPeriod = () => { const p = periodOf(draft); return !!p && (draft.date < p.start || draft.date > p.end); };
+  const problem = () => !draft.title ? 'name' : badTime() ? 'time' : badColor() ? 'color' : badPeriod() ? 'period' : null;
   const timeIn = isBlock ? durIn : endIn;   // the field that is wrong when the time is
   function refresh(){
     const p = problem();
     saveBtn.setAttribute('aria-disabled', p ? 'true' : 'false');
     timeIn.classList.toggle('invalid', p === 'time');
     ovrBtn.classList.toggle('clash', p === 'color');
+    if (periodSel) periodSel.classList.toggle('invalid', p === 'period');
     const nextDay = !isBlock && !p && toHours(draft.end) < toHours(draft.start);
     hint.classList.toggle('info', nextDay);
     if (p === 'time') hint.textContent = isBlock ? 'Duration must be longer than 0' : 'End can’t be the same as start';
     else if (p === 'color') hint.textContent = 'Override too close to the “' + typeOf(draft).name + '” color — pick a clearly different one';
+    else if (p === 'period'){
+      const per = periodOf(draft), d = parseIso(draft.date);
+      hint.textContent = DAY_NAMES[d.getDay()] + ' ' + shortDate(draft.date) + ' is outside “' + per.name + '” (' + shortDate(per.start) + ' – ' + shortDate(per.end) + ')';
+    }
     else if (nextDay){
       const d = addDays(parseIso(draft.date), 1);
       hint.textContent = 'Ends next day, ' + DAY_NAMES[d.getDay()] + ' ' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1);
@@ -281,6 +313,7 @@ function openEditor(isBlock, item, fresh){
     if (p === 'name'){ pulse(nameEl); return; }
     if (p === 'time'){ pulse(timeIn); return; }
     if (p === 'color'){ pulse(ovrBtn); return; }
+    if (p === 'period'){ pulse(periodSel); return; }
     rememberType(draft.typeId);
     (isBlock ? saveBlock : saveEvent)(draft);
     close();
@@ -301,7 +334,7 @@ function openEditor(isBlock, item, fresh){
     delBtn.hidden = true;
   }
 
-  showName(); showType(); showOvr(); showDate(); showRecur(); refresh();
+  showName(); showType(); showOvr(); showDate(); showRecur(); showPeriod(); refresh();
 }
 
 /* ============================================================

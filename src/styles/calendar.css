@@ -65,6 +65,14 @@
 .ev-block.cancelled:hover{opacity:.6;filter:none}
 .ev-block.cancelled .ev-time,.ev-block.cancelled .ev-title{text-decoration:line-through}
 .ev-block.cancelled.washed{animation:wash-out .4s ease forwards}
+/* 3g: a tied event stranded outside its period — ghosted like a cancelled one, not struck through */
+.ev-block.outside{opacity:.35;border-style:dashed;box-shadow:none !important}
+.ev-block.outside:hover{opacity:.6;filter:none}
+/* 3g: the dot in the period's color before a tied event's time */
+.ev-period-dot{
+  display:inline-block;width:6px;height:6px;margin:0 4px 1px 0;border-radius:50%;vertical-align:middle;
+  background:var(--pc);box-shadow:0 0 5px var(--pc);
+}
 @keyframes wash-out{to{opacity:0;transform:translateY(10px) scale(.94)}}
 
 /* the wave that washes a period's ghosts away: one big band in the period
@@ -195,6 +203,8 @@ body.tb-dragging,body.tb-dragging *{cursor:grabbing !important}
 .dd-item.cancelled{opacity:.5;border-style:dashed;border-left-style:solid}
 .dd-item.cancelled .dd-title{text-decoration:line-through;font-weight:500}
 .dd-cancelled-by{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);flex-shrink:0}
+/* 3g: the period a listed event is tied to */
+.dd-during{font-family:var(--font-mono);font-size:10.5px;color:var(--pc);flex-shrink:0}
 
 /* ============ PERIODS (3e) ============ */
 /* color bands above the headers: one row per overlapping period, no names */

@@ -61,10 +61,11 @@ export const labelsOn = dateStr => store.get('ideally.dayLabels', {})[dateStr] |
 export const dayCount = p => dayNumber(p.end) - dayNumber(p.start) + 1;
 
 /* the period that cancels event e on dateStr (the day the event starts), or null.
-   `among` lets the period editor test an unsaved draft instead of the stored periods. */
+   `among` lets the period editor test an unsaved draft instead of the stored periods.
+   3g: a period never cancels the events tied to it — they were made for it. */
 export function cancelledBy(e, dateStr, among = periods){
   const created = e.created || 0;
-  return among.find(p => p.cancelEvents && p.start <= dateStr && dateStr <= p.end && created < (p.cancelSince || 0)) || null;
+  return among.find(p => p.cancelEvents && p.id !== e.periodId && p.start <= dateStr && dateStr <= p.end && created < (p.cancelSince || 0)) || null;
 }
 
 export function nameTaken(name, exceptId){

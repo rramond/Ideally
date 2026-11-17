@@ -2,6 +2,7 @@ import { isoDate } from '../lib/dates.js';
 import { toast } from '../lib/toast.js';
 import { showContextMenu } from '../lib/contextMenu.js';
 import { getPeriods, getPeriod, deletePeriod, dayCount, onPeriodsChange } from './periods.js';
+import { tiedCount, onEventsChange } from './events.js';
 import { openPeriodEditor } from './periodEditor.js';
 import { showWeekOf } from './calendar.js';
 
@@ -38,9 +39,11 @@ function render(){
     name.className = 'tb-name';
     name.textContent = p.name;
     const n = dayCount(p);
+    const tied = tiedCount(p.id).events;   // 3g
     const meta = document.createElement('span');
     meta.className = 'tb-meta';
-    meta.textContent = short(p.start) + ' – ' + short(p.end) + ' · ' + n + 'd' + (p.cancelEvents ? ' · ⊘ cancels events' : '');
+    meta.textContent = short(p.start) + ' – ' + short(p.end) + ' · ' + n + 'd' + (p.cancelEvents ? ' · ⊘ cancels events' : '') +
+                       (tied ? ' · ' + tied + (tied === 1 ? ' event' : ' events') : '');
     const jump = document.createElement('button');
     jump.type = 'button';
     jump.className = 'pe-jump';
@@ -76,4 +79,5 @@ listEl.addEventListener('contextmenu', e => {
 });
 
 onPeriodsChange(render);
+onEventsChange(render);   // 3g: the tied counts
 render();
