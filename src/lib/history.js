@@ -24,8 +24,8 @@ export const getState = () => current;
 
 const sameView = (a, b) => a.view === b.view && !!a.calMode === !!b.calMode
   && !!a.blocks === !!b.blocks && !!a.periods === !!b.periods && !!a.types === !!b.types
-  && (a.typeId || null) === (b.typeId || null);
-const viewOf = s => ({ view: s.view, calMode: s.calMode, blocks: s.blocks, periods: s.periods, types: s.types, typeId: s.typeId || null });
+  && (a.typeId || null) === (b.typeId || null) && (a.projectId || null) === (b.projectId || null);
+const viewOf = s => ({ view: s.view, calMode: s.calMode, blocks: s.blocks, periods: s.periods, types: s.types, typeId: s.typeId || null, projectId: s.projectId || null });
 
 /* hide pop-ups newest first, without touching history */
 function hideAll(ids){

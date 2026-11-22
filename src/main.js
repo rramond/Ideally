@@ -9,6 +9,7 @@ import './styles/board.css';
 import './styles/color-wheel.css';
 import './styles/event-editor.css';
 import './styles/timer.css';
+import './styles/projects.css';
 
 import './themes/themePicker.js';   // applies the saved theme (theme.js) and wires the Themes dropdown
 import './themes/petals.js';        // Sakura: a gust of petals on every tab change
@@ -20,6 +21,7 @@ import './calendar/periodsPanel.js';
 import { showTypeView } from './calendar/typeLibrary.js';
 import { renderArrows, renderHandles } from './board.js';
 import './timer/timer.js';
+import { applyProjectsState } from './projects/projectsView.js';
 import { resizeSceneCanvas, ensureSceneLoop } from './timer/scenes.js';
 import { initHistory, go, back, getState } from './lib/history.js';
 import { isoDate, fromHours } from './lib/dates.js';
@@ -30,11 +32,12 @@ import { isoDate, fromHours } from './lib/dates.js';
 const sidebar = document.querySelector('.sidebar');
 const calView = document.getElementById('view-calendar');
 /* the calendar side panel's sub-panels are exclusive; an open type (3h) belongs to the Types panel */
-const PANEL_OFF = { blocks: false, periods: false, types: false, typeId: null };
+const PANEL_OFF = { blocks: false, periods: false, types: false, typeId: null, projectId: null };
 const views = document.querySelectorAll('.view');
 const navBtns = document.querySelectorAll('.nav-main .nav-btn');
 
-function applyState({ view, calMode, blocks, periods, types, typeId }){
+let lastView = null;
+function applyState({ view, calMode, blocks, periods, types, typeId, projectId }){
   navBtns.forEach(b => b.classList.toggle('active', b.dataset.view === view));
   views.forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
   if (view === 'board'){ renderArrows(); renderHandles(); }
@@ -48,6 +51,10 @@ function applyState({ view, calMode, blocks, periods, types, typeId }){
   const openType = view === 'calendar' ? typeId || null : null;
   calView.classList.toggle('type-open', !!openType);
   showTypeView(openType);
+  /* 2: the projects droplets, or one project full screen; the entry sweep plays
+     each time the tab is entered from another tab */
+  applyProjectsState(view === 'projects', view === 'projects' ? projectId || null : null, view === 'projects' && lastView !== 'projects');
+  lastView = view;
 }
 initHistory({ view: 'notes', calMode: false, ...PANEL_OFF }, applyState);
 
