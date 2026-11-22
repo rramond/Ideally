@@ -28,6 +28,10 @@
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="6" width="8" height="8" rx="1"/><rect x="7" y="14" width="8" height="8" rx="1"/></svg>
       Vision board
     </button>
+    <button class="nav-btn" data-view="projects">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="10" r="5"/><circle cx="17" cy="15" r="3.5"/><circle cx="8.5" cy="19.5" r="2"/></svg>
+      Projects
+    </button>
     <button class="nav-btn" data-view="timer">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>
       Focus
@@ -189,6 +193,20 @@
   </section>
 
   <!-- ================= TIMER ================= -->
+  <!-- ================= PROJECTS (2) ================= -->
+  <section class="view" id="view-projects">
+    <canvas id="pj-canvas" aria-label="Projects: each circle is a project; click to open, right-click for more"></canvas>
+    <p class="pj-hint" id="pj-hint">Create your first project with the <b>+</b></p>
+    <!-- a project, full screen (2c fills it in) -->
+    <div class="pj-page" id="pj-page" hidden>
+      <div class="pj-page-head">
+        <span class="pj-page-drop"></span>
+        <h1 class="pj-page-name"></h1>
+      </div>
+      <p class="pj-page-note">This project's full screen is coming in 2c — timeline, notes and files. Press the logo or Esc to go back.</p>
+    </div>
+  </section>
+
   <section class="view" id="view-timer">
     <canvas id="scene-canvas"></canvas>
     <div class="scene-dim"></div>
