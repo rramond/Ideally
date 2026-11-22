@@ -23,13 +23,16 @@ const hintEl = document.getElementById('pj-hint');
 const page = document.getElementById('pj-page');
 
 const PLUS = '+';                 // id of the "new project" droplet
-const PULL = 2.4;                 // pull toward the center (per second)
+const PULL = 2.4;                 // pull toward the center (per second), near the middle
+const PULL_FAR = 0.8;             // up to this much extra pull far from the center (×PULL)
+const JELLY_K = 170, JELLY_C = 5; // the jelly's spring stiffness and damping (~2 Hz, rings ~1.5 s)
+const JIGGLE_MIN_IMPACT = 25;     // px/s: gentler contact (the settled cluster) doesn't jiggle
 const DRIFT = 7;                  // gentle wandering force
 const GAP = 10;                   // px kept between droplets
 const DRAG_START = 5;             // px a press must move before it becomes a drag
 
 let W = 0, H = 0, dpr = 1;
-let nodes = [];                   // { id, color, x, y, vx, vy, r, tr, hover, bulge, ang, wob, seed, t }
+let nodes = [];                   // { id, color, x, y, vx, vy, r, tr, hover, bulge, ang, wob, sq, sqV, sqAng, seed, t }
 let pointer = { x: -1e4, y: -1e4, inside: false };
 let hovered = null, press = null, dragging = null;
 let raf = null, lastT = 0, active = false;
@@ -63,7 +66,7 @@ function sync(scatter){
       const a = Math.random() * Math.PI * 2;
       const d = scatter ? Math.max(W, H) * (0.55 + Math.random() * 0.2) : 30 + Math.random() * 40;
       n = { ...(n || {}), id, x: W / 2 + Math.cos(a) * d, y: H / 2 + Math.sin(a) * d, vx: 0, vy: 0,
-            r: n ? n.r : 4, hover: 0, bulge: 0, ang: 0, wob: 0.05, seed: Math.random() * 10, t: Math.random() * 10,
+            r: n ? n.r : 4, hover: 0, bulge: 0, ang: 0, wob: 0.05, sq: 0, sqV: 0, sqAng: 0, seed: Math.random() * 10, t: Math.random() * 10,
             wait: scatter ? i * 0.09 : 0 };
     }
     n.tr = targetRadius(id);
@@ -89,8 +92,12 @@ function step(dt){
     n.r += (n.tr - n.r) * Math.min(1, dt * 6);
     if (n.wait > 0){ n.wait -= dt; return; }        // still waiting for its turn to fly in
     if (n === dragging) return;
-    n.vx += (cx - n.x) * PULL * dt + Math.cos(n.t * 0.7 + n.seed) * DRIFT * dt;
-    n.vy += (cy - n.y) * PULL * dt + Math.sin(n.t * 0.9 + n.seed * 2) * DRIFT * dt;
+    /* the pull grows with the distance: droplets far out come in faster,
+       the packed middle behaves as before */
+    const far = Math.min(1.25, Math.hypot(cx - n.x, cy - n.y) / (Math.min(W, H) * 0.45));
+    const pull = PULL * (1 + PULL_FAR * far);
+    n.vx += (cx - n.x) * pull * dt + Math.cos(n.t * 0.7 + n.seed) * DRIFT * dt;
+    n.vy += (cy - n.y) * pull * dt + Math.sin(n.t * 0.9 + n.seed * 2) * DRIFT * dt;
   });
   /* push overlapping droplets apart (the dragged one doesn't yield) */
   for (let i = 0; i < nodes.length; i++){
@@ -106,6 +113,11 @@ function step(dt){
       a.x -= nx * overlap * wa; a.y -= ny * overlap * wa;
       b.x += nx * overlap * wb; b.y += ny * overlap * wb;
       const rel = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+      if (-rel > JIGGLE_MIN_IMPACT){
+        /* a bump: both squash along the line between them */
+        const k = Math.min(0.12, -rel / 1500), axis = Math.atan2(ny, nx);
+        jiggle(a, axis, k); jiggle(b, axis, k);
+      }
       if (rel < 0){
         if (a !== dragging){ a.vx += nx * rel * wa; a.vy += ny * rel * wa; }
         if (b !== dragging){ b.vx -= nx * rel * wb; b.vy -= ny * rel * wb; }
@@ -126,7 +138,18 @@ function step(dt){
     const near = isHover ? clamp(1.25 - Math.hypot(pointer.x - n.x, pointer.y - n.y) / n.r, 0, 1) : 0;
     n.bulge += (0.075 * near - n.bulge) * Math.min(1, dt * 10);
     n.wob *= Math.exp(-2.6 * dt);
+    /* jelly: a damped spring for the squash & stretch */
+    n.sqV += (-JELLY_K * n.sq - JELLY_C * n.sqV) * dt;
+    n.sq = clamp(n.sq + n.sqV * dt, -0.22, 0.22);
   });
+}
+
+/* hit along `angle`: squash along it (stretch across), then spring back and forth */
+function jiggle(n, angle, strength){
+  if (n.wait > 0) return;
+  n.sqAng = angle;
+  n.sqV -= strength * 14;
+  n.wob = Math.max(n.wob, strength * 0.45);
 }
 
 /* ---- drawing ---- */
@@ -138,6 +161,7 @@ function blobPath(n){
     const rr = n.r * (1
       + n.wob * (0.6 * Math.sin(3 * th + n.t * 7 + n.seed) + 0.4 * Math.sin(5 * th - n.t * 9))
       + n.bulge * Math.pow(Math.max(0, Math.cos(th - n.ang)), 4)
+      + n.sq * Math.cos(2 * (th - n.sqAng))
       + n.hover * 0.01 * Math.sin(4 * th + n.t * 3));
     const x = n.x + Math.cos(th) * rr, y = n.y + Math.sin(th) * rr;
     k ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
@@ -261,17 +285,32 @@ function nodeAt(x, y){
 }
 function setHovered(n){
   if (n === hovered) return;
-  if (hovered) hovered.wob = Math.max(hovered.wob, 0.045);   // leaving: it rings out
-  if (n) n.wob = Math.max(n.wob, 0.06);                     // entering: surface-tension wobble
+  /* the cursor touching or leaving a droplet jiggles it, harder the faster it moves,
+     along the cursor's direction */
+  const hit = clamp(0.05 + pointerSpeed / 6000, 0.05, 0.16);
+  if (hovered) jiggle(hovered, pointerDir, hit * 0.7);
+  if (n) jiggle(n, pointerDir, hit);
   hovered = n;
   canvas.style.cursor = n ? (dragging ? 'grabbing' : 'pointer') : 'default';
 }
 const local = e => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
 
+let pointerSpeed = 0, pointerDir = 0, lastMoveT = 0;   // px/s and direction, for the jiggles
 canvas.addEventListener('pointermove', e => {
   const p = local(e);
   const dx = p.x - pointer.x, dy = p.y - pointer.y;
+  const now = performance.now(), dts = Math.max(0.004, (now - lastMoveT) / 1000);
+  lastMoveT = now;
+  if (pointer.inside && Math.hypot(dx, dy) > 0.5){
+    pointerSpeed = pointerSpeed * 0.5 + Math.min(4000, Math.hypot(dx, dy) / dts) * 0.5;
+    pointerDir = Math.atan2(dy, dx);
+  }
   pointer = { ...p, inside: true };
+  /* moving fast inside a droplet pokes it a little */
+  if (hovered && !dragging && pointerSpeed > 300 && now - (hovered.poked || 0) > 120){
+    hovered.poked = now;
+    jiggle(hovered, pointerDir, Math.min(0.025, pointerSpeed / 60000));
+  }
   if (press && !dragging && Math.hypot(p.x - press.x, p.y - press.y) > DRAG_START){
     dragging = press.node;
     canvas.setPointerCapture(e.pointerId);
@@ -364,4 +403,4 @@ onProjectsChange(() => { if (active && page.hidden) sync(false); });
 onThemeChange(() => { accent = themeColor('--accent-bright') || accent; if (active) sync(false); });
 
 /* dev server only (stripped from builds): where the droplets are, for browser tests */
-if (import.meta.env.DEV) window.__projectsDebug = () => nodes.map(n => ({ id: n.id, x: n.x, y: n.y, r: n.r, hover: n.hover }));
+if (import.meta.env.DEV) window.__projectsDebug = () => nodes.map(n => ({ id: n.id, x: n.x, y: n.y, r: n.r, hover: n.hover, sq: n.sq }));
