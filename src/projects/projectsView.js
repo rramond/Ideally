@@ -2,9 +2,10 @@ import { clamp, shade } from '../lib/utils.js';
 import { themeColor, onThemeChange } from '../themes/theme.js';
 import { showContextMenu } from '../lib/contextMenu.js';
 import { toast } from '../lib/toast.js';
-import { go, back, anyPopupOpen } from '../lib/history.js';
+import { go } from '../lib/history.js';
 import { getProjects, getProject, contentCount, deleteProject, onProjectsChange } from './projects.js';
 import { openProjectEditor } from './projectEditor.js';
+import { showProjectPage } from './projectPage.js';
 import { playEntry } from './entryFx.js';
 
 /* ============================================================
@@ -367,32 +368,32 @@ canvas.addEventListener('contextmenu', e => {
   ]);
 });
 
-/* ---- the project's full-screen page (2c fills it in later) ---- */
-function openProject(id){ go({ projectId: id }); }
-
-function renderPage(p){
-  page.style.setProperty('--pc', p.color);
-  page.querySelector('.pj-page-name').textContent = p.name;
+/* ---- the project's full-screen page (2c, projectPage.js) grows out of its droplet ---- */
+let openFrom = null, returnTo = null;
+function openProject(id){
+  const n = nodes.find(x => x.id === id);
+  openFrom = n ? { x: n.x, y: n.y, r: n.r } : null;
+  go({ projectId: id });
 }
-/* Esc on the page goes back to the droplets (pop-ups close first: capture runs
-   before the history module's own Esc handler) */
-window.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && active && !page.hidden && !anyPopupOpen()) back();
-}, true);
 
 /* ---- called by main.js on every navigation step ---- */
 export function applyProjectsState(isActive, projectId, entering){
   active = isActive;
-  if (!isActive){ stop(); setHovered(null); press = dragging = null; return; }
+  if (!isActive){ stop(); setHovered(null); press = dragging = null; showProjectPage(null); return; }
   const p = projectId ? getProject(projectId) : null;
-  page.hidden = !p;
+  showProjectPage(p ? p.id : null, p && !entering ? openFrom : null);
+  openFrom = null;
   if (p){
-    renderPage(p);
+    returnTo = p.id;
     stop();
   } else {
     accent = themeColor('--accent-bright') || accent;
     resize();
     sync(entering);
+    /* back from a project: its droplet wobbles, as if it had just been let go */
+    const back = !entering && returnTo && nodes.find(n => n.id === returnTo);
+    if (back) jiggle(back, Math.random() * Math.PI, 0.1);
+    returnTo = null;
     start();
   }
   if (entering) playEntry(view);

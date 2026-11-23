@@ -197,14 +197,8 @@
   <section class="view" id="view-projects">
     <canvas id="pj-canvas" aria-label="Projects: each circle is a project; click to open, right-click for more"></canvas>
     <p class="pj-hint" id="pj-hint">Create your first project with the <b>+</b></p>
-    <!-- a project, full screen (2c fills it in) -->
-    <div class="pj-page" id="pj-page" hidden>
-      <div class="pj-page-head">
-        <span class="pj-page-drop"></span>
-        <h1 class="pj-page-name"></h1>
-      </div>
-      <p class="pj-page-note">This project's full screen is coming in 2c — timeline, notes and files. Press the logo or Esc to go back.</p>
-    </div>
+    <!-- a project, full screen (2c, built by src/projects/projectPage.js) -->
+    <div class="pj-page" id="pj-page" hidden></div>
   </section>
 
   <section class="view" id="view-timer">

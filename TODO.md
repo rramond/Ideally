@@ -16,18 +16,27 @@ e) ✅ DONE — when having a note selected, pressing backspace should delete th
 
 The project window simulates the entire app on a smaller scale. Its purpose is to work on isolated projects, creating timelines, making notes, adding files and structuring the workflow.
 
-a) PROJECT TAB ENTER
+a) ✅ DONE — PROJECT TAB ENTER
 a projects button should be added in the main side panel. when clicking on it opens the projectsTAB, with a cyberpunk coruption animation, where, from left to right, horizontal neon bars of various different theme shades flow in a swift swype, leaving behind the projects tab. They should have a glitchy effect and have different lengths and equal widths. EQ sound display look.
 
-b) PROJECT TAB HOMEPAGE
+b) ✅ DONE — PROJECT TAB HOMEPAGE
 in the projects tab, projects are displayed by circles, being "pulled" towards the center. the circles have a base size, and scale with the amount of content inside, up until a max decided based on the window resolution. Hovering one of the circles makes its border glow and displays its name. clicking it opens the project on a full screen. In essence it should look like the league of legens mastery chart. the circles have a water/oil droplet reaction/animation when cursor is hovering over them.
 [future plan: png for circles]
 
-c) PROJECT FULL SCREEN
+c) ✅ DONE — PROJECT FULL SCREEN
+the app on a smaller scale, for one project. Clicking a droplet grows the page out of it (a circle opening from the droplet). On top: the project's droplet (click → color wheel, saved live) and its name (click to rename; Enter / clicking away saves, Esc reverts), "1 NOTE · 4 MILESTONES · 2 FILES" on the right. Below, a mini side rail (Notes · Timeline · Files, with counts; the last one opened is remembered per project) and "delete project" at its bottom (deletes its notes, timeline and stored files). Notes = the Notes tab in miniature (list + editor, saves as you type). Esc leaves a text field first, then goes back to the droplets; the droplet wobbles when you return. The droplets grow with notes + milestones + files
 
-d) TIMELINE
+d) ✅ DONE — TIMELINE
+milestones (one day) and spans (several days) on a horizontal axis in the project color, with a glowing TODAY line, month labels, day numbers (week ticks when zoomed out) and shaded weekends. Items sit in lanes above / below the axis so labels never overlap. Drag an item to move it (snaps to days, a tag shows the new date); drag a span's right edge to change its end; click opens it, right-click → Edit / Mark as done / Delete; double-click or right-click empty space → new milestone on that day. Wheel scrolls through time, Shift+wheel up / down, Ctrl+wheel (or − / +) zooms days → weeks → months around the cursor; Today scrolls back. Header: progress bar "1 / 4 done". Below: the same items as a checklist in date order (checkbox toggles done; "in 3 days", "ongoing · 5 days left", "2 days late" in red, done struck through). Milestone overlay: name, Date (or Starts → Ends with "Lasts several days", moving the start keeps the length), Done, description, Ctrl+Enter saves
 
-e) FILE ATTACHMENTS
+e) ✅ DONE — FILE ATTACHMENTS
+drop files anywhere on the project page (a dashed "Drop to attach to …" frame appears), paste them (Ctrl+V), or "+ Add files". Stored in IndexedDB (src/projects/fileStore.js), not localStorage, so big files fit (200 MB max each); the project keeps only name / size / type / date. A grid of cards: image thumbnails, other files a colored extension badge (PDF red, CSV green…). Click opens: images in a preview pop-up (with Download), PDFs / text / audio / video in a new tab, the rest downloads; right-click → Open / Download / Rename (inline, the extension isn't selected) / Delete
+
+f) idea: show timeline milestones on the calendar (e.g. as all-day markers in the project color)
+
+g) idea: a mini vision board inside a project (the "entire app on a smaller scale" could include it)
+
+h) note: files live in this browser's IndexedDB, so like the rest of the data they're tied to the browser address until the Ideally API (GENERAL c) exists
 
 ## **3. Calendar rework**
 
