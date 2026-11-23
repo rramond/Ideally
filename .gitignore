@@ -3,3 +3,6 @@ dist/
 .DS_Store
 *.log
 
+
+# Ideally data exports (personal data)
+ideally-backup*.json
