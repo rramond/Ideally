@@ -24,7 +24,7 @@ const TEMPLATE =
     '<h2 class="ee-name" title="Click to name the project"></h2>' +
     '<div class="ee-type-wrap pe-color-wrap"><button class="ee-type pj-color" type="button" title="Project color"></button></div>' +
   '</div>' +
-  '<p class="pe-note">The circle grows as the project fills up with notes, milestones and files.</p>' +
+  '<p class="pe-note">The circle grows as the project fills up with stickies, notes, roadmap items and files.</p>' +
   '<div class="ee-foot">' +
     '<button class="danger-link ee-delete" type="button"></button>' +
     '<span class="ee-hint"></span>' +
