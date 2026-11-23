@@ -84,6 +84,27 @@
     </button>
     <div class="tb-list" id="ty-list"></div>
   </nav>
+  <!-- shown instead of nav-main while a project is open (2c) -->
+  <nav class="nav-project">
+    <div class="nav-label nav-pj-head"><i class="nav-pj-dot" id="nav-pj-dot"></i><span id="nav-pj-name">Project</span></div>
+    <button class="nav-btn" data-sec="board">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><rect x="6.5" y="7.5" width="5" height="5" rx=".5"/><path d="M14 9h4M14 12h3M7 16h10"/></svg>
+      <span class="pj-rail-label">Board</span><span class="pj-rail-count"></span>
+    </button>
+    <button class="nav-btn" data-sec="notes">
+      <svg viewBox="0 0 24 24"><path d="M4 4h13l3 3v13H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
+      <span class="pj-rail-label">Notes</span><span class="pj-rail-count"></span>
+    </button>
+    <button class="nav-btn" data-sec="timeline">
+      <svg viewBox="0 0 24 24"><path d="M5 3v18"/><path d="M5 5h11l-2 3 2 3H5"/><path d="M5 15h7"/></svg>
+      <span class="pj-rail-label">Roadmap</span><span class="pj-rail-count"></span>
+    </button>
+    <button class="nav-btn" data-sec="files">
+      <svg viewBox="0 0 24 24"><path d="M21 12.5l-8.5 8.5a5 5 0 0 1-7-7L14 5.5a3.3 3.3 0 0 1 4.7 4.7L10.2 18.7a1.7 1.7 0 0 1-2.4-2.4L15.5 8.6"/></svg>
+      <span class="pj-rail-label">Files</span><span class="pj-rail-count"></span>
+    </button>
+    <button class="danger-link nav-pj-delete" id="nav-pj-delete" type="button">delete project</button>
+  </nav>
   <!-- themes (4): opens the themes dropdown -->
   <div class="nav-theme">
     <button class="nav-btn" id="theme-btn" title="Themes">
