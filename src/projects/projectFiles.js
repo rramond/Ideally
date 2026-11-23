@@ -47,25 +47,83 @@ function kindColor(f){
   return '#94A3B8';
 }
 
-/* add File objects to a project; resolves to how many were added */
+export { extOf, isImage, kindColor };
+
+/* ---- open / download / preview a stored file (the Files grid and the board) ---- */
+async function blobOf(f){
+  const blob = await getFileBlob(f.id).catch(() => null);
+  if (!blob) toast('“' + f.name + '” isn\'t stored in this browser anymore');
+  return blob;
+}
+/* images in a preview pop-up, PDFs / text / media in a new tab, the rest downloads */
+export async function openFile(f){
+  const blob = await blobOf(f);
+  if (!blob) return;
+  if (isImage(f)) return preview(f, blob);
+  if (!opensInTab(f)) return downloadFile(f, blob);
+  const url = URL.createObjectURL(new Blob([blob], { type: f.type }));
+  window.open(url, '_blank', 'noopener');
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+export async function downloadFile(f, blob){
+  blob ||= await blobOf(f);
+  if (!blob) return;
+  const url = URL.createObjectURL(blob);
+  const a = el('a');
+  a.href = url; a.download = f.name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+function preview(f, blob){
+  closePopup(PREVIEW);
+  const url = URL.createObjectURL(blob);
+  const overlay = el('div', 'ev-overlay fl-preview');
+  const card = el('figure', 'fl-preview-card');
+  const img = el('img');
+  img.src = url; img.alt = f.name;
+  const cap = el('figcaption');
+  const dl = el('button', 'ghost-btn pj-small-btn', 'Download');
+  dl.type = 'button';
+  dl.addEventListener('click', () => downloadFile(f, blob));
+  cap.append(el('span', 'fl-name', f.name), el('span', 'fl-meta', sizeLabel(f.size)), dl);
+  card.append(img, cap);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+  openPopup(PREVIEW, () => { overlay.remove(); URL.revokeObjectURL(url); });
+  addCloseX(card, () => closePopup(PREVIEW));
+  overlay.addEventListener('pointerdown', e => { if (e.target === overlay) closePopup(PREVIEW); });
+}
+
+/* delete a file: from the project, its cards on the board, and the storage */
+export function deleteFile(projectId, f){
+  updateProject(projectId, p => {
+    p.files = p.files.filter(x => x.id !== f.id);
+    if (p.board) p.board.items = p.board.items.filter(i => i.fileId !== f.id);
+    p.timeline.forEach(it => { if (it.docs) it.docs = it.docs.filter(d => d.fileId !== f.id); });   // 2h: roadmap documents
+  });
+  deleteFiles([f.id]).catch(() => {});
+  toast('Deleted “' + f.name + '”');
+}
+
+/* add File objects to a project; resolves to the added files' metadata */
 export async function addFiles(projectId, fileList){
   const files = [...fileList];
   const tooBig = files.filter(f => f.size > MAX_SIZE);
   const ok = files.filter(f => f.size <= MAX_SIZE);
   if (tooBig.length) toast((tooBig.length === 1 ? '“' + tooBig[0].name + '” is' : tooBig.length + ' files are') + ' over ' + sizeLabel(MAX_SIZE) + ' — not added');
-  let added = 0;
+  const added = [];
   for (const f of ok){
     const meta = { id: uid(), name: f.name || 'pasted.' + (f.type.split('/')[1] || 'bin'), size: f.size, type: f.type || '', added: Date.now() };
     try {
       await putFile(meta.id, projectId, f);
       updateProject(projectId, p => { p.files.unshift(meta); });
-      added++;
+      added.push(meta);
     } catch (err){
       toast('Couldn\'t store “' + meta.name + '” (' + (err && err.message || 'storage error') + ')');
       break;
     }
   }
-  if (added) toast('Added ' + (added === 1 ? '“' + ok[0].name + '”' : added + ' files'));
+  if (added.length) toast('Added ' + (added.length === 1 ? '“' + added[0].name + '”' : added.length + ' files'));
   return added;
 }
 
@@ -86,6 +144,7 @@ export function mountFiles(root, projectId){
   function render(){
     grid.innerHTML = '';
     const fs = files();
+    const board = new Set(((getProject(projectId) || {}).board?.items || []).map(i => i.fileId).filter(Boolean));
     total.textContent = fs.length ? fs.length + (fs.length === 1 ? ' file · ' : ' files · ') + sizeLabel(fs.reduce((s, f) => s + f.size, 0)) : '';
     if (!fs.length){
       const empty = el('div', 'fl-empty');
@@ -112,7 +171,8 @@ export function mountFiles(root, projectId){
         loadThumb(f, img);
       } else thumb.appendChild(el('span', 'fl-ext', extOf(f.name)));
       const name = el('span', 'fl-name', f.name);
-      card.append(thumb, name, el('span', 'fl-meta', sizeLabel(f.size) + ' · ' + fmtDate(f.added)));
+      const onBoard = board.has(f.id);
+      card.append(thumb, name, el('span', 'fl-meta', sizeLabel(f.size) + ' · ' + fmtDate(f.added) + (onBoard ? ' · on board' : '')));
       grid.appendChild(card);
     });
   }
@@ -127,48 +187,7 @@ export function mountFiles(root, projectId){
     } catch { img.replaceWith(el('span', 'fl-ext', extOf(f.name))); }
   }
 
-  async function blobOf(f){
-    const blob = await getFileBlob(f.id).catch(() => null);
-    if (!blob) toast('“' + f.name + '” isn\'t stored in this browser anymore');
-    return blob;
-  }
-  async function open(f){
-    const blob = await blobOf(f);
-    if (!blob) return;
-    if (isImage(f)) return preview(f, blob);
-    if (!opensInTab(f)) return download(f, blob);
-    const url = URL.createObjectURL(new Blob([blob], { type: f.type }));
-    window.open(url, '_blank', 'noopener');
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
-  }
-  async function download(f, blob){
-    blob ||= await blobOf(f);
-    if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const a = el('a');
-    a.href = url; a.download = f.name;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
-  }
-  function preview(f, blob){
-    closePopup(PREVIEW);
-    const url = URL.createObjectURL(blob);
-    const overlay = el('div', 'ev-overlay fl-preview');
-    const card = el('figure', 'fl-preview-card');
-    const img = el('img');
-    img.src = url; img.alt = f.name;
-    const cap = el('figcaption');
-    const dl = el('button', 'ghost-btn pj-small-btn', 'Download');
-    dl.type = 'button';
-    dl.addEventListener('click', () => download(f, blob));
-    cap.append(el('span', 'fl-name', f.name), el('span', 'fl-meta', sizeLabel(f.size)), dl);
-    card.append(img, cap);
-    overlay.appendChild(card);
-    document.body.appendChild(overlay);
-    openPopup(PREVIEW, () => { overlay.remove(); URL.revokeObjectURL(url); });
-    addCloseX(card, () => closePopup(PREVIEW));
-    overlay.addEventListener('pointerdown', e => { if (e.target === overlay) closePopup(PREVIEW); });
-  }
+  const open = openFile, download = f => downloadFile(f);
   function rename(f){
     const card = grid.querySelector('.fl-card[data-id="' + f.id + '"]');
     const nameEl = card && card.querySelector('.fl-name');
@@ -196,11 +215,11 @@ export function mountFiles(root, projectId){
     inp.addEventListener('click', e => e.stopPropagation());
   }
   function remove(f){
-    updateProject(projectId, p => { p.files = p.files.filter(x => x.id !== f.id); });
-    deleteFiles([f.id]).catch(() => {});
+    const onBoard = ((getProject(projectId) || {}).board?.items || []).some(i => i.fileId === f.id);
+    if (onBoard && !confirm('“' + f.name + '” is also on the board. Delete it from both?')) return;
+    deleteFile(projectId, f);
     if (urls.has(f.id)){ URL.revokeObjectURL(urls.get(f.id)); urls.delete(f.id); }
     render();
-    toast('Deleted “' + f.name + '”');
   }
 
   const fileOf = target => { const c = target.closest('.fl-card'); return c && files().find(f => f.id === c.dataset.id); };
@@ -220,7 +239,7 @@ export function mountFiles(root, projectId){
   input.addEventListener('change', async () => {
     const list = [...input.files];
     input.value = '';
-    if (list.length && await addFiles(projectId, list)) render();
+    if (list.length && (await addFiles(projectId, list)).length) render();
   });
 
   render();

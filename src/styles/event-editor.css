@@ -77,6 +77,11 @@
 .ev-card input:focus,.ev-card textarea:focus,.ev-card select:focus{border-color:color-mix(in srgb, var(--accent-bright) 60%, transparent);outline:none}
 .ee-time{width:96px;font-family:var(--font-mono) !important;font-size:14px !important;letter-spacing:.04em}
 .ee-time.invalid{border-color:var(--danger) !important;box-shadow:0 0 0 1px color-mix(in srgb, var(--danger) 35%, transparent)}
+/* a block's duration, or no fixed duration */
+.ee-dur-row{display:flex;align-items:center;gap:14px}
+.ee-flex{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none}
+.ee-flex input{width:14px;height:14px;margin:0;cursor:pointer;accent-color:var(--accent)}
+.ev-card.flexible .ee-dur{opacity:.35;cursor:not-allowed}
 .ee-desc{resize:vertical;min-height:70px;line-height:1.5}
 .ee-desc::placeholder{color:var(--dim-2)}
 .ee-recur{display:flex;gap:8px}

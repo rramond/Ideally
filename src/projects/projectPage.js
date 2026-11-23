@@ -1,28 +1,35 @@
-import { store } from '../lib/storage.js';
 import { back, anyPopupOpen } from '../lib/history.js';
 import { toast } from '../lib/toast.js';
 import { attachColorWheel } from '../colorWheel.js';
-import { getProject, saveProject, deleteProject, onProjectsChange } from './projects.js';
+import { getProject, saveProject, deleteProject, onProjectsChange, stickyCount } from './projects.js';
+import { mountBoard } from './projectBoard.js';
 import { mountNotes } from './projectNotes.js';
 import { mountTimeline } from './timeline.js';
 import { mountFiles, addFiles } from './projectFiles.js';
 
 /* ============================================================
    PROJECT FULL SCREEN (2c) — the app on a smaller scale, for one
-   project: its droplet (click: color wheel) and name (click to
-   rename) on top, a mini side rail with Notes · Timeline · Files,
-   the open section beside it. Opening grows the page out of the
-   clicked droplet. Files dropped anywhere on the page, or pasted,
-   are attached. Esc / the logo go back to the droplets.
+   project. While it's open the app's side panel becomes the
+   project's (Board · Notes · Timeline · Files, delete project),
+   like the calendar swaps in its own. On top of the page: the
+   project's droplet (click: color wheel) and name (click to
+   rename). It always opens on the Board (2f). Opening grows the
+   page out of the clicked droplet. Files dropped anywhere on the
+   page, or pasted, go on the board (in Files, they're just
+   stored). Esc / the logo go back to the droplets.
 ============================================================ */
 const page = document.getElementById('pj-page');
-const SECTIONS = [
-  { id: 'notes', label: 'Notes', icon: '<path d="M4 4h13l3 3v13H4z"/><path d="M8 9h8M8 13h8M8 17h5"/>', count: p => (p.notes || []).length },
-  { id: 'timeline', label: 'Timeline', icon: '<path d="M3 12h18"/><circle cx="7" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><path d="M7 6v4M15 14v4"/>', count: p => (p.timeline || []).length },
-  { id: 'files', label: 'Files', icon: '<path d="M21 12.5l-8.5 8.5a5 5 0 0 1-7-7L14 5.5a3.3 3.3 0 0 1 4.7 4.7L10.2 18.7a1.7 1.7 0 0 1-2.4-2.4L15.5 8.6"/>', count: p => (p.files || []).length }
-];
-const MOUNT = { notes: mountNotes, timeline: mountTimeline, files: mountFiles };
-const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+const sidebar = document.querySelector('.sidebar');
+const navName = document.getElementById('nav-pj-name');
+const navDot = document.getElementById('nav-pj-dot');
+const navBtns = [...document.querySelectorAll('.nav-project .nav-btn[data-sec]')];
+const SECTIONS = {
+  board: { mount: mountBoard, count: p => p.board ? p.board.items.length : 0 },
+  notes: { mount: mountNotes, count: p => (p.notes || []).length },
+  timeline: { mount: mountTimeline, count: p => (p.timeline || []).length },
+  files: { mount: mountFiles, count: p => (p.files || []).length }
+};
+const plural = (n, w, many) => n + ' ' + (n === 1 ? w : many || w + 's');
 
 const el = (tag, cls, text) => {
   const x = document.createElement(tag);
@@ -33,8 +40,7 @@ const el = (tag, cls, text) => {
 const editing = () => { const a = document.activeElement; return a && (/INPUT|TEXTAREA|SELECT/.test(a.tagName) || a.isContentEditable); };
 
 let openId = null, section = null, mounted = null, destroyWheel = null;
-let ui = null;   // { drop, name, stats, rail: {id: btn}, body, dropZone }
-const sectionOf = store.get('ideally.projectSections', {});
+let ui = null;   // { drop, name, stats, content, dropZone }
 
 /* called by projectsView.js: show the project's page (origin: the droplet it opens from), or hide it */
 export function showProjectPage(id, origin){
@@ -42,9 +48,10 @@ export function showProjectPage(id, origin){
   teardown();
   openId = id;
   page.hidden = !id;
+  sidebar.classList.toggle('project-mode', !!id);
   if (!id) return;
   build();
-  openSection(sectionOf[id] && MOUNT[sectionOf[id]] ? sectionOf[id] : 'notes');
+  openSection('board');
   refresh();
   if (origin && !matchMedia('(prefers-reduced-motion: reduce)').matches){
     const R = Math.hypot(Math.max(origin.x, page.clientWidth - origin.x), Math.max(origin.y, page.clientHeight - origin.y));
@@ -76,38 +83,12 @@ function build(){
   name.title = 'Click to rename the project';
   const stats = el('span', 'pj-stats');
   head.append(wrap, name, stats);
-
-  const body = el('div', 'pj-body');
-  const rail = el('nav', 'pj-rail');
-  rail.appendChild(el('div', 'nav-label', 'Project'));
-  const railBtns = {};
-  SECTIONS.forEach(s => {
-    const b = el('button', 'nav-btn');
-    b.type = 'button';
-    b.innerHTML = '<svg viewBox="0 0 24 24">' + s.icon + '</svg>';
-    b.append(el('span', 'pj-rail-label', s.label), el('span', 'pj-rail-count'));
-    b.addEventListener('click', () => openSection(s.id));
-    rail.appendChild(b);
-    railBtns[s.id] = b;
-  });
-  rail.appendChild(el('span', 'pj-grow'));
-  const del = el('button', 'danger-link pj-delete', 'delete project');
-  del.type = 'button';
-  del.addEventListener('click', () => {
-    const pr = getProject(openId);
-    if (!pr || !confirm('Delete the project “' + pr.name + '” with all its notes, timeline and files? This can\'t be undone.')) return;
-    deleteProject(pr.id);          // the change listener goes back to the droplets
-    toast('Deleted project “' + pr.name + '”');
-  });
-  rail.appendChild(del);
   const content = el('div', 'pj-content');
-  body.append(rail, content);
-
   const dropZone = el('div', 'pj-dropzone');
   dropZone.hidden = true;
   dropZone.appendChild(el('div', 'pj-dropzone-inner'));
-  page.append(head, body, dropZone);
-  ui = { drop, name, stats, railBtns, content, dropZone };
+  page.append(head, content, dropZone);
+  ui = { drop, name, stats, content, dropZone };
 
   /* color: live */
   destroyWheel = attachColorWheel(drop, () => (getProject(openId) || p).color, hex => {
@@ -145,29 +126,41 @@ function openSection(id){
   if (!ui || id === section) return;
   if (mounted) mounted.destroy();
   section = id;
-  sectionOf[openId] = id;
-  store.set('ideally.projectSections', sectionOf);
-  Object.entries(ui.railBtns).forEach(([k, b]) => b.classList.toggle('active', k === id));
+  navBtns.forEach(b => b.classList.toggle('active', b.dataset.sec === id));
   ui.content.innerHTML = '';
   ui.content.className = 'pj-content pj-sec-' + id;
-  mounted = MOUNT[id](ui.content, openId);
+  mounted = SECTIONS[id].mount(ui.content, openId);
 }
 
-/* header + rail counts follow the data (the sections redraw themselves) */
+/* the side panel (index.html, .nav-project) */
+navBtns.forEach(b => b.addEventListener('click', () => openSection(b.dataset.sec)));
+document.getElementById('nav-pj-delete').addEventListener('click', () => {
+  const pr = getProject(openId);
+  if (!pr || !confirm('Delete the project “' + pr.name + '” with its board, notes, timeline and files? This can\'t be undone.')) return;
+  deleteProject(pr.id);          // the change listener goes back to the droplets
+  toast('Deleted project “' + pr.name + '”');
+});
+
+/* header + side panel counts follow the data (the sections redraw themselves) */
 function refresh(){
   const p = getProject(openId);
   if (!p || !ui) return;
   page.style.setProperty('--pc', p.color);
+  sidebar.style.setProperty('--pc', p.color);
   ui.drop.style.setProperty('--pc', p.color);
   if (!ui.name.isContentEditable) ui.name.textContent = p.name;
-  SECTIONS.forEach(s => { const n = s.count(p); ui.railBtns[s.id].querySelector('.pj-rail-count').textContent = n || ''; });
-  const parts = [plural((p.notes || []).length, 'note'), plural((p.timeline || []).length, 'milestone'), plural((p.files || []).length, 'file')];
-  ui.stats.textContent = parts.join(' · ').toUpperCase();
+  navName.textContent = p.name;
+  navDot.style.background = p.color;
+  navBtns.forEach(b => { b.querySelector('.pj-rail-count').textContent = SECTIONS[b.dataset.sec].count(p) || ''; });
+  ui.stats.textContent = [
+    plural(stickyCount(p), 'sticky', 'stickies'), plural((p.notes || []).length, 'note'),
+    plural((p.timeline || []).length, 'milestone'), plural((p.files || []).length, 'file')
+  ].join(' · ').toUpperCase();
 }
 
 onProjectsChange(() => {
   if (!openId) return;
-  if (!getProject(openId)){ teardown(); openId = null; page.hidden = true; back(); return; }
+  if (!getProject(openId)){ teardown(); openId = null; page.hidden = true; sidebar.classList.remove('project-mode'); back(); return; }
   refresh();
 });
 
@@ -177,26 +170,35 @@ onProjectsChange(() => {
 window.addEventListener('keydown', e => {
   if (e.key !== 'Escape' || !openId || page.hidden || anyPopupOpen()) return;
   if (editing()){
-    if (!document.activeElement.isContentEditable) document.activeElement.blur();   // contentEditable names revert themselves
+    if (!document.activeElement.isContentEditable) document.activeElement.blur();   // contentEditable fields handle Esc themselves
     return;
   }
   back();
 }, true);
 
-/* ---- files: drop anywhere on the page, or paste ---- */
+/* ---- files: drop anywhere on the page, or paste — onto the board, unless
+   the Files section is open (then they're just stored) ---- */
 let dragDepth = 0;
 const hasFiles = e => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
-async function attach(list){
+async function attach(list, cx, cy){
   const id = openId;
   if (!id || !list.length) return;
-  if (section !== 'files') openSection('files');
-  if (await addFiles(id, list) && section === 'files' && openId === id) mounted.refresh();
+  if (section === 'files'){
+    if ((await addFiles(id, list)).length && section === 'files' && openId === id) mounted.refresh();
+    return;
+  }
+  openSection('board');
+  if (cx == null) mounted.pasteFiles(list);
+  else mounted.dropFiles(list, cx, cy);
 }
 page.addEventListener('dragenter', e => {
   if (!hasFiles(e) || !ui) return;
   e.preventDefault();
   if (dragDepth++ === 0){
-    ui.dropZone.firstChild.textContent = 'Drop to attach to “' + (getProject(openId) || {}).name + '”';
+    ui.dropZone.firstChild.textContent = section === 'files'
+      ? 'Drop to store in “' + (getProject(openId) || {}).name + '”'
+      : 'Drop to pin on the board';
+    ui.dropZone.classList.toggle('on-board', section === 'board');
     ui.dropZone.hidden = false;
   }
 });
@@ -210,7 +212,7 @@ page.addEventListener('drop', e => {
   e.preventDefault();
   dragDepth = 0;
   if (ui) ui.dropZone.hidden = true;
-  attach([...e.dataTransfer.files]);
+  attach([...e.dataTransfer.files], e.clientX, e.clientY);
 });
 document.addEventListener('paste', e => {
   if (!openId || page.hidden || editing() || anyPopupOpen()) return;

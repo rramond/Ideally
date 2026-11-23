@@ -78,6 +78,18 @@
   cursor:pointer;transition:filter .12s;
 }
 .ev-block:hover{filter:brightness(1.18)}
+/* from a flexible time block: grips on the top / bottom edge resize it */
+.ev-grip{position:absolute;left:0;right:0;height:7px;z-index:2;cursor:ns-resize}
+.ev-grip.top{top:-1px}
+.ev-grip.bottom{bottom:-1px}
+.ev-grip::after{
+  content:"";position:absolute;left:50%;width:18px;height:3px;margin-left:-9px;border-radius:2px;
+  background:color-mix(in srgb, var(--ink-bright) 75%, transparent);opacity:0;transition:opacity .12s;
+}
+.ev-grip.top::after{top:2px}
+.ev-grip.bottom::after{bottom:2px}
+.ev-block.flexible:hover .ev-grip::after,.ev-block.resizing .ev-grip::after{opacity:1}
+.ev-block.resizing{z-index:3;filter:brightness(1.2);cursor:ns-resize}
 /* past events are ghosted: faint, dashed, no glow (like cancelled ones, but not struck through) */
 .ev-block.past{opacity:.4;border-style:dashed;box-shadow:none !important}
 .ev-block.past:hover{opacity:.7;filter:none}

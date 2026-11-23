@@ -49,22 +49,74 @@
 .pj-page-name{flex:0 1 auto;font-size:28px;color:var(--ink-bright)}
 .pj-stats{margin-left:auto;font-family:var(--font-mono);font-size:11.5px;letter-spacing:.12em;color:var(--muted);white-space:nowrap;flex-shrink:0}
 
-/* body: the mini side rail and the open section */
-.pj-body{flex:1;min-height:0;display:flex}
-.pj-rail{
-  width:168px;flex-shrink:0;display:flex;flex-direction:column;gap:3px;padding:16px 10px 14px;
-  border-right:1px solid var(--line);background:color-mix(in srgb, var(--bg-side) 70%, transparent);
-}
-.pj-rail .nav-btn{font-size:13px;padding:7px 9px}
-.pj-rail .nav-btn.active{
+/* the app's side panel while a project is open (replaces the main menu, like the calendar's) */
+.nav-project{display:flex;flex-direction:column;gap:4px;min-height:0}
+.sidebar.project-mode .nav-main,.sidebar:not(.project-mode) .nav-project{display:none}
+.nav-pj-head{display:flex;align-items:center;gap:8px;min-width:0}
+.nav-pj-head span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav-pj-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px var(--pc, var(--accent))}
+.nav-project .nav-btn.active{
   background:color-mix(in srgb, var(--pc) 14%, transparent);color:var(--ink-bright);
   border-color:color-mix(in srgb, var(--pc) 40%, transparent);
   box-shadow:inset 0 0 12px color-mix(in srgb, var(--pc) 12%, transparent),0 0 10px color-mix(in srgb, var(--pc) 25%, transparent);
 }
 .pj-rail-label{flex:1}
 .pj-rail-count{font-family:var(--font-mono);font-size:10.5px;color:var(--muted)}
-.pj-delete{align-self:flex-start;padding:4px 9px}
-.pj-content{flex:1;min-width:0;min-height:0;display:flex}
+.nav-pj-delete{align-self:flex-start;margin-top:14px;padding:4px 10px}
+.pj-content{flex:1;min-width:0;min-height:0;display:flex;position:relative}
+
+/* ---- 2f: the board (stickies + files on a whiteboard) ---- */
+.pj-sec-board{flex-direction:column}
+.pj-board-bar{gap:10px;padding:12px 22px;border-bottom:1px solid var(--line)}
+.pj-board-bar .nav-label{margin-right:4px}
+.pj-board-bar .tool-btn{padding:6px 11px;font-size:12.5px}
+.pj-board-bar .color-pick{margin-left:0}
+.pj-board-stage{perspective:none}
+.pj-board-stage .board-empty[hidden]{display:none}
+.pj-board-world{transform-style:flat}
+.pj-item{position:absolute;touch-action:none}
+.pj-sticky{pointer-events:auto;transition:box-shadow .18s ease,outline-color .12s}
+.pj-sticky.dark .s-text{color:#F4F4F5}
+.pj-sticky.dark .s-del{color:rgba(255,255,255,.6)}
+.pj-sticky.dark .s-resize::after{border-color:rgba(255,255,255,.6)}
+.pj-sticky .s-text:empty::before{content:"Double-click to write";color:rgba(34,31,24,.35)}
+.pj-sticky.dark .s-text:empty::before{color:rgba(255,255,255,.4)}
+.pj-sticky .s-text[contenteditable="true"]:empty::before{content:""}
+.pj-sticky .s-text[contenteditable="true"]{outline:none}
+
+/* a file on the board: a card, or the picture itself */
+.pj-bfile{
+  display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:11px;cursor:grab;
+  background:var(--surface2);border:1px solid color-mix(in srgb, var(--kc) 45%, var(--line));
+  box-shadow:var(--shadow-md),0 0 12px color-mix(in srgb, var(--kc) 14%, transparent);
+  transition:box-shadow .18s ease;
+}
+.pj-bfile.dragging,.pj-sticky.dragging{cursor:grabbing;box-shadow:var(--shadow-lg)}
+.pj-bfile .fl-ext{flex-shrink:0}
+.pj-bfile-info{display:flex;flex-direction:column;min-width:0}
+.pj-bfile.img{display:block;padding:6px;border-radius:9px}
+.pj-bfile.img img{display:block;width:100%;height:100%;object-fit:cover;border-radius:5px;pointer-events:none}
+.pj-bfile.img .fl-ext{position:absolute;inset:0;margin:auto;width:max-content;height:max-content}
+.pj-bfile-cap{
+  position:absolute;left:6px;right:6px;bottom:6px;padding:14px 8px 5px;border-radius:0 0 5px 5px;
+  background:linear-gradient(transparent, rgba(0,0,0,.65));color:#fff;font-size:11.5px;font-weight:600;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity .12s;pointer-events:none;
+}
+.pj-bfile.img:hover .pj-bfile-cap{opacity:1}
+.pj-item.selected{outline:2px solid color-mix(in srgb, var(--accent-bright) 90%, transparent);outline-offset:3px}
+.pj-bfile .s-del{
+  position:absolute;top:-9px;right:-9px;z-index:2;width:20px;height:20px;border-radius:50%;
+  display:grid;place-items:center;font-size:13px;line-height:1;
+  background:var(--surface2);border:1px solid var(--line);color:var(--muted);opacity:0;transition:opacity .12s,color .12s;
+}
+.pj-bfile:hover .s-del{opacity:1}
+.pj-bfile .s-del:hover{color:var(--danger);border-color:color-mix(in srgb, var(--danger) 50%, transparent)}
+.pj-bfile .s-resize{position:absolute;right:-6px;bottom:-6px;width:16px;height:16px;cursor:nwse-resize;opacity:0;transition:opacity .12s}
+.pj-bfile:hover .s-resize{opacity:.8}
+.pj-bfile .s-resize::after{
+  content:"";position:absolute;right:4px;bottom:4px;width:8px;height:8px;
+  border-right:2px solid var(--kc);border-bottom:2px solid var(--kc);
+}
 
 /* shared section header */
 .pj-sec-head{display:flex;align-items:center;gap:12px;padding:14px 22px 10px;flex-shrink:0}
@@ -232,6 +284,7 @@
   box-shadow:inset 0 0 40px color-mix(in srgb, var(--pc) 20%, transparent);
 }
 .pj-dropzone[hidden]{display:none}
+.pj-dropzone.on-board{top:120px;background:color-mix(in srgb, var(--pc) 6%, transparent)}
 .pj-dropzone-inner{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--ink-bright)}
 
 /* image preview */

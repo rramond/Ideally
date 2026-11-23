@@ -3,7 +3,7 @@ import { store } from '../lib/storage.js';
 import { pad, isoDate, addDays, mondayOf, parseIso, toHours, fromHours } from '../lib/dates.js';
 import { toast } from '../lib/toast.js';
 import { showContextMenu } from '../lib/contextMenu.js';
-import { segmentsOn, timeLabel, typeOf, colorsOf, periodOf, getEvent, deleteEvent, keepEvent, untieEvent, onEventsChange } from './events.js';
+import { segmentsOn, timeLabel, typeOf, colorsOf, periodOf, getEvent, saveEvent, deleteEvent, keepEvent, untieEvent, onEventsChange } from './events.js';
 import { openEventEditor } from './eventEditor.js';
 import { openDayDetails } from './dayDetails.js';
 import { periodsOn, periodsBetween, getPeriod, savePeriod, deletePeriod, onPeriodsChange } from './periods.js';
@@ -264,8 +264,24 @@ function renderWeek(){
       block.append(t, ti);
       if (e.description) block.appendChild(de);
       blockStyle(block, e, u);
+      /* from a time block with no fixed duration: drag the top / bottom edge to resize
+         (not on ghosts, nor on the halves of an overnight event) */
+      const overnightHalf = cont || (end >= 24 && e.end !== '24:00');
+      if (e.flexible && !cancelled && !outside && !overnightHalf){
+        block.classList.add('flexible');
+        ['top', 'bottom'].forEach(edge => {
+          const grip = document.createElement('span');
+          grip.className = 'ev-grip ' + edge;
+          grip.title = 'Drag to change the ' + (edge === 'top' ? 'start' : 'end');
+          grip.addEventListener('pointerdown', pe => startResize(pe, block, t, e, edge, start, end));
+          block.appendChild(grip);
+        });
+      }
       /* a cancelled ghost: clicking washes every ghost of its period away (edit via right-click) */
-      block.addEventListener('click', () => cancelled && !outside ? washPeriod(cancelled) : openEventEditor({ event: getEvent(e.id) }));
+      block.addEventListener('click', () => {
+        if (suppressBlockClick){ suppressBlockClick = false; return; }
+        cancelled && !outside ? washPeriod(cancelled) : openEventEditor({ event: getEvent(e.id) });
+      });
       grid.appendChild(block);
     });
 
@@ -316,6 +332,45 @@ function renderWeek(){
   }
   restoreScroll();
   updateNowLine();
+}
+
+/* resizing an event from a flexible time block: the dragged edge snaps to
+   15 minutes, the event stays at least 15 minutes long and inside its day;
+   saved on release (a repeating event changes in all its repeats) */
+const SNAP = 0.25;
+let suppressBlockClick = false;          // the click that ends a resize doesn't open the editor
+function startResize(pe, block, timeEl, ev, edge, start, end){
+  if (pe.button !== 0 || !hourPx) return;
+  pe.preventDefault();
+  pe.stopPropagation();
+  suppressBlockClick = false;
+  const grip = pe.currentTarget;
+  grip.setPointerCapture(pe.pointerId);
+  const grid = block.parentElement;
+  let s = start, en = end, moved = false;
+  block.classList.add('resizing');
+  const move = me => {
+    const h = Math.round((me.clientY - grid.getBoundingClientRect().top) / hourPx / SNAP) * SNAP;
+    if (edge === 'top') s = clamp(h, 0, en - SNAP); else en = clamp(h, s + SNAP, 24);
+    moved = moved || s !== start || en !== end;
+    block.style.top = atHour(s);
+    block.style.height = 'calc(var(--hour, 40px) * ' + (en - s) + ' - 3px)';
+    timeEl.lastChild.textContent = fromHours(s) + '–' + fromHours(en) + (ev.recur && ev.recur.kind !== 'none' ? ' ↻' : '');
+  };
+  const up = () => {
+    grip.removeEventListener('pointermove', move);
+    grip.removeEventListener('pointerup', up);
+    grip.removeEventListener('pointercancel', up);
+    block.classList.remove('resizing');
+    suppressBlockClick = true;
+    setTimeout(() => { suppressBlockClick = false; }, 0);   // only the click of this release
+    const cur = getEvent(ev.id);
+    if (!moved || !cur || (fromHours(s) === cur.start && fromHours(en) === cur.end)) return;
+    saveEvent({ ...cur, start: fromHours(s), end: fromHours(en) });
+  };
+  grip.addEventListener('pointermove', move);
+  grip.addEventListener('pointerup', up);
+  grip.addEventListener('pointercancel', up);
 }
 
 /* the half-hour slot under the cursor, for dropping a time block of `dur`

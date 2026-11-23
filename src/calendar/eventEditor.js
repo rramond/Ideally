@@ -66,7 +66,11 @@ const TEMPLATE =
     '<label class="ee-field"><span>Start</span><input class="ee-time ee-start" inputmode="numeric" maxlength="5" autocomplete="off"></label>' +
     '<label class="ee-field"><span>End</span><input class="ee-time ee-end" inputmode="numeric" maxlength="5" autocomplete="off"></label>' +
   '</div>' +
-  '<label class="ee-field ee-dur-field"><span>Duration (h:mm)</span><input class="ee-time ee-dur" inputmode="numeric" maxlength="5" autocomplete="off"></label>' +
+  '<div class="ee-field ee-dur-field"><span>Duration (h:mm)</span><div class="ee-dur-row">' +
+    '<input class="ee-time ee-dur" inputmode="numeric" maxlength="5" autocomplete="off" aria-label="Duration (h:mm)">' +
+    '<label class="ee-flex" title="For things without a set length (a walk, reading, studying): it lands as 1 hour and you drag its top / bottom edge on the calendar to fit">' +
+      '<input type="checkbox" class="ee-flex-box"> No fixed duration</label>' +
+  '</div></div>' +
   '<label class="ee-field"><span>Description</span><textarea class="ee-desc" rows="3" placeholder="Add details…"></textarea></label>' +
   '<div class="ee-field"><span>Repeat</span><div class="ee-recur">' +
     '<select class="ee-recur-kind" aria-label="Repeat"></select>' +
@@ -243,6 +247,21 @@ function openEditor(isBlock, item, fresh){
     });
   });
 
+  /* ---- a block with no fixed duration: dropped as 1 hour, then resized on the
+     calendar by dragging its top / bottom edge (the typed duration is kept, for
+     when the box is unchecked) ---- */
+  const flexBox = $('.ee-flex-box');
+  const showFlex = () => {
+    if (!isBlock) return;
+    flexBox.checked = !!draft.flexible;
+    durIn.disabled = !!draft.flexible;
+    card.classList.toggle('flexible', !!draft.flexible);
+  };
+  if (isBlock) flexBox.addEventListener('change', () => {
+    if (flexBox.checked) draft.flexible = true; else delete draft.flexible;
+    showFlex(); refresh();
+  });
+
   /* ---- description ---- */
   descIn.value = draft.description || '';
   descIn.addEventListener('input', () => { draft.description = descIn.value; });
@@ -282,7 +301,7 @@ function openEditor(isBlock, item, fresh){
 
   /* ---- save / delete ---- */
   /* an event's end may be earlier than its start: it then ends the next day */
-  const badTime = () => isBlock ? toHours(draft.duration) <= 0 : span(draft.start, draft.end) <= 0;
+  const badTime = () => isBlock ? !draft.flexible && toHours(draft.duration) <= 0 : span(draft.start, draft.end) <= 0;
   /* 3f: the override must be clearly different from the type color */
   const badColor = () => !!draft.overrideColor && overrideClash(draft.overrideColor, typeOf(draft).color);
   /* 3g: a tied event must start inside its period, or it would never show */
@@ -296,7 +315,8 @@ function openEditor(isBlock, item, fresh){
     ovrBtn.classList.toggle('clash', p === 'color');
     if (periodSel) periodSel.classList.toggle('invalid', p === 'period');
     const nextDay = !isBlock && !p && toHours(draft.end) < toHours(draft.start);
-    hint.classList.toggle('info', nextDay);
+    const flexInfo = isBlock && !p && !!draft.flexible;
+    hint.classList.toggle('info', nextDay || flexInfo);
     if (p === 'time') hint.textContent = isBlock ? 'Duration must be longer than 0' : 'End can’t be the same as start';
     else if (p === 'color') hint.textContent = 'Override too close to the “' + typeOf(draft).name + '” color — pick a clearly different one';
     else if (p === 'period'){
@@ -306,7 +326,8 @@ function openEditor(isBlock, item, fresh){
     else if (nextDay){
       const d = addDays(parseIso(draft.date), 1);
       hint.textContent = 'Ends next day, ' + DAY_NAMES[d.getDay()] + ' ' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1);
-    } else hint.textContent = '';
+    } else if (flexInfo) hint.textContent = 'Lands as 1 hour — drag its edges on the calendar';
+    else hint.textContent = '';
   }
   function trySave(){
     timeFields.forEach(([input, key]) => commitTime(input, key));
@@ -335,7 +356,7 @@ function openEditor(isBlock, item, fresh){
     delBtn.hidden = true;
   }
 
-  showName(); showType(); showOvr(); showDate(); showRecur(); showPeriod(); refresh();
+  showName(); showType(); showOvr(); showDate(); showRecur(); showPeriod(); showFlex(); refresh();
 }
 
 /* ============================================================

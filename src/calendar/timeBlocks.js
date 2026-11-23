@@ -11,6 +11,8 @@ import { slotAt } from './calendar.js';
    type, description and repeat. Made in the Time Blocks side
    panel, then dragged onto a day: over a column they snap to
    its hour / half-hour rows; dropping one creates an event.
+   A block with no fixed duration (flexible) lands as 1 hour; its
+   event can then be resized on the calendar (calendar.js).
 ============================================================ */
 const listEl = document.getElementById('tb-list');
 const DRAG_START = 5;            // px the pointer must move before a press becomes a drag
@@ -44,10 +46,11 @@ function render(){
     name.textContent = b.title;
     const meta = document.createElement('span');
     meta.className = 'tb-meta';
-    meta.textContent = durLabel(b.duration) + ' · ' + t.name + (repeats ? ' ↻' : '');
+    const len = b.flexible ? 'flexible' : durLabel(b.duration);
+    meta.textContent = len + ' · ' + t.name + (repeats ? ' ↻' : '');
     item.append(name, meta);
-    item.title = b.title + ' (' + durLabel(b.duration) + ')' + (b.description ? '\n' + b.description : '') +
-                 '\nDrag onto a day · click to edit';
+    item.title = b.title + ' (' + (b.flexible ? 'no fixed duration — lands as 1 hour, drag its edges on the calendar' : len) + ')' +
+                 (b.description ? '\n' + b.description : '') + '\nDrag onto a day · click to edit';
     item.addEventListener('keydown', e => {
       if (e.key === 'Enter'){ e.preventDefault(); openBlockEditor({ block: getBlock(b.id) }); }
     });
@@ -77,7 +80,7 @@ listEl.addEventListener('pointerdown', e => {
   const block = getBlock(item.dataset.id);
   if (!block) return;
   const x0 = e.clientX, y0 = e.clientY;
-  const dur = Math.min(24, toHours(block.duration));
+  const dur = block.flexible ? 1 : Math.min(24, toHours(block.duration));   // a flexible block lands as 1 hour
   let ghost = null, preview = null, slot = null;
 
   const startDrag = () => {
@@ -157,6 +160,7 @@ function place(block, { date, hour }, dur){
     typeId: block.typeId,
     recur: { ...(block.recur || { kind: 'none' }) },
     ...(block.overrideColor ? { overrideColor: block.overrideColor } : {}),   // 3f
+    ...(block.flexible ? { flexible: true } : {}),                            // resizable on the calendar
     blockId: block.id
   });
   const d = parseIso(date);
