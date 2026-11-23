@@ -4,7 +4,7 @@ import { attachColorWheel } from '../colorWheel.js';
 import { getProject, saveProject, deleteProject, onProjectsChange, stickyCount } from './projects.js';
 import { mountBoard } from './projectBoard.js';
 import { mountNotes } from './projectNotes.js';
-import { mountTimeline } from './timeline.js';
+import { mountRoadmap } from './roadmapSection.js';
 import { mountFiles, addFiles } from './projectFiles.js';
 
 /* ============================================================
@@ -26,7 +26,7 @@ const navBtns = [...document.querySelectorAll('.nav-project .nav-btn[data-sec]')
 const SECTIONS = {
   board: { mount: mountBoard, count: p => p.board ? p.board.items.length : 0 },
   notes: { mount: mountNotes, count: p => (p.notes || []).length },
-  timeline: { mount: mountTimeline, count: p => (p.timeline || []).length },
+  timeline: { mount: mountRoadmap, count: p => (p.timeline || []).length },   // the Roadmap (2h)
   files: { mount: mountFiles, count: p => (p.files || []).length }
 };
 const plural = (n, w, many) => n + ' ' + (n === 1 ? w : many || w + 's');
@@ -154,7 +154,7 @@ function refresh(){
   navBtns.forEach(b => { b.querySelector('.pj-rail-count').textContent = SECTIONS[b.dataset.sec].count(p) || ''; });
   ui.stats.textContent = [
     plural(stickyCount(p), 'sticky', 'stickies'), plural((p.notes || []).length, 'note'),
-    plural((p.timeline || []).length, 'milestone'), plural((p.files || []).length, 'file')
+    plural((p.timeline || []).length, 'roadmap item'), plural((p.files || []).length, 'file')
   ].join(' · ').toUpperCase();
 }
 
