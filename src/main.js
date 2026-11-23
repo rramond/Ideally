@@ -25,6 +25,7 @@ import { applyProjectsState } from './projects/projectsView.js';
 import { resizeSceneCanvas, ensureSceneLoop } from './timer/scenes.js';
 import { initHistory, go, back, getState } from './lib/history.js';
 import { isoDate, fromHours } from './lib/dates.js';
+import { exportData, importData } from './backup.js';
 
 /* ============================================================
    View switching
@@ -34,7 +35,7 @@ const calView = document.getElementById('view-calendar');
 /* the calendar side panel's sub-panels are exclusive; an open type (3h) belongs to the Types panel */
 const PANEL_OFF = { blocks: false, periods: false, types: false, typeId: null, projectId: null };
 const views = document.querySelectorAll('.view');
-const navBtns = document.querySelectorAll('.nav-main .nav-btn');
+const navBtns = document.querySelectorAll('.nav-main .nav-btn[data-view]');
 
 let lastView = null;
 function applyState({ view, calMode, blocks, periods, types, typeId, projectId }){
@@ -70,6 +71,10 @@ navBtns.forEach(btn => btn.addEventListener('click', () => {
     go({ view: target, calMode: false, ...PANEL_OFF });
   }
 }));
+
+/* GENERAL d: export / import everything */
+document.getElementById('data-export').addEventListener('click', exportData);
+document.getElementById('data-import').addEventListener('click', importData);
 
 /* logo = back; clicking the calendar itself (not just scrolling) brings its side panel back */
 document.getElementById('brand').addEventListener('click', back);

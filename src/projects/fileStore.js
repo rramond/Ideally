@@ -34,4 +34,7 @@ async function run(mode, fn){
 
 export const putFile = (id, projectId, blob) => run('readwrite', s => s.put({ id, projectId, blob }));
 export const getFileBlob = async id => { const rec = await run('readonly', s => s.get(id)); return rec ? rec.blob : null; };
+/* every stored file, for the backup export: [{ id, projectId, blob }] */
+export const allFileRecords = () => run('readonly', s => s.getAll());
+export const clearFiles = () => run('readwrite', s => { s.clear(); });
 export const deleteFiles = ids => ids.length ? run('readwrite', s => { ids.forEach(id => s.delete(id)); }) : Promise.resolve();

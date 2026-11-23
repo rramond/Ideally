@@ -130,6 +130,15 @@ b) ✅ DONE — every and any pop-up/overlay should have an "x" button, small, s
 c) IDEALLY API — LOCAL SERVER (planned, implement later)
 move the app's data out of the browser (localStorage) into a small local Node server: an "Ideally API". The app saves to and loads from it, and the planned Discord query system reads from it (e.g. the period labels in ideally.dayLabels / ideally.periodColors). Also removes the "data is tied to the browser address" problem (file:// vs localhost, different ports).
 
+d) ✅ DONE — EXPORT / IMPORT DATA (to move everything to another device, until the Ideally API exists): "Export data" and "Import data" under a "Data" label in the main menu side panel (for now)
+- Export downloads one file, ideally-backup-YYYY-MM-DD.json: every saved value (all the ideally.* keys — projects with their board, notes, roadmap and goals, notes, events, time blocks, types, periods, vision board, settings, theme) and every file attached to a project (from IndexedDB, as data URLs); a toast says what went in ("1 project · 1 note · 6 events · … · 1 file")
+- Import picks such a file and shows a dialog: the file's name and export time, what's in it and what's on this device, then
+  - Merge: adds what this device doesn't have yet (by id: projects, notes, events, time blocks, event types, periods, vision board stickies / arrows, attached files); everything already here and this device's settings / theme are kept
+  - Replace (click twice to confirm): deletes this device's data and attached files and uses the file's
+  then the page reloads. The period indexes (dayLabels / periodColors) are rebuilt on load, not imported
+- the Data buttons don't count as tabs (the main menu's tab switching only uses the tab buttons)
+- ideally-backup*.json is in .gitignore, so an export saved inside the repo isn't committed by accident (it's personal data)
+
 ### **EXTRAS** (added along the way, not in the original spec)
 
 #### **1. Project setup**

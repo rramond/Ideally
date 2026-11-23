@@ -43,6 +43,18 @@
 .ctx-item:hover,.ctx-item:focus-visible{background:var(--hover2);color:var(--accent-pale);outline:none}
 .ctx-item.danger:hover,.ctx-item.danger:focus-visible{background:color-mix(in srgb, var(--danger) 12%, transparent);color:var(--danger)}
 
+/* GENERAL d: the Data buttons in the main menu, and the import dialog */
+.nav-data-label{margin-top:18px}
+.nav-main #data-export,.nav-main #data-import{font-size:13px;color:var(--ink-soft)}
+.bk-card{width:min(520px, 100%)}
+.bk-rows{display:flex;flex-direction:column;gap:8px}
+.bk-row{display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:baseline}
+.bk-label{font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.bk-text{font-size:13px;color:var(--ink);overflow-wrap:anywhere}
+.bk-note{font-size:12.5px;line-height:1.55;color:var(--muted)}
+.bk-replace:hover,.bk-replace.armed{border-color:var(--danger);color:var(--danger);box-shadow:0 0 10px color-mix(in srgb, var(--danger) 35%, transparent)}
+.bk-card button:disabled{opacity:.5;pointer-events:none}
+
 /* Short-lived status message */
 .toast{
   position:fixed;left:50%;bottom:28px;z-index:100;
