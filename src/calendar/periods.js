@@ -97,3 +97,12 @@ export function deletePeriod(id){
   periods = periods.filter(p => p.id !== id);
   persist();
 }
+
+/* a day's background (week header, month cell): the period color, or equal stripes of several */
+export function periodTint(list){
+  const tint = c => 'color-mix(in srgb, ' + c + ' 26%, transparent)';
+  if (list.length === 1) return tint(list[0].color);
+  const n = list.length;
+  return 'linear-gradient(90deg,' + list.map((p, k) =>
+    tint(p.color) + ' ' + (k * 100 / n) + '% ' + ((k + 1) * 100 / n) + '%').join(',') + ')';
+}

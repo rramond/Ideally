@@ -10,8 +10,8 @@ import { openReminderEditor } from './reminderEditor.js';
    REMINDER STICKERS on a day's date box (the column header).
    Each sticker lands at a random spot inside the box, tilted
    −30° … 30°, without touching the date text or another sticker.
-   Hitboxes: the date's text (DD.MM and the weekday) is a
-   rectangle; a sticker is a circle around its glyph only — the
+   Hitboxes: the date's text (and in the month view the event
+   pills) are rectangles (.rem-hit); a sticker is a circle around its glyph only — the
    white contour isn't counted, so contours may overlap a little.
    The spots are seeded by each reminder's id and placed in the
    order the reminders were made, so they stay put on every
@@ -46,8 +46,9 @@ function seeded(str){
   };
 }
 
-/* adds the day's stickers to its header (does nothing on a day without reminders);
-   they are placed by layoutStickers once the header is on screen */
+/* adds the day's stickers to its date box — a week column's header, or a month
+   cell (nothing on a day without reminders); layoutStickers places them once the
+   box is on screen */
 export function addStickers(head, dateStr){
   const list = remindersOn(dateStr);
   if (!list.length) return;
@@ -78,18 +79,18 @@ function rectDepth(x, y, r, b){
   return Math.max(0, r - Math.hypot(dx, dy));
 }
 
-/* places the stickers of one header; false while it has no size (another tab is open) */
+/* places the stickers of one date box; false while it has no size (another tab is open) */
 function layoutHead(head){
   const W = head.clientWidth, H = head.clientHeight;
   const stickers = [...head.querySelectorAll('.rem-sticker')];
   if (!W || !H || !stickers.length) return false;
   /* the date's hitbox: the weekday + DD.MM text, a little padded */
   const hr = head.getBoundingClientRect();
-  const texts = [...head.querySelectorAll('.dh-init, .dh-date')].map(t => t.getBoundingClientRect());
-  const date = {
-    l: Math.min(...texts.map(t => t.left)) - hr.left - DATE_PAD, r: Math.max(...texts.map(t => t.right)) - hr.left + DATE_PAD,
-    t: Math.min(...texts.map(t => t.top)) - hr.top - DATE_PAD,   b: Math.max(...texts.map(t => t.bottom)) - hr.top + DATE_PAD
-  };
+  /* obstacles: every .rem-hit inside the box (the date text; in the month view
+     also the event pills), each a padded rectangle; hidden ones are skipped */
+  const hits = [...head.querySelectorAll('.rem-hit')].map(t => t.getBoundingClientRect())
+    .filter(b => b.width && b.height)
+    .map(b => ({ l: b.left - hr.left - DATE_PAD, r: b.right - hr.left + DATE_PAD, t: b.top - hr.top - DATE_PAD, b: b.bottom - hr.top + DATE_PAD }));
   stickers.forEach(s => s.style.removeProperty('--rem-k'));
   const base = parseFloat(getComputedStyle(stickers[0]).fontSize) || 17;
 
@@ -105,7 +106,8 @@ function layoutHead(head){
       let best = null;
       for (let i = 0; i < TRIES; i++){
         const x = r + rand() * xr, y = r + rand() * yr;
-        let depth = rectDepth(x, y, r, date);
+        let depth = 0;
+        hits.forEach(b => { depth += rectDepth(x, y, r, b); });
         spots.forEach(o => { depth += Math.max(0, 2 * r - Math.hypot(x - o.x, y - o.y)); });
         if (!best || depth < best.depth) best = { x, y, depth };
         if (depth === 0) break;
@@ -126,7 +128,7 @@ function layoutHead(head){
 
 /* places every sticker under root (call once the headers are laid out, and on resize) */
 export function layoutStickers(root){
-  root.querySelectorAll('.day-head.has-reminders').forEach(layoutHead);
+  root.querySelectorAll('.has-reminders').forEach(layoutHead);
 }
 
 /* ---- hover: the name in a small tag under the sticker ---- */

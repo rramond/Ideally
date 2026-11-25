@@ -359,3 +359,55 @@ body.tb-dragging,body.tb-dragging *{cursor:grabbing !important}
 .ty-row-time,.ty-row-date{font-family:var(--font-mono);font-size:12.5px;color:var(--ink-soft);flex-shrink:0}
 .ty-row-recur{margin-left:auto;font-family:var(--font-mono);font-size:10.5px;color:var(--muted);flex-shrink:0}
 .ty-foot{display:flex;padding:8px 28px 18px}
+
+/* ============ MONTH VIEW ============ */
+/* the toggle beside the days pill; while on, the pill only leads back to the days */
+.cal-month-btn.on{background:var(--accent-soft);color:var(--accent-pale);box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent)}
+#view-calendar.month-mode .cal-days{opacity:.45}
+#view-calendar.month-mode .cal-days:hover,#view-calendar.month-mode .cal-days:focus-within{opacity:1}
+.month{display:none}
+#view-calendar.month-mode .week{display:none}
+#view-calendar.month-mode:not(.type-open) .month{
+  flex:1;min-height:0;display:grid;
+  grid-template-columns:repeat(7, minmax(0, 1fr));
+  grid-template-rows:auto repeat(var(--weeks, 5), minmax(0, 1fr));
+}
+.mo-dow{
+  padding:6px 10px 5px;border-bottom:1px solid var(--line);
+  font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+}
+.mo-dow.weekend{background:var(--surface-weekend)}
+.mo-cell{
+  position:relative;display:flex;flex-direction:column;min-width:0;min-height:0;cursor:pointer;
+  background:var(--surface);border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+  transition:background .12s,filter .15s;user-select:none;
+}
+.mo-cell:nth-child(7n+7){border-right:none}
+.mo-cell.weekend{background:var(--surface-weekend)}
+.mo-cell:hover{background:color-mix(in srgb, var(--ink) 3%, var(--surface))}
+.month.has-selection .mo-cell:not(.selected){filter:brightness(.5) saturate(.8)}
+.mo-cell.selected{background:var(--accent-soft);box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent)}
+.mo-head{display:flex;align-items:center;padding:5px 10px 4px}
+.mo-num{font-family:var(--font-display);font-size:14px;font-weight:700;color:var(--ink)}
+.mo-cell.other .mo-num{color:var(--dim-2);font-weight:500}
+.mo-cell.today .mo-num{
+  color:var(--today-ink);
+  text-shadow:0 0 6px color-mix(in srgb, var(--glow-bright) 95%, transparent),0 0 16px color-mix(in srgb, var(--glow) 70%, transparent);
+}
+/* the stack: thin pills for events and blocks, no names (reminders are stickers on the cell) */
+.mo-stack{flex:1;min-height:0;display:flex;flex-direction:column;gap:3px;padding:2px 8px 8px;overflow:hidden}
+.mo-pill{
+  display:block;flex-shrink:0;height:6px;border-radius:99px;   /* PILL_H / PILL_GAP in monthView.js */
+}
+.mo-pill[hidden]{display:none}
+.mo-pill.ev{
+  background:linear-gradient(90deg, color-mix(in srgb, var(--tc) 85%, transparent), color-mix(in srgb, var(--tc2, var(--tc)) 85%, transparent));
+  box-shadow:0 0 6px color-mix(in srgb, color-mix(in srgb, var(--tc), var(--tc2, var(--tc))) 45%, transparent);
+}
+.mo-pill.ev.ghost{background:none;box-shadow:none;border:1px dashed color-mix(in srgb, var(--tc) 55%, transparent);opacity:.7}
+.mo-cell.past .mo-pill.ev{opacity:.35;box-shadow:none}
+.mo-cell.other .mo-stack{opacity:.45}
+.mo-more{font-family:var(--font-mono);font-size:10px;line-height:1;color:var(--muted);padding-top:1px}
+.mo-cell .rem-stickers{z-index:2}
+.mo-cell.other .rem-stickers{opacity:.5}
+.mo-cell.past .rem-stickers{opacity:.75}

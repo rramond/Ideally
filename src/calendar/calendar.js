@@ -6,12 +6,13 @@ import { showContextMenu } from '../lib/contextMenu.js';
 import { segmentsOn, timeLabel, typeOf, colorsOf, periodOf, getEvent, saveEvent, deleteEvent, keepEvent, untieEvent, onEventsChange } from './events.js';
 import { openEventEditor } from './eventEditor.js';
 import { openDayDetails } from './dayDetails.js';
-import { periodsOn, periodsBetween, getPeriod, savePeriod, deletePeriod, onPeriodsChange } from './periods.js';
+import { periodsOn, periodsBetween, getPeriod, savePeriod, deletePeriod, onPeriodsChange, periodTint } from './periods.js';
 import { openPeriodEditor } from './periodEditor.js';
 import { anyPopupOpen } from '../lib/history.js';
 import { onRemindersChange, getReminder, deleteReminder } from './reminders.js';
 import { addStickers, layoutStickers, hideTag as hideReminderTag } from './reminderStickers.js';
 import { openReminderEditor } from './reminderEditor.js';
+import { renderMonth, fitPills, monthContextMenu } from './monthView.js';
 
 /* ============================================================
    CALENDAR — day columns, 1 to 7 at once (EXTRAS 3.bh): a full
@@ -26,6 +27,8 @@ const DAY_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frida
 const HOURS_VISIBLE = 12, FIRST_HOUR = 5;
 const WHEEL_STEP = 40;                            // wheel/trackpad distance (px) that moves one hour
 const weekEl = document.getElementById('week');
+const monthEl = document.getElementById('month');
+const calViewEl = document.getElementById('view-calendar');
 
 let dayCount = clamp(Number(store.get('ideally.calDays', 7)) || 7, 1, 7);   // columns shown, remembered
 let weekStart = mondayOf(new Date());             // first shown day (a Monday when 7 days are shown)
@@ -36,6 +39,11 @@ let calHidden = true;
 let renderedToday = isoDate(new Date());
 let selectedDate = null;                          // 3d: clicked date, the others are dimmed
 let suppressHeadClick = false;                    // a header drag (new period) just ended on a header
+/* month view: one month at once instead of the day columns (remembered) */
+let monthMode = !!store.get('ideally.calMonth', false);
+let monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+const firstOfMonth = d => new Date(d.getFullYear(), d.getMonth(), 1);
+const calVisible = () => !!(weekEl.offsetParent || monthEl.offsetParent);
 
 function urgency(dateStr){
   /* 0 → past, 0.12 → far away, 1 → today/tomorrow */
@@ -124,6 +132,7 @@ function showDayCount(){
    in view, else the current first day — snapped to Monday for a full week */
 function setDayCount(n){
   n = clamp(n, 1, 7);
+  if (monthMode){ setMonthMode(false, n); return; }   // a day count from the month view: back to the days
   if (n === dayCount) return;
   const today = isoDate(new Date());
   const anchor = selectedDate ? parseIso(selectedDate)
@@ -147,13 +156,25 @@ daysLabel.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === 
 daysLabel.addEventListener('blur', showDayCount);
 document.addEventListener('keydown', e => {
   if (!/^[1-7]$/.test(e.key) || e.ctrlKey || e.metaKey || e.altKey) return;
-  if (!weekEl.offsetParent || anyPopupOpen()) return;                       // calendar not in view, or a pop-up is open
+  if (!calVisible() || anyPopupOpen()) return;                              // calendar not in view, or a pop-up is open
   const t = e.target;
   if (t.closest && (t.closest('input, textarea, select') || t.isContentEditable)) return;
   setDayCount(Number(e.key));
 });
 
 function renderWeek(){
+  calViewEl.classList.toggle('month-mode', monthMode);
+  monthBtn.classList.toggle('on', monthMode);
+  monthBtn.setAttribute('aria-pressed', String(monthMode));
+  document.getElementById('cal-prev').title = monthMode ? 'Previous month' : 'Previous days';
+  document.getElementById('cal-next').title = monthMode ? 'Next month' : 'Next days';
+  if (monthMode){
+    document.getElementById('cal-title').textContent = MONTHS[monthStart.getMonth()] + ' ' + monthStart.getFullYear();
+    renderedToday = isoDate(new Date());
+    hideReminderTag();
+    renderMonth(monthEl, monthStart, selectedDate, selectDate);
+    return;
+  }
   document.getElementById('cal-title').textContent = weekTitle();
   showDayCount();
   weekEl.innerHTML = '';
@@ -184,10 +205,10 @@ function renderWeek(){
     const head = document.createElement('div');
     head.className = 'day-head';
     const init = document.createElement('span');
-    init.className = 'dh-init';
+    init.className = 'dh-init rem-hit';
     init.textContent = dayCount <= 4 ? DAY_FULL[d.getDay()] : DAY_INITIALS[d.getDay()];
     const date = document.createElement('span');
-    date.className = 'dh-date';
+    date.className = 'dh-date rem-hit';
     date.textContent = pad(d.getDate()) + '.' + pad(d.getMonth() + 1);
     head.append(init, date);
     /* 3e: the header is tinted with the day's period colors (stripes if several);
@@ -430,15 +451,6 @@ function washPeriod(p){
   }, WAVE_MS + 150);
 }
 
-/* header / band background: the period color, or equal stripes of several */
-function periodTint(list){
-  const tint = c => 'color-mix(in srgb, ' + c + ' 26%, transparent)';
-  if (list.length === 1) return tint(list[0].color);
-  const n = list.length;
-  return 'linear-gradient(90deg,' + list.map((p, k) =>
-    tint(p.color) + ' ' + (k * 100 / n) + '% ' + ((k + 1) * 100 / n) + '%').join(',') + ')';
-}
-
 function periodMenuItems(p, named){
   const suffix = named ? ' “' + p.name + '”' : '';
   return [
@@ -511,18 +523,21 @@ document.addEventListener('pointerup', e => {
 export function showWeekOf(dateStr){
   selectedDate = null;
   const d = parseIso(dateStr);
+  monthStart = firstOfMonth(d);
   weekStart = dayCount === 7 ? mondayOf(d) : d;
   renderWeek();
 }
 
 function selectDate(dStr){
   selectedDate = dStr;
+  monthEl.classList.toggle('has-selection', !!dStr);
+  monthEl.querySelectorAll('.mo-cell').forEach(c => c.classList.toggle('selected', c.dataset.date === dStr));
   weekEl.classList.toggle('has-selection', !!dStr);
   weekEl.querySelectorAll('.day-col').forEach(c => c.classList.toggle('selected', c.dataset.date === dStr));
 }
 /* Esc unselects (once no pop-up is left to close) */
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && selectedDate && !anyPopupOpen() && weekEl.offsetParent) selectDate(null);
+  if (e.key === 'Escape' && selectedDate && !anyPopupOpen() && calVisible()) selectDate(null);
 });
 
 function restoreScroll(){
@@ -628,20 +643,50 @@ setInterval(() => {
 /* ‹ › page by the number of days shown; Today shows this week, or starts the window on today */
 document.getElementById('cal-prev').addEventListener('click', () => {
   selectedDate = null;
+  if (monthMode){ monthStart = new Date(monthStart.getFullYear(), monthStart.getMonth() - 1, 1); renderWeek(); return; }
   weekStart = addDays(weekStart, -dayCount);
   renderWeek();
 });
 document.getElementById('cal-next').addEventListener('click', () => {
   selectedDate = null;
+  if (monthMode){ monthStart = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1); renderWeek(); return; }
   weekStart = addDays(weekStart, dayCount);
   renderWeek();
 });
 document.getElementById('cal-today').addEventListener('click', () => {
   selectedDate = null;
   const today = new Date();
+  monthStart = firstOfMonth(today);
   weekStart = dayCount === 7 ? mondayOf(today) : new Date(today.getFullYear(), today.getMonth(), today.getDate());
   renderWeek();
 });
+/* ---- month view on / off: the button beside the days pill ---- */
+const monthBtn = document.getElementById('cal-month');
+/* entering shows the month of the selected date, else of today if it is in view,
+   else of the first shown day; leaving (optionally with a new day count) shows
+   the selected date, else today if it is in that month, else the month's 1st */
+function setMonthMode(on, n = dayCount){
+  const today = isoDate(new Date());
+  if (on){
+    const anchor = selectedDate ? parseIso(selectedDate)
+      : isoDate(weekStart) <= today && today <= isoDate(lastShown()) ? parseIso(today) : weekStart;
+    monthStart = firstOfMonth(anchor);
+  } else {
+    const anchor = selectedDate ? parseIso(selectedDate)
+      : today.slice(0, 7) === isoDate(monthStart).slice(0, 7) ? parseIso(today) : monthStart;
+    dayCount = n;
+    store.set('ideally.calDays', n);
+    weekStart = n === 7 ? mondayOf(anchor) : anchor;
+  }
+  monthMode = on;
+  store.set('ideally.calMonth', on);
+  renderWeek();
+}
+monthBtn.addEventListener('click', () => setMonthMode(!monthMode));
+monthEl.addEventListener('contextmenu', monthContextMenu);
+/* the cells change size with the window: re-fit the pill stacks */
+new ResizeObserver(() => { if (monthMode){ fitPills(monthEl); layoutStickers(monthEl); } }).observe(monthEl);
+
 onEventsChange(renderWeek);
 onPeriodsChange(renderWeek);
 onRemindersChange(renderWeek);
