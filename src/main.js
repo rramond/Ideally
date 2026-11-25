@@ -10,6 +10,7 @@ import './styles/color-wheel.css';
 import './styles/event-editor.css';
 import './styles/timer.css';
 import './styles/projects.css';
+import './styles/reminders.css';
 
 import './themes/themePicker.js';   // applies the saved theme (theme.js) and wires the Themes dropdown
 import './themes/petals.js';        // Sakura: a gust of petals on every tab change
@@ -18,6 +19,7 @@ import './calendar/calendar.js';
 import { openEventEditor } from './calendar/eventEditor.js';
 import './calendar/timeBlocks.js';
 import './calendar/periodsPanel.js';
+import './calendar/remindersPanel.js';
 import { showTypeView } from './calendar/typeLibrary.js';
 import { renderArrows, renderHandles } from './board.js';
 import './timer/timer.js';
@@ -33,12 +35,12 @@ import { exportData, importData } from './backup.js';
 const sidebar = document.querySelector('.sidebar');
 const calView = document.getElementById('view-calendar');
 /* the calendar side panel's sub-panels are exclusive; an open type (3h) belongs to the Types panel */
-const PANEL_OFF = { blocks: false, periods: false, types: false, typeId: null, projectId: null };
+const PANEL_OFF = { blocks: false, periods: false, reminders: false, types: false, typeId: null, projectId: null };
 const views = document.querySelectorAll('.view');
 const navBtns = document.querySelectorAll('.nav-main .nav-btn[data-view]');
 
 let lastView = null;
-function applyState({ view, calMode, blocks, periods, types, typeId, projectId }){
+function applyState({ view, calMode, blocks, periods, reminders, types, typeId, projectId }){
   navBtns.forEach(b => b.classList.toggle('active', b.dataset.view === view));
   views.forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
   if (view === 'board'){ renderArrows(); renderHandles(); }
@@ -47,6 +49,7 @@ function applyState({ view, calMode, blocks, periods, types, typeId, projectId }
   sidebar.classList.toggle('cal-mode', view === 'calendar' && !!calMode);
   sidebar.classList.toggle('blocks-mode', view === 'calendar' && !!calMode && !!blocks);
   sidebar.classList.toggle('periods-mode', view === 'calendar' && !!calMode && !!periods);
+  sidebar.classList.toggle('reminders-mode', view === 'calendar' && !!calMode && !!reminders);
   sidebar.classList.toggle('types-mode', view === 'calendar' && !!calMode && !!types);
   /* 3h: an open type replaces the week inside the calendar view */
   const openType = view === 'calendar' ? typeId || null : null;
@@ -98,6 +101,11 @@ document.getElementById('cal-new-event').addEventListener('click', () => {
 /* side panel "Periods": switch to the periods panel (Back returns to the calendar panel) */
 document.getElementById('cal-periods').addEventListener('click', () => {
   if (!getState().periods) go({ ...PANEL_OFF, periods: true });
+});
+
+/* side panel "Reminders": switch to the reminders panel (Back returns to the calendar panel) */
+document.getElementById('cal-reminders').addEventListener('click', () => {
+  if (!getState().reminders) go({ ...PANEL_OFF, reminders: true });
 });
 
 /* side panel "Types" (3h): switch to the type library panel (Back returns to the calendar panel) */

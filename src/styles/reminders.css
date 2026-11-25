@@ -1,0 +1,101 @@
+/* ============ REMINDERS ============ */
+
+/* ---- a pictogram: an emoji, or the default red "!!" (an svg 1em tall) ---- */
+.pg{display:inline-grid;place-items:center;line-height:1;font-style:normal;flex-shrink:0;
+  font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+.pg svg{width:1em;height:1.04em;display:block;overflow:visible}
+.pg-shine{stroke:#fff !important;stroke-width:1.1;stroke-linecap:round;opacity:.85}
+/* die-cut sticker: a white contour hugging the shape, then a shadow like a
+   sticky note's — a tight contact shadow plus a soft one cast down-right, as
+   if the sticker's edges lift off the page. On the calendar the stickers are
+   rotated inside (.pg), so the light always comes from the same side. */
+.rem-sticker-look{
+  filter:
+    drop-shadow(1.2px 0 0 #fff) drop-shadow(-1.2px 0 0 #fff)
+    drop-shadow(0 1.2px 0 #fff) drop-shadow(0 -1.2px 0 #fff)
+    drop-shadow(0 1px 1px rgba(0,0,0,.45))
+    drop-shadow(1.5px 3px 2.5px rgba(0,0,0,.32));
+}
+
+/* ---- stickers inside the date box (the day's header), placed by reminderStickers.js ---- */
+.day-head{position:relative}
+.rem-stickers{position:absolute;inset:0;pointer-events:none;z-index:4}
+.rem-sticker{
+  position:absolute;pointer-events:auto;padding:0;background:none;border:none;
+  font-size:calc(17px * var(--scale-h, 1) * var(--rem-k, 1));line-height:1;cursor:pointer;
+  transform:translate(-50%, -50%);
+  transition:transform .14s cubic-bezier(.3,1.6,.6,1),filter .14s;
+}
+.rem-sticker .pg{transform:rotate(var(--tilt, 0deg));transition:transform .14s ease}
+.rem-sticker:hover,.rem-sticker:focus-visible{
+  transform:translate(-50%, -50%) scale(1.3);
+  z-index:20 !important;outline:none;
+  filter:
+    drop-shadow(1.2px 0 0 #fff) drop-shadow(-1.2px 0 0 #fff)
+    drop-shadow(0 1.2px 0 #fff) drop-shadow(0 -1.2px 0 #fff)
+    drop-shadow(0 2px 2px rgba(0,0,0,.4))
+    drop-shadow(3px 6px 5px rgba(0,0,0,.35));        /* lifted a bit further off the page */
+}
+.rem-sticker:hover .pg,.rem-sticker:focus-visible .pg{transform:rotate(calc(var(--tilt, 0deg) * .4))}
+
+/* hover tag */
+.rem-tag .pg{font-size:14px}
+
+/* click: the reminder's card */
+.rem-pop{
+  position:fixed;z-index:60;width:min(280px, calc(100vw - 16px));
+  display:flex;flex-direction:column;gap:10px;padding:14px 16px 12px;
+  background:var(--surface2);border:1px solid var(--line);border-radius:12px;
+  box-shadow:var(--shadow-lg);animation:ee-fade .12s ease;
+}
+.rem-pop-head{display:flex;align-items:center;gap:12px}
+.rem-pop-icon{font-size:28px}
+.rem-pop-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rem-pop-name{font-family:var(--font-display);font-size:16px;font-weight:700;overflow-wrap:anywhere}
+.rem-pop-date{font-family:var(--font-mono);font-size:11.5px;color:var(--muted)}
+.rem-pop-desc{margin:0;font-size:13px;line-height:1.55;color:var(--ink-soft);white-space:pre-wrap;overflow-wrap:anywhere;max-height:40vh;overflow-y:auto}
+.rem-pop-desc.empty{color:var(--dim)}
+.rem-pop-edit{align-self:flex-end;padding:4px 12px;font-size:12px}
+
+/* ---- side panel ---- */
+.nav-reminders{display:flex;flex-direction:column;gap:4px;flex:1;min-height:0}
+.sidebar.reminders-mode .nav-cal,.sidebar:not(.reminders-mode) .nav-reminders{display:none}
+.rem-item{
+  display:flex;align-items:center;gap:10px;flex-shrink:0;
+  padding:7px 6px 7px 10px;border-radius:8px;cursor:pointer;border:1px solid transparent;
+  transition:background .12s,border-color .12s,opacity .12s;
+}
+.rem-item:hover,.rem-item:focus-visible{background:var(--hover);outline:none}
+.rem-item.now{background:var(--accent-soft);border-color:color-mix(in srgb, var(--accent) 30%, transparent)}
+.rem-item.past{opacity:.5}
+.rem-item.past:hover{opacity:.85}
+.rem-item-icon{font-size:18px;width:22px;transform:rotate(-6deg)}
+.rem-group{margin-top:10px}
+
+/* ---- the overlay ---- */
+.rem-card{--pc:#ff3d55}
+.rem-icon-wrap{position:relative;flex-shrink:0}
+.rem-icon-btn{
+  width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:24px;
+  border:1px dashed color-mix(in srgb, var(--ink) 22%, transparent);transition:background .12s,border-color .12s;
+}
+.rem-icon-btn:hover{background:var(--hover2);border-color:color-mix(in srgb, var(--ink) 45%, transparent)}
+.rem-icon-btn .pg{transform:rotate(-6deg)}
+.rem-icon-pop{
+  position:absolute;top:calc(100% + 8px);right:-6px;z-index:6;width:300px;
+  display:flex;flex-direction:column;gap:8px;padding:10px;
+  background:var(--surface2);border:1px solid var(--line);border-radius:12px;
+  box-shadow:var(--shadow-lg);
+}
+.rem-icon-grid{display:grid;grid-template-columns:repeat(8, 1fr);gap:2px}
+.rem-icon-opt{height:32px;border-radius:7px;font-size:19px;display:grid;place-items:center;transition:background .1s,transform .1s}
+.rem-icon-opt:hover{background:var(--hover2);transform:scale(1.15)}
+.rem-icon-opt.on{background:var(--accent-soft);box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent)}
+.ev-card .rem-icon-custom{padding:6px 9px;font-size:12.5px}
+.rem-weekday{padding-bottom:10px}
+.pp-dots i.rem-dot{background:var(--pc)}
+
+/* ---- details window ---- */
+.dd-reminder{--tc:#ff3d55}
+.dd-reminder .dd-item-top{align-items:center}
+.dd-rm-icon{font-size:18px;transform:rotate(-6deg)}

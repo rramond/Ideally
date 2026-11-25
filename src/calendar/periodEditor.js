@@ -22,10 +22,10 @@ const el = (tag, cls, text) => {
   return x;
 };
 const pulse = node => { node.classList.remove('pulse'); void node.offsetWidth; node.classList.add('pulse'); };
-const fmtDate = iso => { const [y, m, d] = iso.split('-'); return d + '.' + m + '.' + y; };
+export const fmtDate = iso => { const [y, m, d] = iso.split('-'); return d + '.' + m + '.' + y; };
 
 /* "1611" / "16.11" → 16.11.<year>, "16.11.27" / "16.11.2027" / "16112027" → 'YYYY-MM-DD' (or null) */
-function parseDateInput(str, year){
+export function parseDateInput(str, year){
   const s = str.trim();
   let d, m, y;
   const parts = s.split(/[.\/\-\s]+/).filter(Boolean);

@@ -9,6 +9,9 @@ import { openDayDetails } from './dayDetails.js';
 import { periodsOn, periodsBetween, getPeriod, savePeriod, deletePeriod, onPeriodsChange } from './periods.js';
 import { openPeriodEditor } from './periodEditor.js';
 import { anyPopupOpen } from '../lib/history.js';
+import { onRemindersChange, getReminder, deleteReminder } from './reminders.js';
+import { addStickers, layoutStickers, hideTag as hideReminderTag } from './reminderStickers.js';
+import { openReminderEditor } from './reminderEditor.js';
 
 /* ============================================================
    CALENDAR — day columns, 1 to 7 at once (EXTRAS 3.bh): a full
@@ -157,6 +160,7 @@ function renderWeek(){
   renderedToday = isoDate(new Date());
   weekEl.classList.toggle('has-selection', !!selectedDate);
   periodTag.hidden = true;
+  hideReminderTag();
 
   /* 3e: periods touching the shown days get a band row each (overlaps stack) */
   const weekPeriods = periodsBetween(isoDate(weekStart), isoDate(lastShown()));
@@ -195,6 +199,8 @@ function renderWeek(){
     } else {
       head.title = 'Click to select · double-click for the day’s details · drag across days for a period';
     }
+    /* the day's reminders: stickers on the date box */
+    addStickers(head, dStr);
     /* click selects the date (again: unselects); double-click opens its details */
     head.addEventListener('click', e => {
       if (suppressHeadClick){ suppressHeadClick = false; return; }
@@ -330,6 +336,7 @@ function renderWeek(){
     col.append(head, body);
     weekEl.appendChild(col);
   }
+  layoutStickers(weekEl);
   restoreScroll();
   updateNowLine();
 }
@@ -451,6 +458,7 @@ document.body.appendChild(periodTag);
 weekEl.addEventListener('mouseover', e => {
   const band = e.target.closest('.period-band');
   const head = e.target.closest('.day-head');
+  if (e.target.closest('.rem-sticker')){ periodTag.hidden = true; return; }   // a sticker shows its own name
   const list = (band ? [getPeriod(band.dataset.periodId)] : head ? periodsOn(head.parentElement.dataset.date) : [])
     .filter(Boolean);
   if (!list.length || hdrDrag){ periodTag.hidden = true; return; }
@@ -551,6 +559,15 @@ weekEl.addEventListener('contextmenu', e => {
     showContextMenu(e.clientX, e.clientY, items);
     return;
   }
+  const sticker = e.target.closest('.rem-sticker');
+  if (sticker){
+    const r = getReminder(sticker.dataset.id);
+    if (r) showContextMenu(e.clientX, e.clientY, [
+      { label: 'Edit reminder', action: () => openReminderEditor({ reminder: getReminder(r.id) }) },
+      { label: 'Delete reminder', danger: true, action: () => { deleteReminder(r.id); toast('Deleted reminder “' + r.name + '”'); } }
+    ]);
+    return;
+  }
   const band = e.target.closest('.period-band');
   if (band){
     const p = getPeriod(band.dataset.periodId);
@@ -563,7 +580,8 @@ weekEl.addEventListener('contextmenu', e => {
     const h0 = colScroll[col.dataset.index];
     const items = [
       { label: 'New event', action: () => openEventEditor({ date: col.dataset.date, start: fromHours(h0), end: fromHours(Math.min(24, h0 + 1)) }) },
-      { label: 'New period from here', action: () => openPeriodEditor({ start: col.dataset.date, pickEnd: true }) }
+      { label: 'New period from here', action: () => openPeriodEditor({ start: col.dataset.date, pickEnd: true }) },
+      { label: 'New reminder', action: () => openReminderEditor({ date: col.dataset.date }) }
     ];
     periodsOn(col.dataset.date).forEach(p => items.push(...periodMenuItems(p, true)));
     showContextMenu(e.clientX, e.clientY, items);
@@ -592,6 +610,7 @@ new ResizeObserver(() => {
     hourPx = h;
     weekEl.style.setProperty('--hour', h + 'px');
   }
+  layoutStickers(weekEl);   // the date boxes changed size (or just came into view)
   restoreScroll();
 }).observe(weekEl);
 
@@ -625,4 +644,5 @@ document.getElementById('cal-today').addEventListener('click', () => {
 });
 onEventsChange(renderWeek);
 onPeriodsChange(renderWeek);
+onRemindersChange(renderWeek);
 renderWeek();

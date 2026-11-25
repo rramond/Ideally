@@ -5,6 +5,9 @@ import { segmentsOn, timeLabel, typeOf, paintColors, periodOf, getEvent, onEvent
 import { openEventEditor } from './eventEditor.js';
 import { periodsOn, getPeriod, onPeriodsChange } from './periods.js';
 import { openPeriodEditor } from './periodEditor.js';
+import { remindersOn, getReminder, onRemindersChange } from './reminders.js';
+import { openReminderEditor } from './reminderEditor.js';
+import { pictogramNode } from './pictograms.js';
 
 /* ============================================================
    DETAILS PANEL (3d) — double-click a date: a window in the
@@ -18,6 +21,7 @@ const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frida
 let refresh = null;   // re-renders the open panel when events change
 onEventsChange(() => { if (refresh) refresh(); });
 onPeriodsChange(() => { if (refresh) refresh(); });
+onRemindersChange(() => { if (refresh) refresh(); });
 
 const el = (tag, cls, text) => {
   const x = document.createElement(tag);
@@ -68,14 +72,28 @@ export function openDayDetails(dateStr){
     /* includes events that started the day before and run past midnight;
        3e.1: the ones cancelled by a period come last, under their own heading;
        3g: so do tied events stranded outside their period */
+    /* the day's reminders first: pictogram, name, description (click to edit) */
+    const reminders = remindersOn(dateStr);
+    reminders.forEach(r => {
+      const item = el('button', 'dd-item dd-reminder');
+      item.type = 'button';
+      item.title = 'Edit reminder';
+      const top = el('div', 'dd-item-top');
+      top.append(pictogramNode(r.icon, 'pg rem-sticker-look dd-rm-icon'), el('span', 'dd-title', r.name), el('span', 'dd-type', 'Reminder'));
+      item.appendChild(top);
+      if (r.description) item.appendChild(el('p', 'dd-desc', r.description));
+      item.addEventListener('click', () => { const cur = getReminder(r.id); if (cur) openReminderEditor({ reminder: cur }); });
+      list.appendChild(item);
+    });
     const segs = segmentsOn(dateStr);
     const live = segs.filter(s => !s.cancelled && !s.outside);
     const cancelled = segs.filter(s => s.cancelled && !s.outside), outside = segs.filter(s => s.outside);
+    if (!segs.length && reminders.length) return;
     if (!segs.length){
       list.appendChild(el('p', 'dd-empty', 'Nothing planned for this day.'));
       return;
     }
-    if (!live.length) list.appendChild(el('p', 'dd-empty dd-empty-top', 'Nothing planned for this day.'));
+    if (!live.length && !reminders.length) list.appendChild(el('p', 'dd-empty dd-empty-top', 'Nothing planned for this day.'));
     const ghosts = [
       ...(cancelled.length ? [{ heading: 'Cancelled' }, ...cancelled] : []),
       ...(outside.length ? [{ heading: 'Outside its period' }, ...outside] : [])

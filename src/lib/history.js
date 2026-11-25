@@ -3,9 +3,9 @@
    browser history step, so the Ideally logo, the browser's Back,
    the mouse back button and Alt+← all behave the same.
 
-   State: { view, calMode, blocks, periods, types, typeId, popups, depth }
-   - blocks / periods / types: the calendar side panel shows the Time
-     Blocks / Periods / Types list; typeId: the type open in the main
+   State: { view, calMode, blocks, periods, reminders, types, typeId, popups, depth }
+   - blocks / periods / reminders / types: the calendar side panel shows
+     the Time Blocks / Periods / Reminders / Types list; typeId: the type open in the main
      area (3h)
    - popups: ids of the pop-ups open at that step, oldest first.
      Pop-ups can nest (overlay → type picker → color wheel).
@@ -23,9 +23,9 @@ const openNow = new Map(); // pop-up id → hide(), in opening order
 export const getState = () => current;
 
 const sameView = (a, b) => a.view === b.view && !!a.calMode === !!b.calMode
-  && !!a.blocks === !!b.blocks && !!a.periods === !!b.periods && !!a.types === !!b.types
+  && !!a.blocks === !!b.blocks && !!a.periods === !!b.periods && !!a.reminders === !!b.reminders && !!a.types === !!b.types
   && (a.typeId || null) === (b.typeId || null) && (a.projectId || null) === (b.projectId || null);
-const viewOf = s => ({ view: s.view, calMode: s.calMode, blocks: s.blocks, periods: s.periods, types: s.types, typeId: s.typeId || null, projectId: s.projectId || null });
+const viewOf = s => ({ view: s.view, calMode: s.calMode, blocks: s.blocks, periods: s.periods, reminders: s.reminders, types: s.types, typeId: s.typeId || null, projectId: s.projectId || null });
 
 /* hide pop-ups newest first, without touching history */
 function hideAll(ids){

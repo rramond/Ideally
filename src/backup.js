@@ -8,11 +8,11 @@ import { allFileRecords, clearFiles, putFile } from './projects/fileStore.js';
    EXPORT / IMPORT (GENERAL d) — move everything to another
    browser or device. Export saves one .json file: every saved
    value (the ideally.* keys: projects, notes, events, time blocks,
-   types, periods, stickies, settings…) and every file attached
+   types, periods, reminders, stickies, settings…) and every file attached
    to a project (from IndexedDB, as data URLs). Import reads such
    a file and either
    - merges it: items this device doesn't have yet (by id) are
-     added — projects, notes, events, blocks, types, periods,
+     added — projects, notes, events, blocks, types, periods, reminders,
      stickies, arrows, attached files; what's here already, and
      this device's settings, are kept
    - or replaces this device's data with it entirely.
@@ -22,7 +22,7 @@ const PREFIX = 'ideally.';
 /* the lists merged by id, with how to name them in the toast */
 const LIST_NAMES = {
   projects: ['project', 'projects'], notes: ['note', 'notes'], events: ['event', 'events'],
-  timeBlocks: ['time block', 'time blocks'], eventTypes: ['event type', 'event types'], periods: ['period', 'periods'],
+  timeBlocks: ['time block', 'time blocks'], eventTypes: ['event type', 'event types'], periods: ['period', 'periods'], reminders: ['reminder', 'reminders'],
   stickies: ['vision board sticky', 'vision board stickies'], arrows: ['vision board arrow', 'vision board arrows']
 };
 const LISTS = Object.keys(LIST_NAMES).map(k => PREFIX + k);
@@ -51,7 +51,7 @@ const dataUrlToBlob = url => fetch(url).then(r => r.blob());
 function summary(storage, fileCount){
   const n = k => { const v = parse(storage[PREFIX + k]); return Array.isArray(v) ? v.length : 0; };
   return [plural(n('projects'), 'project'), plural(n('notes'), 'note'), plural(n('events'), 'event'),
-          plural(n('timeBlocks'), 'time block'), plural(n('periods'), 'period'), plural(fileCount, 'file')].join(' · ');
+          plural(n('timeBlocks'), 'time block'), plural(n('periods'), 'period'), plural(n('reminders'), 'reminder'), plural(fileCount, 'file')].join(' · ');
 }
 
 /* ---------------- export ---------------- */
