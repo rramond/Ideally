@@ -58,6 +58,10 @@
       <svg viewBox="0 0 24 24"><path d="M3 12h18"/><path d="M6 7v10M18 7v10"/></svg>
       Periods
     </button>
+    <button class="nav-btn" id="cal-reminders">
+      <svg viewBox="0 0 24 24"><path d="M9 4v10M15 3v10"/><circle cx="9" cy="19" r=".6"/><circle cx="15" cy="18" r=".6"/></svg>
+      Reminders
+    </button>
     <button class="nav-btn" id="cal-blocks">
       <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="6" rx="1.5"/><rect x="4" y="11" width="16" height="4" rx="1.5"/><rect x="4" y="17" width="10" height="4" rx="1.5"/></svg>
       Time Blocks
@@ -84,6 +88,15 @@
       New Period
     </button>
     <div class="tb-list" id="pe-list"></div>
+  </nav>
+  <!-- calendar side panel, Reminders mode -->
+  <nav class="nav-reminders">
+    <div class="nav-label">Reminders</div>
+    <button class="nav-btn" id="rem-new">
+      <svg viewBox="0 0 24 24"><path d="M9 4v10M15 3v10"/><circle cx="9" cy="19" r=".6"/><circle cx="15" cy="18" r=".6"/></svg>
+      New Reminder
+    </button>
+    <div class="tb-list" id="rem-list"></div>
   </nav>
   <!-- calendar side panel, Types mode (3h) -->
   <nav class="nav-types">
